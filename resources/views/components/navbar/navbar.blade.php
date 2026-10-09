@@ -60,9 +60,55 @@
                     Cara Booking
                 </a>
 
+                {{-- PILIH BAHASA KHUSUS MOBILE --}}
+                <div class="mt-2 border-t border-slate-200 pt-3 md:hidden">
+                    <p class="mb-2 px-1 text-xs font-semibold text-slate-500">
+                        Pilih Bahasa / Language
+                    </p>
+
+                    <div class="flex gap-2">
+                        <button
+                            type="button"
+                            data-lang="id"
+                            aria-pressed="true"
+                            class="rounded-full border border-teal-100 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700"
+                        >
+                            ID - Indonesia
+                        </button>
+
+                        <button
+                            type="button"
+                            data-lang="en"
+                            aria-pressed="false"
+                            class="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-500"
+                        >
+                            EN - English
+                        </button>
+                    </div>
+                </div>
+
+                {{-- WHATSAPP CS KHUSUS MOBILE --}}
+                @if (!empty($whatsappUrl))
+                    <a
+                        href="{{ $whatsappUrl }}"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-green-500 px-4 py-3 text-sm font-bold text-white no-underline transition hover:bg-green-600 md:hidden"
+                    >
+                        WhatsApp Customer Service
+                    </a>
+                @else
+                    <a
+                        href="{{ route('home') }}#kontak"
+                        class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-green-500 px-4 py-3 text-sm font-bold text-white no-underline transition hover:bg-green-600 md:hidden"
+                    >
+                        WhatsApp Customer Service
+                    </a>
+                @endif
+
                 @auth
                     {{-- Dropdown profil mobile --}}
-                    <div class="relative md:hidden">
+                    <div class="relative mt-2 md:hidden">
                         <button
                             type="button"
                             data-profile-toggle
@@ -89,15 +135,15 @@
                 @else
                     <a
                         href="{{ route('login') }}"
-                        class="rounded-full bg-teal-700 px-4 py-3 text-sm font-semibold text-white no-underline md:hidden"
+                        class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white no-underline md:hidden"
                     >
                         Login / Masuk
                     </a>
                 @endauth
             </div>
 
-            {{-- AKSI DI SISI KANAN --}}
-            <div class="flex shrink-0 items-center gap-2">
+            {{-- AKSI DI SISI KANAN (Hanya Desktop) --}}
+            <div class="hidden shrink-0 items-center gap-2 md:flex">
                 <div class="flex items-center gap-1" aria-label="Pilih bahasa">
                     <button
                         type="button"
@@ -171,21 +217,21 @@
                         Login / Masuk
                     </a>
                 @endauth
-
-                {{-- Tombol menu mobile --}}
-                <button
-                    id="menuToggle"
-                    type="button"
-                    aria-label="Buka navigasi"
-                    aria-expanded="false"
-                    aria-controls="navLinks"
-                    class="grid h-9 w-9 shrink-0 place-items-center rounded-full border-0 bg-teal-700 text-white md:hidden"
-                >
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                        <path d="M4 7h16M4 12h16M4 17h16"/>
-                    </svg>
-                </button>
             </div>
+
+            {{-- Tombol menu mobile (Hamburger) --}}
+            <button
+                id="menuToggle"
+                type="button"
+                aria-label="Buka navigasi"
+                aria-expanded="false"
+                aria-controls="navLinks"
+                class="grid h-9 w-9 shrink-0 place-items-center rounded-full border-0 bg-teal-700 text-white md:hidden"
+            >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                    <path d="M4 7h16M4 12h16M4 17h16"/>
+                </svg>
+            </button>
         </nav>
     </div>
 </header>
