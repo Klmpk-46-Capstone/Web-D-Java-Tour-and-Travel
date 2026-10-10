@@ -1,7 +1,10 @@
-<header class="sticky top-0 z-50 bg-indigo-50 py-2 md:py-3">
+<header
+    id="mainNavbar"
+    class="sticky top-0 z-50 bg-indigo-50 py-2 transition-all duration-300 md:py-3"
+>
     <div class="container mx-auto px-4">
         <nav
-            class="relative flex min-h-14 items-center justify-between gap-2 rounded-3xl border border-slate-200 bg-white px-3 py-2 shadow-sm md:min-h-16 md:gap-3 md:rounded-full md:px-5"
+            class="relative flex min-h-14 items-center justify-between gap-2 rounded-3xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition-all duration-300 md:min-h-16 md:gap-3 md:rounded-full md:px-5"
             aria-label="Navigasi utama"
         >
             {{-- LOGO --}}
@@ -241,7 +244,38 @@ document.addEventListener('DOMContentLoaded', function () {
     const mobileBreakpoint = 768;
     const menuToggle = document.getElementById('menuToggle');
     const navLinks = document.getElementById('navLinks');
+    const mainNavbar = document.getElementById('mainNavbar');
+    const navbarNav = mainNavbar?.querySelector('nav');
 
+    // 1. Efek Kaca Blur saat Scroll
+    function updateNavbarOnScroll() {
+        if (!mainNavbar || !navbarNav) return;
+
+        const isScrolled = window.scrollY > 20;
+
+        // Header Background
+        if (isScrolled) {
+            mainNavbar.classList.remove('bg-indigo-50');
+            mainNavbar.classList.add('bg-transparent');
+        } else {
+            mainNavbar.classList.remove('bg-transparent');
+            mainNavbar.classList.add('bg-indigo-50');
+        }
+
+        // Nav Glassmorphism
+        if (isScrolled) {
+            navbarNav.classList.remove('bg-white', 'border-slate-200', 'shadow-sm');
+            navbarNav.classList.add('bg-white/70', 'backdrop-blur-md', 'border-white/50', 'shadow-lg');
+        } else {
+            navbarNav.classList.remove('bg-white/70', 'backdrop-blur-md', 'border-white/50', 'shadow-lg');
+            navbarNav.classList.add('bg-white', 'border-slate-200', 'shadow-sm');
+        }
+    }
+
+    window.addEventListener('scroll', updateNavbarOnScroll, { passive: true });
+    updateNavbarOnScroll();
+
+    // 2. Mobile Menu Toggle Logic
     function setMobileMenu(open) {
         if (!menuToggle || !navLinks) return;
 
@@ -277,6 +311,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // 3. Translation Dictionary & Logic
     const translations = {
         id: {
             beranda: 'Beranda',
@@ -327,6 +362,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // 4. Profile Dropdown Logic
     const profileToggles = document.querySelectorAll('[data-profile-toggle]');
 
     function closeProfileMenus(exceptToggle) {
