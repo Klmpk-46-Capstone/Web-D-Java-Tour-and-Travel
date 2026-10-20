@@ -9,6 +9,10 @@
     Profile
 </a>
 
+<a href="{{ route('customer.bookings') }}" class="{{ $itemClass }}">
+    Riwayat Booking
+</a>
+
 <a href="{{ url('/settings') }}" class="{{ $itemClass }}">
     Pengaturan
 </a>

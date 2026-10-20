@@ -1,58 +1,209 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# ✦ D'Java Tour & Travel — Customer Portal & CMS OPS Console
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Aplikasi web reservasi paket wisata Jawa Timur dan **Back-Office Ops Console (CMS Admin)** yang terintegrasi penuh secara *real-time* dan *data-driven*, dibangun menggunakan **Laravel 12/13**, **Tailwind CSS v4**, dan **Vite**.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Daftar Isi
+- [Fitur Utama Sistem](#-fitur-utama-sistem)
+- [Prasyarat Sistem (Prerequisites)](#-prasyarat-sistem-prerequisites)
+- [Panduan Instalasi & Menjalankan Server](#-panduan-instalasi--menjalankan-server-bebas-error)
+- [Kredensial Akun Bawaan (Default Seed)](#-kredensial-akun-bawaan-default-seed)
+- [Hidden Admin Gateway (Akses Rahasia Console)](#-hidden-admin-gateway-akses-rahasia-console)
+- [Logika 5 Titik Integrasi (CMS ⇄ Customer)](#-logika-5-titik-integrasi-cms--customer)
+- [Panduan Mengatasi Masalah (Troubleshooting)](#-panduan-mengatasi-masalah-troubleshooting)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 Fitur Utama Sistem
 
-## Learning Laravel
+### 1. Customer Frontend
+- **Katalog & Detail Paket Wisata**: Eksplorasi rute Karimunjawa, Gunung Bromo, Kawah Ijen, Dieng, dan Yogyakarta dengan rincian jadwal harian (*itinerary*).
+- **Rekomendasi Utama (Featured Showcase)**: Highlight paket terpopuler yang dikontrol langsung oleh tim admin.
+- **Form Booking Real-Time**: Pemilihan batch tanggal keberangkatan dengan validasi sisa kuota kursi dinamis.
+- **Riwayat Reservasi & Pengajuan Refund**: Pantau status e-tiket dan formulir pembatalan tiket mandiri.
+- **Ulasan & Penilaian Pelanggan**: Testimoni terkurasi dari wisatawan terverifikasi.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. CMS OPS Console (Admin Panel Sesuai Mockup Visual)
+- **Dashboard Analitik & Ringkasan Operasional**: Metrik Gross Revenue, Target Q1 sparkline, total booking pax, paket terlaris mingguan, tinjauan refund disengketakan, dan widget live BMKG Maritim.
+- **Grafik Tren Penjualan**: Proyeksi bulanan rute Bahari, Gunung, dan Heritage dengan indikator *peak high season*.
+- **Peringatan Kuota Penuh**: Indikator trip mendekati batas kapasitas dengan tombol *quick-action* `+ Buka Batch Baru`.
+- **Manifes Penumpang**: Roster resmi penumpang per jadwal batch trip siap cetak (*print-ready*).
+- **Audit Finansial**: Laporan transaksi masuk dan fitur ekspor data dalam format **CSV**.
+- **Moderasi Ulasan & Tiket Refund**: Persetujuan pembatalan yang secara otomatis memulihkan kuota kursi ke sistem.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## 🛠 Prasyarat Sistem (Prerequisites)
 
-## Agentic Development
+Pastikan lingkungan lokal Anda telah terpasang:
+- **PHP** `>= 8.2` atau `8.3` (Disarankan PHP 8.3)
+  - Ekstensi PHP aktif: `pdo_mysql`, `mbstring`, `openssl`, `tokenizer`, `xml`, `ctype`, `curl`, `fileinfo`.
+- **Composer** `>= 2.2`
+- **Node.js** `>= 18.x` & **NPM**
+- **Database Server**: **MySQL** `>= 8.0` atau **MariaDB** `>= 10.4` (bisa menggunakan Laragon, XAMPP, atau Docker).
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+---
 
+## 💻 Panduan Instalasi & Menjalankan Server (Bebas Error)
+
+Ikuti langkah-langkah berikut secara berurutan saat pertama kali meng-clone repositori ini:
+
+### 1. Clone Repositori
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone https://github.com/username/Web-D-Java-Tour-and-Travel.git
+cd Web-D-Java-Tour-and-Travel
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 2. Install Dependensi PHP (Composer)
+```bash
+composer install
+```
 
-## Contributing
+### 3. Install Dependensi Frontend (NPM)
+```bash
+npm install
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 4. Konfigurasi File Environment (`.env`)
+Salin file `.env.example` menjadi `.env`:
+```bash
+# Windows PowerShell
+copy .env.example .env
 
-## Code of Conduct
+# Linux / macOS / Bash
+cp .env.example .env
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Buka file `.env` dan sesuaikan pengaturan database Anda:
+```env
+APP_NAME="D'Java Tour & Travel"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
 
-## Security Vulnerabilities
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=capstoneweb
+DB_USERNAME=root
+DB_PASSWORD=
+```
+> [!IMPORTANT]
+> Pastikan database dengan nama `capstoneweb` sudah dibuat terlebih dahulu di phpMyAdmin / MySQL client Anda (`CREATE DATABASE capstoneweb;`).
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### 5. Generate Application Key
+```bash
+php artisan key:generate
+```
 
-## License
+### 6. Jalankan Migrasi Database & Seeder Data Awal
+Perintah ini akan membuat semua struktur tabel (`packages`, `itineraries`, `trips`, `bookings`, `transactions`, `refunds`, `reviews`) sekaligus mengisi data awal super admin dan mockup dashboard:
+```bash
+php artisan migrate --seed --class=CmsTourSeeder
+```
+*Atau jalankan migrasi dasar diikuti seeder:*
+```bash
+php artisan migrate
+php artisan db:seed --class=CmsTourSeeder
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### 7. Buat Symlink Storage Publik
+```bash
+php artisan storage:link
+```
+
+### 8. Kompilasi Aset Frontend (Tailwind CSS & JS)
+Pilih salah satu sesuai kebutuhan Anda:
+- **Untuk Mode Produksi (Cepat & Siap Pakai)**:
+  ```bash
+  npm run build
+  ```
+- **Untuk Mode Pengembangan Aktif (Hot Reload)**:
+  ```bash
+  npm run dev
+  ```
+
+### 9. Jalankan Server Lokal Laravel
+Buka terminal dan jalankan server artisan:
+```bash
+php artisan serve
+```
+Aplikasi sekarang dapat diakses melalui browser di: **`http://localhost:8000`** atau **`http://127.0.0.1:8000`**.
+
+---
+
+## 🔑 Kredensial Akun Bawaan (Default Seed)
+
+Setelah menjalankan `CmsTourSeeder`, akun-akun berikut sudah langsung aktif di database:
+
+| Peran (Role) | Nama Pengguna | Alamat Email | Password | Akses Halaman |
+|---|---|---|---|---|
+| **Super Admin** | Bambang Setiawan | `bambang@djavatour.com` | `password123` | CMS OPS Console (`/admin`) |
+| **Admin Ops** | Admin Ops Tour | `admin@djavatour.com` | `password123` | CMS OPS Console (`/admin`) |
+| **Customer Demo** | Rian Adiputra | `rian.adi@gmail.com` | `password123` | Riwayat Booking (`/customer/riwayat-booking`) |
+
+---
+
+## 🛡 Hidden Admin Gateway (Akses Rahasia Console)
+
+Sesuai spesifikasi keamanan, **tidak ada tombol atau link admin** pada navbar halaman publik customer. Untuk masuk ke portal CMS Back-Office:
+
+1. Buka halaman utama aplikasi di browser (`http://localhost:8000`).
+2. Tekan kombinasi tombol shortcut rahasia berikut pada keyboard:
+   - **Windows / Linux**: `Ctrl` + `Shift` + `L`
+   - **macOS**: `Cmd` + `Shift` + `L`
+3. Sistem akan memunculkan toast autentikasi rahasia dan mengalihkan Anda ke portal:
+   ```
+   http://localhost:8000/admin/gate-auth
+   ```
+4. Masukkan email `bambang@djavatour.com` dan password `password123`.
+
+> [!NOTE]
+> Pengguna umum atau pengunjung non-admin yang mencoba mengakses URL `/admin/*` secara langsung tanpa otorisasi akan otomatis diblokir dan dialihkan kembali.
+
+---
+
+## 🔄 Logika 5 Titik Integrasi (CMS ⇄ Customer)
+
+1. **Paket Wisata & Itinerary**: Penambahan atau perubahan paket di CMS langsung mengupdate katalog di `/paket-wisata` serta rincian timeline hari-ke-hari pada `/paket-wisata/{slug}`.
+2. **Rekomendasi Utama (Featured Toggle)**: Menghidupkan atau mematikan tombol `Featured` di admin langsung menentukan kemunculan kartu paket pada banner atas beranda depan customer.
+3. **Jadwal & Kuota Kursi**: Tanggal batch trip diatur di CMS. Jika kuota = 0, tanggal keberangkatan otomatis terkunci (`disabled`) bertuliskan `[HABIS / FULL]`.
+4. **Validasi Pembatalan & Refund**: Ketika admin menyetujui (*approve*) klaim refund, status pemesanan customer berubah menjadi `refunded/dibatalkan` dan sisa kursi pada trip terkait otomatis dipulihkan (*auto seat recovery*).
+5. **Moderasi Ulasan**: Customer dapat mengirimkan review langsung dari halaman detail paket. Tombol sembunyikan/hapus di CMS secara instan mencabut ulasan dari tayangan publik dan mengkalkulasi ulang rata-rata rating paket.
+
+---
+
+## 🛠 Panduan Mengatasi Masalah (Troubleshooting)
+
+### 1. `Base table or view not found: 'packages'`
+- **Penyebab**: Migrasi database belum dijalankan.
+- **Solusi**: Jalankan perintah `php artisan migrate --seed --class=CmsTourSeeder`.
+
+### 2. `SQLSTATE[HY000] [1524] Plugin 'mysql_native_password' is not loaded`
+- **Penyebab**: Konfigurasi autentikasi MySQL 8.x pada server lokal (seperti Laragon/XAMPP).
+- **Solusi**: Buka MySQL console Anda dan jalankan perintah:
+  ```sql
+  ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY '';
+  FLUSH PRIVILEGES;
+  ```
+  Atau gunakan koneksi SQLite dengan mengubah `DB_CONNECTION=sqlite` di file `.env`.
+
+### 3. Tampilan Berantakan / CSS Tidak Termuat
+- **Penyebab**: Aset Tailwind belum di-build.
+- **Solusi**: Jalankan `npm run build` di terminal proyek.
+
+### 4. Sesi Login Mengalami Infinite Loop / Error CSRF
+- **Penyebab**: Cache konfigurasi atau sesi usang.
+- **Solusi**:
+  ```bash
+  php artisan optimize:clear
+  php artisan config:clear
+  ```
+
+---
+
+<p align="center">
+  <strong>D'Java Tour &amp; Travel System</strong> • Engineered with precision for seamless tour management.
+</p>

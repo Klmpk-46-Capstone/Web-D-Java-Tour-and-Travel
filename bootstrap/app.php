@@ -15,6 +15,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->trustProxies(
             at: ['127.0.0.1', '::1'],
         );
+        $middleware->redirectGuestsTo(
+            fn (\Illuminate\Http\Request $request) => $request->is('admin*') ? route('admin.login') : route('login')
+        );
+        $middleware->alias([
+            'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        ]);
     })
     // (Untuk Tahap Hosting ubah ke Ini lagi)
     // ->withMiddleware(function (Middleware $middleware): void {

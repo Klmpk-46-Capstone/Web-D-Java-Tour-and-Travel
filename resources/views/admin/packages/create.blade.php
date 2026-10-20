@@ -1,0 +1,165 @@
+@extends('layouts.admin')
+
+@section('title', 'Tambah Paket Wisata Baru')
+
+@section('content')
+<div class="max-w-4xl mx-auto space-y-6">
+
+    {{-- HEADER --}}
+    <div class="flex items-center justify-between">
+        <div>
+            <div class="flex items-center gap-2 text-[11px] font-bold tracking-wider text-slate-400 uppercase mb-1">
+                <a href="{{ route('admin.packages.index') }}" class="hover:text-teal-700">PAKET WISATA</a>
+                <span>/</span>
+                <span class="text-teal-700">BUAT BARU</span>
+            </div>
+            <h1 class="text-2xl font-extrabold text-slate-900 tracking-tight">
+                Tambah Paket Wisata &amp; Itinerary
+            </h1>
+        </div>
+
+        <a href="{{ route('admin.packages.index') }}" class="px-4 py-2 text-xs font-bold text-slate-600 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition">
+            &larr; Kembali
+        </a>
+    </div>
+
+    {{-- FORM CARD --}}
+    <form action="{{ route('admin.packages.store') }}" method="POST" class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-2xs space-y-6">
+        @csrf
+
+        {{-- BASIC INFORMATION --}}
+        <div>
+            <h2 class="text-sm font-extrabold text-slate-900 mb-4 pb-2 border-b border-slate-100">Informasi Dasar Paket</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Nama Paket Wisata</label>
+                    <input type="text" name="name" value="{{ old('name') }}" required placeholder="Cth: Karimunjawa Snorkeling 3D2N VIP" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Kategori Wisata</label>
+                    <select name="category" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
+                        <option value="Wisata Bahari & Island Hopping">Wisata Bahari &amp; Island Hopping</option>
+                        <option value="Mountain Trekking & Sunrise">Mountain Trekking &amp; Sunrise</option>
+                        <option value="Cultural, Heritage & City Tour">Cultural, Heritage &amp; City Tour</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Tipe Rute Wilayah</label>
+                    <select name="route_type" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
+                        <option value="bahari">Bahari (Karimunjawa / Jepara)</option>
+                        <option value="gunung">Gunung (Bromo / Dieng / Ijen)</option>
+                        <option value="heritage">Heritage (Jogja / Borobudur)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Durasi Perjalanan</label>
+                    <input type="text" name="duration" value="{{ old('duration', '3 Hari 2 Malam') }}" required placeholder="Cth: 3 Hari 2 Malam" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Harga per Orang (IDR)</label>
+                    <input type="number" name="price" value="{{ old('price', 1250000) }}" required min="0" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Badge Promosi (Opsional)</label>
+                    <input type="text" name="badge" value="{{ old('badge', 'OPEN TRIP REGULER') }}" placeholder="Cth: BAHARI OPEN TRIP / BEST SELLER" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 mb-1">URL Foto Sampul</label>
+                    <input type="url" name="image_url" value="{{ old('image_url', 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=1200&q=80') }}" placeholder="https://images.unsplash.com/..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="block text-xs font-bold text-slate-700 mb-1">Deskripsi Paket Wisata</label>
+                    <textarea name="description" rows="3" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-3 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">{{ old('description', 'Pengalaman eksklusif mengeksplorasi keindahan alam dan kebudayaan dengan pelayanan terbaik dari D\'Java Tour.') }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        {{-- VISIBILITY TOGGLES --}}
+        <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="is_featured" value="1" {{ old('is_featured') ? 'checked' : '' }} class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500">
+                <div>
+                    <span class="text-xs font-extrabold text-slate-800">Tandai sebagai Rekomendasi Utama (Featured)</span>
+                    <span class="text-[11px] text-slate-500 block">Tampil otomatis di banner promo dan highlight beranda depan.</span>
+                </div>
+            </label>
+
+            <label class="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" name="is_active" value="1" checked class="w-4 h-4 rounded text-teal-600 focus:ring-teal-500">
+                <div>
+                    <span class="text-xs font-extrabold text-slate-800">Status Aktif</span>
+                    <span class="text-[11px] text-slate-500 block">Dapat dicari dan dipesan customer.</span>
+                </div>
+            </label>
+        </div>
+
+        {{-- ITINERARY BUILDER --}}
+        <div>
+            <div class="flex items-center justify-between mb-4 pb-2 border-b border-slate-100">
+                <div>
+                    <h2 class="text-sm font-extrabold text-slate-900">Susunan Jadwal Perjalanan (Itinerary)</h2>
+                    <p class="text-xs text-slate-500">Buat rincian aktivitas per hari yang akan dibaca customer.</p>
+                </div>
+                <button type="button" onclick="addItineraryDay()" class="px-3 py-1.5 bg-teal-50 text-teal-800 hover:bg-teal-100 text-xs font-bold rounded-xl transition cursor-pointer">
+                    + Tambah Hari
+                </button>
+            </div>
+
+            <div id="itineraryContainer" class="space-y-3">
+                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-extrabold text-teal-800">HARI 1</span>
+                    </div>
+                    <input type="text" name="itineraries[0][title]" required value="Kedatangan, Check-in & Sunset View" placeholder="Judul aktivitas hari ini" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-teal-600">
+                    <textarea name="itineraries[0][description]" rows="2" placeholder="Rincian jam, lokasi, dan kegiatan..." class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:outline-none focus:border-teal-600">Penjemputan di meeting point, perjalanan menuju destinasi, check-in akomodasi, dan menikmati pemandangan sore hari.</textarea>
+                </div>
+
+                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-extrabold text-teal-800">HARI 2</span>
+                    </div>
+                    <input type="text" name="itineraries[1][title]" required value="Eksplorasi Spot Utama & Wisata Kuliner" placeholder="Judul aktivitas hari ini" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-teal-600">
+                    <textarea name="itineraries[1][description]" rows="2" placeholder="Rincian jam, lokasi, dan kegiatan..." class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:outline-none focus:border-teal-600">Sarapan pagi, petualangan ke spot wisata unggulan, sesi foto dokumentasi, dan santap kuliner khas daerah.</textarea>
+                </div>
+            </div>
+        </div>
+
+        {{-- BUTTON ACTIONS --}}
+        <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
+            <a href="{{ route('admin.packages.index') }}" class="px-5 py-2.5 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl transition">Batal</a>
+            <button type="submit" class="px-6 py-2.5 text-xs font-bold text-white bg-teal-700 hover:bg-teal-800 rounded-xl shadow-sm transition">
+                Simpan &amp; Publikasikan Paket
+            </button>
+        </div>
+    </form>
+
+</div>
+
+@push('scripts')
+<script>
+    let dayCount = 2;
+    function addItineraryDay() {
+        dayCount++;
+        const container = document.getElementById('itineraryContainer');
+        const div = document.createElement('div');
+        div.className = 'p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2';
+        div.innerHTML = `
+            <div class="flex items-center justify-between">
+                <span class="text-xs font-extrabold text-teal-800">HARI ${dayCount}</span>
+                <button type="button" onclick="this.closest('div.p-4').remove()" class="text-xs text-rose-500 hover:underline">Hapus Hari</button>
+            </div>
+            <input type="text" name="itineraries[${dayCount-1}][title]" required placeholder="Judul aktivitas hari ke-${dayCount}" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-teal-600">
+            <textarea name="itineraries[${dayCount-1}][description]" rows="2" placeholder="Rincian jam, lokasi, dan kegiatan..." class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:outline-none focus:border-teal-600"></textarea>
+        `;
+        container.appendChild(div);
+    }
+</script>
+@endpush
+@endsection

@@ -37,6 +37,7 @@
 
     <main>
         @include('pages.dashboard.beranda.components.form_pencarian')
+        @include('pages.dashboard.beranda.components.rekomendasi_utama')
         @include('pages.dashboard.beranda.components.destinasi')
         @include('pages.dashboard.beranda.components.armada')
 

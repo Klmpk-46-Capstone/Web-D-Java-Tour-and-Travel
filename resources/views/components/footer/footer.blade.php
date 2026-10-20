@@ -25,8 +25,12 @@
 
             <div>
                 <h4 class="mb-4 mt-0 text-xs font-bold uppercase tracking-wide">Destinasi Populer</h4>
-                @forelse ($destinations->take(4) as $destination)
-                    <a class="mb-2.5 block break-words text-sm leading-relaxed text-slate-500 no-underline transition hover:text-teal-700" href="#destinasi">{{ $destination->name }}</a>
+                @php
+                    $popularDestinations = isset($destinations) ? $destinations->take(4) : \App\Models\Destination::where('is_active', true)->limit(4)->get();
+                    $footerWa = $whatsappUrl ?? (config('services.djava.whatsapp') ? 'https://wa.me/'.preg_replace('/\D+/', '', config('services.djava.whatsapp')) : null);
+                @endphp
+                @forelse ($popularDestinations as $destination)
+                    <a class="mb-2.5 block break-words text-sm leading-relaxed text-slate-500 no-underline transition hover:text-teal-700" href="{{ route('home') }}#destinasi">{{ $destination->name }}</a>
                 @empty
                     <p class="mb-2.5 mt-0 text-sm leading-relaxed text-slate-500">Destinasi akan ditampilkan setelah data tersedia.</p>
                 @endforelse
@@ -35,8 +39,8 @@
             <div>
                 <h4 class="mb-4 mt-0 text-xs font-bold uppercase tracking-wide">Kontak &amp; Informasi</h4>
                 <p class="mb-2.5 mt-0 text-sm leading-relaxed text-slate-500">D'Java Tour &amp; Travel</p>
-                @if ($whatsappUrl)
-                    <a class="mb-2.5 block break-words text-sm leading-relaxed text-slate-500 no-underline transition hover:text-teal-700" href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer">Hubungi WhatsApp Customer Service</a>
+                @if ($footerWa)
+                    <a class="mb-2.5 block break-words text-sm leading-relaxed text-slate-500 no-underline transition hover:text-teal-700" href="{{ $footerWa }}" target="_blank" rel="noopener noreferrer">Hubungi WhatsApp Customer Service</a>
                 @else
                     <p class="mb-2.5 mt-0 text-sm leading-relaxed text-slate-500">Nomor WhatsApp belum dikonfigurasi.</p>
                 @endif
