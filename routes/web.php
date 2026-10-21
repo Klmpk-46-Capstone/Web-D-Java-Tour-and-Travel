@@ -23,11 +23,15 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // Paket Wisata & Detail
 Route::get('/paket-wisata', [HomeController::class, 'packages'])->name('packages.index');
 Route::get('/paket-wisata/{slug}', [HomeController::class, 'packageDetail'])->name('packages.show');
+Route::get(
+    '/paket-wisata/{slug}/formulir',
+    [HomeController::class, 'bookingForm']
+)->name('booking.form');
 Route::post('/paket-wisata/{package}/review', [HomeController::class, 'storeReview'])->name('packages.review.store');
 
 // Booking & Reservation
 Route::post('/booking/store', [HomeController::class, 'storeBooking'])->name('booking.store');
-Route::get('/customer/riwayat-booking', [HomeController::class, 'customerBookings'])->name('customer.bookings');
+Route::get('/trips/{trip}/quota-check', [HomeController::class, 'checkTripQuota'])->name('trips.check-quota');
 Route::post('/customer/booking/{code}/refund-request', [HomeController::class, 'requestRefund'])->name('customer.refund.request');
 
 /*
@@ -116,4 +120,5 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Logout
     Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
+
 });

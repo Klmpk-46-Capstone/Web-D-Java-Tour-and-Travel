@@ -57,10 +57,10 @@
 
                 <a
                     data-nav-key="booking"
-                    href="{{ url('/cara-booking') }}"
-                    class="{{ request()->is('cara-booking*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors md:whitespace-nowrap md:px-3 md:py-2.5"
+                    href="{{ url('/riwayat-transaksi') }}"
+                    class="{{ request()->is('riwayat-transaksi*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors md:whitespace-nowrap md:px-3 md:py-2.5"
                 >
-                    Cara Booking
+                    Riwayat Transaksi
                 </a>
 
                 {{-- PILIH BAHASA KHUSUS MOBILE --}}
@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function () {
             beranda: 'Beranda',
             armada: 'Armada',
             paket: 'Paket Wisata',
-            booking: 'Cara Booking',
+            booking: 'Riwayat Transaksi',
             login: 'Login / Masuk'
         },
         en: {
