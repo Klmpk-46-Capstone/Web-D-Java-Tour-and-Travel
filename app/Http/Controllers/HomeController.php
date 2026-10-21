@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Booking;
-use App\Models\Destination;
 use App\Models\Package;
 use App\Models\Refund;
 use App\Models\Review;
 use App\Models\Trip;
 use App\Models\Vehicle;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -52,19 +54,21 @@ class HomeController extends Controller
             ->limit(6)
             ->get();
 
-        $destinations = Destination::query()
+        $destinations = Package::query()
             ->where('is_active', true)
             ->when(
                 filled($search['destination'] ?? null),
                 function ($query) use ($search) {
-                    $query->where(
-                        'name',
-                        'like',
-                        '%' . $search['destination'] . '%'
-                    );
+                    $query->where(function ($subQuery) use ($search) {
+                        $keyword = '%' . $search['destination'] . '%';
+
+                        $subQuery->where('name', 'like', $keyword)
+                            ->orWhere('category', 'like', $keyword);
+                    });
                 }
             )
-            ->orderBy('name')
+            ->orderByDesc('is_featured')
+            ->latest('id')
             ->limit(8)
             ->get();
 
@@ -108,7 +112,12 @@ class HomeController extends Controller
             ->latest('id')
             ->paginate(9);
 
-        return view('pages.customer.packages', compact('packages', 'category', 'route', 'q'));
+        return view('pages.dashboard.paket_wisata.index', compact(
+            'packages',
+            'category',
+            'route',
+            'q'
+        ));
     }
 
     // Customer Package Detail with Itinerary, Dynamic Schedule/Quota & Reviews
@@ -126,79 +135,174 @@ class HomeController extends Controller
             ->limit(3)
             ->get();
 
-        return view('pages.customer.package_detail', compact('package', 'relatedPackages'));
+        return view('pages.dashboard.paket_wisata.detail.detail_package', compact(
+            'package',
+            'relatedPackages'
+        ));
     }
 
-    // Customer Store Booking with dynamic quota validation
+    // Customer Booking Form: data perjalanan dipertahankan dari halaman detail.
+    public function bookingForm(Request $request, string $slug): View|RedirectResponse
+    {
+        $package = Package::query()
+            ->where('slug', $slug)
+            ->where('is_active', true)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'trip_id' => ['required', 'integer', 'min:1'],
+            'pax' => ['required', 'integer', 'min:1', 'max:50'],
+            'selected_armada' => ['required', 'in:Innova Reborn,HiAce Commuter'],
+        ]);
+
+        $selectedTrip = Trip::query()
+            ->where('package_id', $package->id)
+            ->whereKey($validated['trip_id'])
+            ->whereIn('status', ['available', 'open', 'almost_full'])
+            ->whereDate('departure_date', '>=', now()->toDateString())
+            ->first();
+
+        if (! $selectedTrip) {
+            return redirect()->route('packages.show', $package->slug)
+                ->with('error', 'Jadwal keberangkatan tidak tersedia. Silakan pilih jadwal lain.');
+        }
+
+        $remainingSeats = max(0, (int) $selectedTrip->quota - (int) $selectedTrip->booked_seats);
+        if ($remainingSeats < 1 || $validated['pax'] > $remainingSeats) {
+            return redirect()->route('packages.show', $package->slug)
+                ->with('error', 'Sisa kuota jadwal berubah. Silakan pilih ulang jadwal dan jumlah peserta.');
+        }
+
+        return view('pages.dashboard.paket_wisata.formulir.index', [
+            'package' => $package,
+            'selectedTrip' => $selectedTrip,
+            'selectedPax' => (int) $validated['pax'],
+            'selectedArmada' => $validated['selected_armada'],
+        ]);
+    }
+
+    // Store booking: validasi ulang data dan kuota di server, lalu simpan secara atomik.
     public function storeBooking(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'trip_id' => ['required', 'exists:trips,id'],
+            'package_id' => ['required', 'integer', 'exists:packages,id'],
+            'trip_id' => ['required', 'integer', 'exists:trips,id'],
+            'pax' => ['required', 'integer', 'min:1', 'max:50'],
+            'selected_armada' => ['required', 'in:Innova Reborn,HiAce Commuter'],
             'customer_name' => ['required', 'string', 'max:150'],
             'customer_email' => ['required', 'email', 'max:150'],
             'customer_phone' => ['required', 'string', 'max:50'],
-            'pax' => ['required', 'integer', 'min:1', 'max:50'],
-            'payment_method' => ['required', 'string'],
+            'pickup_location' => ['required', 'string', 'max:200'],
+            'pickup_details' => ['nullable', 'string', 'max:500'],
+            'payment_method' => ['required', 'in:BCA Virtual Account,Mandiri Virtual Account'],
             'notes' => ['nullable', 'string', 'max:500'],
+            'identity_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
         ]);
 
-        $trip = Trip::with('package')->findOrFail($validated['trip_id']);
+        $booking = DB::transaction(function () use ($request, $validated) {
+            $trip = Trip::query()
+                ->whereKey($validated['trip_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        // Check quota availability
-        if ($trip->remaining_seats < $validated['pax']) {
-            return back()->withInput()->with('error', "Maaf, sisa kursi untuk jadwal batch ini hanya tersisa {$trip->remaining_seats} kursi.");
-        }
+            if ((int) $trip->package_id !== (int) $validated['package_id']) {
+                abort(422, 'Jadwal tidak sesuai dengan paket yang dipilih.');
+            }
 
-        $totalPrice = $trip->package->price * $validated['pax'];
-        $bookingCode = 'DJT-' . rand(1000, 9999);
+            $remainingSeats = max(0, (int) $trip->quota - (int) $trip->booked_seats);
+            if (! in_array($trip->status, ['available', 'open', 'almost_full'], true)
+                || $trip->departure_date < now()->toDateString()
+                || $remainingSeats < (int) $validated['pax']) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'trip_id' => 'Kuota jadwal tidak mencukupi. Silakan kembali ke halaman detail dan pilih ulang jadwal atau jumlah peserta.',
+                ]);
+            }
 
-        $booking = Booking::create([
-            'booking_code' => $bookingCode,
-            'user_id' => auth()->id(),
-            'trip_id' => $trip->id,
-            'package_id' => $trip->package_id,
-            'customer_name' => $validated['customer_name'],
-            'customer_email' => $validated['customer_email'],
-            'customer_phone' => $validated['customer_phone'],
-            'pax' => $validated['pax'],
-            'total_price' => $totalPrice,
-            'payment_method' => $validated['payment_method'],
-            'payment_status' => 'paid',
-            'booking_status' => 'confirmed',
-            'notes' => $validated['notes'] ?? null,
+            $package = Package::query()->whereKey($trip->package_id)->firstOrFail();
+            $totalPrice = (int) $package->price * (int) $validated['pax'];
+            $identityPath = null;
+            if ($request->hasFile('identity_file')) {
+                $identityPath = $request->file('identity_file')->store('booking-identities', 'local');
+            }
+
+            $bookingCode = 'DJT-' . Str::upper(Str::random(8));
+            $booking = new Booking();
+            $booking->forceFill([
+                'booking_code' => $bookingCode,
+                'user_id' => Auth::id(),
+                'trip_id' => $trip->id,
+                'package_id' => $package->id,
+                'customer_name' => $validated['customer_name'],
+                'customer_email' => $validated['customer_email'],
+                'customer_phone' => $validated['customer_phone'],
+                'pax' => (int) $validated['pax'],
+                'pickup_location' => $validated['pickup_location'],
+                'pickup_details' => $validated['pickup_details'] ?? null,
+                'selected_armada' => $validated['selected_armada'],
+                'identity_file_path' => $identityPath,
+                'total_price' => $totalPrice,
+                'payment_method' => $validated['payment_method'],
+                'payment_status' => 'pending',
+                'booking_status' => 'pending',
+                'notes' => $validated['notes'] ?? null,
+            ])->save();
+
+            $trip->booked_seats = (int) $trip->booked_seats + (int) $validated['pax'];
+            if ($trip->booked_seats >= $trip->quota) {
+                $trip->status = 'full';
+            } elseif ($trip->quota > 0 && ($trip->booked_seats / $trip->quota) >= 0.8) {
+                $trip->status = 'almost_full';
+            }
+            $trip->save();
+
+            $booking->transactions()->create([
+                'transaction_code' => 'TRX-' . Str::upper(Str::random(10)),
+                'amount' => (int) round($totalPrice * 0.30),
+                'payment_method' => $validated['payment_method'],
+                'payment_channel' => 'Transfer Bank',
+                'paid_at' => null,
+                'status' => 'pending',
+            ]);
+
+            return $booking;
+        });
+
+        return redirect()->route('booking.form', [
+            'slug' => $booking->package->slug,
+            'trip_id' => $booking->trip_id,
+            'pax' => $booking->pax,
+            'selected_armada' => $booking->selected_armada,
+        ])->with('success', 'Permintaan reservasi berhasil dicatat. Status pembayaran masih menunggu verifikasi DP. Kode booking: ' . $booking->booking_code);
+    }
+
+    // Live Check Trip Quota (Realtime verification against stale frontends)
+    public function checkTripQuota(Trip $trip): JsonResponse
+    {
+        $formattedDate = $trip->departure_date ? \Illuminate\Support\Carbon::parse($trip->departure_date)->translatedFormat('d F Y') : '';
+
+        return response()->json([
+            'id' => $trip->id,
+            'batch_name' => $trip->batch_name,
+            'departure_date' => $trip->departure_date ? \Illuminate\Support\Carbon::parse($trip->departure_date)->format('Y-m-d') : null,
+            'formatted_date' => $formattedDate,
+            'quota' => (int) $trip->quota,
+            'booked_seats' => (int) $trip->booked_seats,
+            'remaining_seats' => (int) $trip->remaining_seats,
+            'is_full' => $trip->remaining_seats <= 0,
+            'percentage_booked' => $trip->percentage_booked,
+            'status' => $trip->status,
         ]);
-
-        // Increment trip booked seats and update status
-        $trip->increment('booked_seats', $validated['pax']);
-        if ($trip->remaining_seats <= 0) {
-            $trip->update(['status' => 'full']);
-        } elseif ($trip->percentage_booked >= 80) {
-            $trip->update(['status' => 'almost_full']);
-        }
-
-        // Record transaction
-        $booking->transactions()->create([
-            'transaction_code' => 'TRX-' . Str::upper(Str::random(10)),
-            'amount' => $totalPrice,
-            'payment_method' => $validated['payment_method'],
-            'payment_channel' => 'Online Payment',
-            'paid_at' => now(),
-            'status' => 'success',
-        ]);
-
-        return redirect()->route('customer.bookings')
-            ->with('success', "Reservasi berhasil dibuat! Kode Booking Anda: {$bookingCode}. Data telah terhubung ke CMS Back-Office.");
     }
 
     // Customer Booking History & Cancellation / Refund Flow
     public function customerBookings(Request $request): View
     {
-        $userEmail = auth()->check() ? auth()->user()->email : $request->query('email', 'rian.adi@gmail.com');
+        $userEmail = Auth::check() ? Auth::user()->email : $request->query('email', 'rian.adi@gmail.com');
 
         $bookings = Booking::with(['package', 'trip', 'transactions', 'refund'])
             ->where(function ($q) use ($userEmail) {
-                if (auth()->check()) {
-                    $q->where('user_id', auth()->id())
+                if (Auth::check()) {
+                    $q->where('user_id', Auth::id())
                       ->orWhere('customer_email', $userEmail);
                 } else {
                     $q->where('customer_email', $userEmail);
@@ -249,7 +353,7 @@ class HomeController extends Controller
 
         Review::create([
             'package_id' => $packageId,
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'customer_name' => $validated['customer_name'],
             'rating' => $validated['rating'],
             'comment' => $validated['comment'],

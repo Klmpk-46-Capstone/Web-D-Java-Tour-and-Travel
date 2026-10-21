@@ -15,7 +15,7 @@
         <form class="mx-auto mt-7 max-w-6xl rounded-2xl border border-slate-100 bg-white p-4 text-left shadow-lg md:mt-10 md:p-6" action="{{ route('home') }}" method="GET">
             <div class="mb-4 flex gap-2">
                 <span class="inline-flex items-center rounded-full bg-teal-700 px-4 py-2 text-xs font-bold text-white">Sewa Mobil Privat</span>
-                <span class="inline-flex items-center rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-600">Paket Petualangan</span>
+                <span class="inline-flex items-center rounded-full bg-slate-100 px-4 py-2 text-xs font-bold text-slate-600">Paket Wisata</span>
             </div>
 
             <div class="grid grid-cols-1 items-stretch gap-3 md:grid-cols-2 xl:grid-cols-[1.15fr_1.15fr_1fr_0.85fr_4rem]">

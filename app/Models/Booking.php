@@ -21,6 +21,8 @@ class Booking extends Model
         'customer_email',
         'customer_phone',
         'pax',
+        'pickup_location',
+        'pickup_details',
         'total_price',
         'payment_method',
         'payment_status',
