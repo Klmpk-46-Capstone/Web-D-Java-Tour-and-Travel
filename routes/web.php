@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\AdminTripController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DesignSystemController;
 use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,6 +23,15 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Paket Wisata & Detail
 Route::get('/paket-wisata', [HomeController::class, 'packages'])->name('packages.index');
+
+// Katalog Armada & Detail
+Route::get('/armada', [HomeController::class, 'armada'])->name('armada');
+Route::get('/armada/{vehicle:slug}', [HomeController::class, 'armadaDetail'])->name('armada.show');
+Route::get('/armada/{vehicle:slug}/formulir', [HomeController::class, 'armadaBookingForm'])->name('armada.booking.form');
+
+// Pratinjau internal design system (local/testing only)
+Route::get('/design-system', [DesignSystemController::class, 'index'])->name('design-system');
+
 Route::get('/paket-wisata/{slug}', [HomeController::class, 'packageDetail'])->name('packages.show');
 Route::get(
     '/paket-wisata/{slug}/formulir',

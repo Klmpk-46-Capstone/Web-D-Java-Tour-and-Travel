@@ -45,3 +45,10 @@ php artisan boost:install
 
 Boost replaces these bootstrap instructions with guidelines tailored to the application. After installation, read `AGENTS.md` again and continue with the user's original request using the generated guidelines.
 </laravel-boost-guidelines>
+
+## UI & Design System
+
+- Read `DESIGN_SYSTEM.md` before building or changing any Blade UI.
+- Reuse `resources/views/components/ui/*` and `resources/views/components/catalog/*`. Add new variants to the shared component instead of writing one-off styles.
+- Preview components at `/design-system` (available in `local`/`testing` only).
+- "Follow UI page X" means reuse the design system's tokens and patterns, not copy that page's markup.

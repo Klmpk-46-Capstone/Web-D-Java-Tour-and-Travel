@@ -29,12 +29,12 @@
             {{-- MENU UTAMA --}}
             <div
                 id="navLinks"
-                class="absolute left-0 right-0 top-full z-50 mt-2 hidden flex-col gap-1 rounded-2xl border border-slate-200 bg-white p-3 shadow-lg md:static md:mt-0 md:flex md:w-auto md:shrink-0 md:flex-row md:items-center md:gap-1 md:rounded-full md:border-0 md:bg-slate-50 md:p-1 md:shadow-none"
+                class="absolute left-0 right-0 top-full z-50 mt-2 hidden flex-col gap-1 rounded-2xl border border-slate-200 bg-white p-3 shadow-lg lg:static lg:mt-0 lg:flex lg:w-auto lg:shrink-0 lg:flex-row lg:items-center lg:gap-1 lg:rounded-full lg:border-0 lg:bg-slate-50 lg:p-1 lg:shadow-none"
             >
                 <a
                     data-nav-key="beranda"
                     href="{{ route('home') }}"
-                    class="{{ request()->routeIs('home') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors md:whitespace-nowrap md:px-3 md:py-2.5"
+                    class="{{ request()->routeIs('home') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
                 >
                     Beranda
                 </a>
@@ -42,7 +42,7 @@
                 <a
                     data-nav-key="armada"
                     href="{{ url('/armada') }}"
-                    class="{{ request()->is('armada*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors md:whitespace-nowrap md:px-3 md:py-2.5"
+                    class="{{ request()->is('armada*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
                 >
                     Armada
                 </a>
@@ -50,7 +50,7 @@
                 <a
                     data-nav-key="paket"
                     href="{{ url('/paket-wisata') }}"
-                    class="{{ request()->is('paket-wisata*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors md:whitespace-nowrap md:px-3 md:py-2.5"
+                    class="{{ request()->is('paket-wisata*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
                 >
                     Paket Wisata
                 </a>
@@ -58,13 +58,13 @@
                 <a
                     data-nav-key="booking"
                     href="{{ url('/riwayat-transaksi') }}"
-                    class="{{ request()->is('riwayat-transaksi*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors md:whitespace-nowrap md:px-3 md:py-2.5"
+                    class="{{ request()->is('riwayat-transaksi*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
                 >
                     Riwayat Transaksi
                 </a>
 
                 {{-- PILIH BAHASA KHUSUS MOBILE --}}
-                <div class="mt-2 border-t border-slate-200 pt-3 md:hidden">
+                <div class="mt-2 border-t border-slate-200 pt-3 lg:hidden">
                     <p class="mb-2 px-1 text-xs font-semibold text-slate-500">
                         Pilih Bahasa / Language
                     </p>
@@ -96,14 +96,14 @@
                         href="{{ $whatsappUrl }}"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-green-500 px-4 py-3 text-sm font-bold text-white no-underline transition hover:bg-green-600 md:hidden"
+                        class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-green-500 px-4 py-3 text-sm font-bold text-white no-underline transition hover:bg-green-600 lg:hidden"
                     >
                         WhatsApp Customer Service
                     </a>
                 @else
                     <a
                         href="{{ route('home') }}#kontak"
-                        class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-green-500 px-4 py-3 text-sm font-bold text-white no-underline transition hover:bg-green-600 md:hidden"
+                        class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-green-500 px-4 py-3 text-sm font-bold text-white no-underline transition hover:bg-green-600 lg:hidden"
                     >
                         WhatsApp Customer Service
                     </a>
@@ -111,7 +111,7 @@
 
                 @auth
                     {{-- Dropdown profil mobile --}}
-                    <div class="relative mt-2 md:hidden">
+                    <div class="relative mt-2 lg:hidden">
                         <button
                             type="button"
                             data-profile-toggle
@@ -138,7 +138,7 @@
                 @else
                     <a
                         href="{{ route('login') }}"
-                        class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white no-underline md:hidden"
+                        class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white no-underline lg:hidden"
                     >
                         Login / Masuk
                     </a>
@@ -146,8 +146,8 @@
             </div>
 
             {{-- AKSI DI SISI KANAN (Hanya Desktop) --}}
-            <div class="hidden shrink-0 items-center gap-2 md:flex">
-                <div class="flex items-center gap-1" aria-label="Pilih bahasa">
+            <div class="hidden shrink-0 items-center gap-2 lg:flex">
+                <div class="hidden items-center gap-1 xl:flex" aria-label="Pilih bahasa">
                     <button
                         type="button"
                         data-lang="id"
@@ -189,7 +189,7 @@
 
                 @auth
                     {{-- Dropdown profil desktop --}}
-                    <div class="relative hidden md:block">
+                    <div class="relative hidden lg:block">
                         <button
                             type="button"
                             data-profile-toggle
@@ -215,7 +215,7 @@
                     <a
                         href="{{ route('login') }}"
                         data-i18n="login"
-                        class="hidden items-center whitespace-nowrap rounded-full bg-teal-700 px-4 py-2.5 text-xs font-bold text-white no-underline transition hover:bg-teal-800 md:inline-flex"
+                        class="hidden items-center whitespace-nowrap rounded-full bg-teal-700 px-4 py-2.5 text-xs font-bold text-white no-underline transition hover:bg-teal-800 lg:inline-flex"
                     >
                         Login / Masuk
                     </a>
@@ -229,7 +229,7 @@
                 aria-label="Buka navigasi"
                 aria-expanded="false"
                 aria-controls="navLinks"
-                class="grid h-9 w-9 shrink-0 place-items-center rounded-full border-0 bg-teal-700 text-white md:hidden"
+                class="grid h-9 w-9 shrink-0 place-items-center rounded-full border-0 bg-teal-700 text-white lg:hidden"
             >
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <path d="M4 7h16M4 12h16M4 17h16"/>
@@ -241,7 +241,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const mobileBreakpoint = 768;
+    const mobileBreakpoint = 1024;
     const menuToggle = document.getElementById('menuToggle');
     const navLinks = document.getElementById('navLinks');
     const mainNavbar = document.getElementById('mainNavbar');

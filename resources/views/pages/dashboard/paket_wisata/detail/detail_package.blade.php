@@ -87,54 +87,31 @@
 
         {{-- FLASH MESSAGES NOTIFIKASI --}}
         @if (session('error'))
-            <div
-                class="mb-5 flex items-start justify-between gap-3 rounded-2xl border border-rose-300 bg-rose-50 p-4 text-sm text-rose-900 shadow-sm">
-                <div class="flex items-center gap-3">
-                    <span class="text-2xl leading-none">⚠️</span>
-                    <div>
-                        <p class="font-extrabold text-rose-800">Pemberitahuan Kuota Tiket</p>
-                        <p class="mt-0.5 text-slate-700 leading-relaxed">{{ session('error') }}</p>
-                    </div>
-                </div>
-                <button type="button" onclick="this.parentElement.remove()"
-                    class="text-rose-500 hover:text-rose-800 text-xl font-bold leading-none">&times;</button>
-            </div>
+            <x-ui.alert variant="danger" title="Pemberitahuan Kuota Tiket" class="mb-5">
+                {{ session('error') }}
+            </x-ui.alert>
         @endif
 
         @if (session('success'))
-            <div
-                class="mb-5 flex items-start justify-between gap-3 rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-sm text-emerald-900 shadow-sm">
-                <div class="flex items-center gap-3">
-                    <span class="text-2xl leading-none">✓</span>
-                    <div>
-                        <p class="font-extrabold text-emerald-800">Berhasil</p>
-                        <p class="mt-0.5 text-slate-700 leading-relaxed">{{ session('success') }}</p>
-                    </div>
-                </div>
-                <button type="button" onclick="this.parentElement.remove()"
-                    class="text-emerald-500 hover:text-emerald-800 text-xl font-bold leading-none">&times;</button>
-            </div>
+            <x-ui.alert variant="success" title="Berhasil" class="mb-5">
+                {{ session('success') }}
+            </x-ui.alert>
         @endif
 
         {{-- Breadcrumb --}}
-        <nav aria-label="Breadcrumb" class="mb-5 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-            <a href="{{ route('packages.index') }}" class="font-medium transition hover:text-teal-700">
-                <span aria-hidden="true">&larr;</span> Kembali ke Paket Wisata
-            </a>
-            <span aria-hidden="true">/</span>
-            <span>Paket Wisata</span>
-            <span aria-hidden="true">/</span>
-            <span class="font-medium text-slate-700">{{ $package->name }}</span>
-        </nav>
+        <x-ui.breadcrumb :items="[
+            ['label' => 'Kembali ke Paket Wisata', 'url' => route('packages.index')],
+            ['label' => 'Paket Wisata', 'url' => route('packages.index')],
+            ['label' => $package->name],
+        ]" />
 
         {{-- Package heading --}}
         <section class="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div class="max-w-4xl">
                 @if ($package->badge)
-                    <span
-                        class="mb-3 inline-flex rounded-full bg-teal-50 px-3 py-1 text-xs font-bold uppercase tracking-wide text-teal-800">
+                    <x-ui.badge variant="brand" size="md" class="mb-3 uppercase tracking-wide">
                         {{ $package->badge }}
-                    </span>
+                    </x-ui.badge>
                 @endif
 
                 <h1 class="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">

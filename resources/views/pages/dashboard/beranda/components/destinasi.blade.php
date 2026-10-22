@@ -1,19 +1,24 @@
 {{-- DESTINASI --}}
+@php
+    $isSearchResult = $searchActive ?? false;
+@endphp
+
 <section class="py-6 pb-10 md:py-8 md:pb-12" id="destinasi">
     <div class="container mx-auto px-4">
         <div class="mb-5 flex flex-col items-start gap-2 md:mb-7 md:flex-row md:items-end md:justify-between md:gap-7">
             <div>
                 <span class="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-teal-700">
-                    KURASI LANSKAP
+                    {{ $isSearchResult ? 'HASIL PENCARIAN' : 'KURASI LANSKAP' }}
                 </span>
                 <h2 class="m-0 text-3xl leading-tight tracking-tight md:text-4xl">
-                    Destinasi Pilihan
+                    {{ $isSearchResult ? 'Paket Wisata Ditemukan' : 'Destinasi Pilihan' }}
                 </h2>
             </div>
 
             <p class="mb-0 mt-0 max-w-md text-sm leading-relaxed text-slate-500 md:mb-0.5">
-                Temukan destinasi wisata untuk rencana
-                perjalanan yang lebih mudah dan terarah.
+                {{ $isSearchResult
+                    ? 'Paket yang cocok dengan kata kunci, rute, tanggal, dan kapasitas pilihan Anda.'
+                    : 'Temukan destinasi wisata untuk rencana perjalanan yang lebih mudah dan terarah.' }}
             </p>
         </div>
 
@@ -105,10 +110,12 @@
             @empty
                 <div class="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center text-slate-500">
                     <strong class="mb-2 block text-lg text-slate-900">
-                        Destinasi belum tersedia
+                        {{ $isSearchResult ? 'Paket wisata tidak ditemukan' : 'Destinasi belum tersedia' }}
                     </strong>
 
-                    Belum ada destinasi aktif di database. Silakan tambahkan data destinasi terlebih dahulu.
+                    {{ $isSearchResult
+                        ? 'Coba ubah kata kunci, rute, tanggal, atau kapasitas pencarian.'
+                        : 'Belum ada destinasi aktif di database. Silakan tambahkan data destinasi terlebih dahulu.' }}
                 </div>
             @endforelse
         </div>

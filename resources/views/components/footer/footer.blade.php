@@ -26,7 +26,9 @@
             <div>
                 <h4 class="mb-4 mt-0 text-xs font-bold uppercase tracking-wide">Destinasi Populer</h4>
                 @php
-                    $popularDestinations = isset($destinations) ? $destinations->take(4) : \App\Models\Destination::where('is_active', true)->limit(4)->get();
+                    $popularDestinations = isset($destinations)
+                        ? $destinations->take(4)
+                        : \App\Models\Package::where('is_active', true)->orderByDesc('is_featured')->limit(4)->get();
                     $footerWa = $whatsappUrl ?? (config('services.djava.whatsapp') ? 'https://wa.me/'.preg_replace('/\D+/', '', config('services.djava.whatsapp')) : null);
                 @endphp
                 @forelse ($popularDestinations as $destination)
@@ -45,7 +47,7 @@
                     <p class="mb-2.5 mt-0 text-sm leading-relaxed text-slate-500">Nomor WhatsApp belum dikonfigurasi.</p>
                 @endif
                 <a class="mb-2.5 block text-sm leading-relaxed text-slate-500 no-underline transition hover:text-teal-700" href="#cara-booking">Cara Booking</a>
-                <a class="mb-2.5 block text-sm leading-relaxed text-slate-500 no-underline transition hover:text-teal-700" href="#armada">Pilihan Armada</a>
+                <a class="mb-2.5 block text-sm leading-relaxed text-slate-500 no-underline transition hover:text-teal-700" href="{{ route('armada') }}">Pilihan Armada</a>
             </div>
         </div>
 

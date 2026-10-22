@@ -25,21 +25,26 @@
         $formatRupiah = static function ($amount) {
             return 'Rp ' . number_format((float) $amount, 0, ',', '.');
         };
-        $destinationImage = static function ($path) {
-            if (!$path) {
-                return null;
-            }
-            return \Illuminate\Support\Facades\Storage::disk('public')->url(ltrim($path, '/'));
-        };
     @endphp
 
     @include('components.navbar.navbar')
 
     <main>
         @include('pages.dashboard.beranda.components.form_pencarian')
-        @include('pages.dashboard.beranda.components.rekomendasi_utama')
-        @include('pages.dashboard.beranda.components.destinasi')
-        @include('pages.dashboard.beranda.components.armada')
+
+        @if ($searchActive)
+            @include('pages.dashboard.beranda.components.hasil_pencarian')
+
+            @if ($mode === 'paket')
+                @include('pages.dashboard.beranda.components.destinasi')
+            @else
+                @include('pages.dashboard.beranda.components.armada')
+            @endif
+        @else
+            @include('pages.dashboard.beranda.components.rekomendasi_utama')
+            @include('pages.dashboard.beranda.components.destinasi')
+            @include('pages.dashboard.beranda.components.armada')
+        @endif
 
         {{-- KEUNGGULAN LAYANAN --}}
         <section class="py-6 pb-10 md:py-8 md:pb-12">

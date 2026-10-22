@@ -24,7 +24,7 @@
     @include('components.navbar.navbar')
 
     <main class="flex-1 py-8 md:py-12">
-        <div class="container mx-auto px-4">
+        <x-ui.page-container>
 
             {{-- HEADER KATALOG --}}
             <div class="mb-8 max-w-2xl">
@@ -42,77 +42,76 @@
                 </p>
             </div>
 
-            {{-- FILTER DAN PENCARIAN --}}
-            <div class="mb-8 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
-                <form
-                    action="{{ route('packages.index') }}"
-                    method="GET"
-                    class="grid grid-cols-1 gap-3 md:grid-cols-4"
-                >
-                    <div class="md:col-span-2">
-                        <label for="package-search" class="sr-only">
-                            Cari paket wisata
-                        </label>
+            {{-- PENCARIAN DAN FILTER KATEGORI --}}
+            @php
+                $sortOptions = [
+                    'rekomendasi' => 'Rekomendasi',
+                    'harga_terendah' => 'Harga Terendah',
+                    'harga_tertinggi' => 'Harga Tertinggi',
+                    'rating' => 'Rating Tertinggi',
+                ];
 
-                        <input
-                            id="package-search"
-                            type="text"
-                            name="q"
-                            value="{{ request('q') }}"
-                            placeholder="Cari destinasi atau nama paket wisata..."
-                            maxlength="150"
-                            class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-teal-700 focus:bg-white focus:outline-none"
+                $hasActiveFilter = filled($q) || filled($category);
+            @endphp
+
+            <x-catalog.filter-card :action="route('packages.index')">
+                <x-catalog.text-field
+                    name="q"
+                    label="Cari paket wisata"
+                    :value="$q"
+                    placeholder="Cari nama paket wisata..."
+                    span="xl:col-span-5"
+                />
+
+                <x-catalog.select-field
+                    name="kategori"
+                    label="Kategori Wisata"
+                    :options="$categories"
+                    :selected="$category"
+                    placeholder="Semua Kategori Wisata"
+                    span="xl:col-span-4"
+                    :autoSubmit="false"
+                />
+
+                <div class="flex items-center gap-2 md:col-span-2 xl:col-span-3">
+                    <x-ui.button type="submit" size="lg" class="flex-1">
+                        Cari Paket
+                    </x-ui.button>
+
+                    @if ($hasActiveFilter)
+                        <x-ui.button
+                            href="{{ route('packages.index') }}"
+                            variant="ghost-danger"
+                            size="sm"
+                            class="whitespace-nowrap"
                         >
-                    </div>
+                            Reset
+                        </x-ui.button>
+                    @endif
+                </div>
+            </x-catalog.filter-card>
 
-                    <div>
-                        <label for="package-route" class="sr-only">
-                            Pilih rute wisata
-                        </label>
-
-                        <select
-                            id="package-route"
-                            name="rute"
-                            onchange="this.form.submit()"
-                            class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-teal-700 focus:bg-white focus:outline-none"
-                        >
-                            <option value="">Semua Rute Wisata</option>
-                            <option value="bahari" @selected(request('rute') === 'bahari')>
-                                Wisata Bahari (Karimunjawa)
-                            </option>
-                            <option value="gunung" @selected(request('rute') === 'gunung')>
-                                Mountain Trekking (Bromo/Dieng/Ijen)
-                            </option>
-                            <option value="heritage" @selected(request('rute') === 'heritage')>
-                                Heritage Culture (Jogja)
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <button
-                            type="submit"
-                            class="flex-1 rounded-2xl bg-teal-700 px-4 py-3 text-sm font-bold text-white transition hover:bg-teal-800"
-                        >
-                            Cari Paket
-                        </button>
-
-                        @if (request('q') || request('rute'))
-                            <a
-                                href="{{ route('packages.index') }}"
-                                class="px-3 py-3 text-xs font-bold text-rose-600 hover:underline"
-                            >
-                                Reset
-                            </a>
-                        @endif
-                    </div>
-                </form>
-            </div>
+            {{-- RINGKASAN HASIL & URUTAN --}}
+            <x-catalog.result-toolbar
+                :action="route('packages.index')"
+                :sort="$sort"
+                :options="$sortOptions"
+            >
+                Menampilkan
+                <strong class="font-bold text-slate-800">{{ $packages->total() }}</strong>
+                paket wisata
+                @if (filled($q))
+                    untuk pencarian &ldquo;{{ $q }}&rdquo;
+                @endif
+                @if (filled($category))
+                    kategori <strong class="font-bold text-slate-800">{{ $categories[$category] ?? $category }}</strong>
+                @endif
+            </x-catalog.result-toolbar>
 
             {{-- DAFTAR PAKET WISATA --}}
             <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 @forelse ($packages as $pkg)
-                    <article class="group flex min-w-0 flex-col justify-between overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:shadow-xl">
+                    <x-ui.card as="article" padding="none" interactive class="group flex min-w-0 flex-col justify-between overflow-hidden">
 
                         <div>
                             {{-- GAMBAR PAKET --}}
@@ -133,9 +132,9 @@
                                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
 
                                 <div class="absolute left-3 top-3">
-                                    <span class="rounded-full bg-teal-600 px-3 py-1 text-xs font-extrabold text-white shadow-sm">
+                                    <x-ui.badge variant="solid">
                                         {{ $pkg->badge ?: 'OPEN TRIP' }}
-                                    </span>
+                                    </x-ui.badge>
                                 </div>
 
                                 <div class="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 text-xs font-bold text-slate-900 shadow-sm backdrop-blur-sm">
@@ -195,24 +194,26 @@
                                 <span class="text-xs text-slate-500">/pax</span>
                             </div>
 
-                            <a
+                            <x-ui.button
                                 href="{{ route('packages.show', $pkg->slug) }}"
-                                class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-teal-700 px-4 py-3 text-xs font-bold text-white no-underline shadow-sm transition hover:bg-teal-800"
+                                size="md"
+                                class="shrink-0"
                             >
                                 <span>Lihat Detail</span>
                                 <span aria-hidden="true">&rarr;</span>
-                            </a>
+                            </x-ui.button>
                         </div>
-                    </article>
+                    </x-ui.card>
                 @empty
-                    <div class="col-span-full rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center text-slate-500">
-                        <strong class="mb-1 block text-lg text-slate-800">
-                            Paket Wisata Tidak Ditemukan
-                        </strong>
-
-                        Tidak ada paket wisata yang cocok dengan kriteria pencarian Anda.
-                        Silakan coba kata kunci lain.
-                    </div>
+                    <x-ui.empty-state
+                        title="Paket Wisata Tidak Ditemukan"
+                        description="Tidak ada paket wisata yang cocok dengan kriteria pencarian Anda. Silakan coba kata kunci lain."
+                        class="col-span-full"
+                    >
+                        <x-ui.button href="{{ route('packages.index') }}" size="md">
+                            Reset Filter
+                        </x-ui.button>
+                    </x-ui.empty-state>
                 @endforelse
             </div>
 
@@ -223,7 +224,7 @@
                 </div>
             @endif
 
-        </div>
+        </x-ui.page-container>
     </main>
 
     @include('components.footer.footer')

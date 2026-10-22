@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'djava' => [
+        'whatsapp' => env('DJAVA_WHATSAPP'),
+    ],
+
 ];

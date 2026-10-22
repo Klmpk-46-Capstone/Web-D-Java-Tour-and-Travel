@@ -14,13 +14,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class HomeController extends Controller
 {
     public function index(Request $request): View
     {
-        $search = $request->validate([
+        $filters = $request->validate([
+            'search' => ['nullable', 'boolean'],
+            'mode' => ['nullable', 'in:paket,mobil'],
             'pickup' => ['nullable', 'string', 'max:150'],
             'destination' => ['nullable', 'string', 'max:150'],
             'departure_date' => [
@@ -36,88 +39,283 @@ class HomeController extends Controller
             ],
         ]);
 
-        // 1. Featured Packages (Rekomendasi Utama) - Data-driven from CMS toggle
-        $featuredPackages = Package::with(['trips', 'itineraries', 'reviews'])
-            ->where('is_active', true)
-            ->where('is_featured', true)
-            ->latest('id')
-            ->get();
+        $searchActive = $request->boolean('search');
+        $mode = $filters['mode'] ?? 'paket';
+        $pickup = trim((string) ($filters['pickup'] ?? ''));
+        $destinationId = $filters['destination'] ?? null;
+        $departureDate = $filters['departure_date'] ?? null;
+        $passengers = (int) ($filters['passengers'] ?? 4);
 
-        // 2. All Active Packages
-        $packages = Package::with(['trips', 'itineraries', 'reviews'])
+        // Opsi dropdown destinasi selalu memakai data penuh, bukan hasil filter.
+        $destinationOptions = Package::query()
             ->where('is_active', true)
-            ->when(filled($search['destination'] ?? null), function ($q) use ($search) {
-                $q->where('name', 'like', '%' . $search['destination'] . '%')
-                  ->orWhere('category', 'like', '%' . $search['destination'] . '%');
-            })
-            ->latest('id')
-            ->limit(6)
-            ->get();
-
-        $destinations = Package::query()
-            ->where('is_active', true)
-            ->when(
-                filled($search['destination'] ?? null),
-                function ($query) use ($search) {
-                    $query->where(function ($subQuery) use ($search) {
-                        $keyword = '%' . $search['destination'] . '%';
-
-                        $subQuery->where('name', 'like', $keyword)
-                            ->orWhere('category', 'like', $keyword);
-                    });
-                }
-            )
             ->orderByDesc('is_featured')
             ->latest('id')
             ->limit(8)
-            ->get();
+            ->get(['id', 'name']);
 
+        $applyPackageFilters = function ($query) use (
+            $searchActive,
+            $mode,
+            $pickup,
+            $destinationId,
+            $departureDate,
+            $passengers
+        ) {
+            if (! $searchActive || $mode !== 'paket') {
+                return $query;
+            }
+
+            if ($pickup !== '') {
+                $keyword = '%' . $pickup . '%';
+
+                $query->where(function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', $keyword)
+                        ->orWhere('category', 'like', $keyword)
+                        ->orWhere('badge', 'like', $keyword)
+                        ->orWhere('description', 'like', $keyword);
+                });
+            }
+
+            if (filled($destinationId)) {
+                $query->whereKey($destinationId);
+            }
+
+            if (filled($departureDate)) {
+                $query->whereHas('trips', function ($tripQuery) use ($departureDate, $passengers) {
+                    $tripQuery->whereDate('departure_date', $departureDate)
+                        ->whereIn('status', ['available', 'open', 'almost_full']);
+
+                    if ($passengers > 0) {
+                        $tripQuery->whereRaw('(quota - booked_seats) >= ?', [$passengers]);
+                    }
+                });
+            } elseif ($passengers > 0) {
+                $query->whereHas('trips', function ($tripQuery) use ($passengers) {
+                    $tripQuery->whereIn('status', ['available', 'open', 'almost_full'])
+                        ->where('quota', '>=', $passengers);
+                });
+            }
+
+            return $query;
+        };
+
+        // 1. Featured Packages (Rekomendasi Utama) - Data-driven from CMS toggle
+        $featuredPackages = $applyPackageFilters(
+            Package::with(['trips', 'itineraries', 'reviews'])
+                ->where('is_active', true)
+                ->where('is_featured', true)
+                ->latest('id')
+        )->get();
+
+        // 2. Paket yang tampil pada section destinasi / hasil pencarian paket.
+        $destinations = $applyPackageFilters(
+            Package::query()
+                ->where('is_active', true)
+                ->orderByDesc('is_featured')
+                ->latest('id')
+        )->limit(8)->get();
+
+        // 3. Armada: kapasitas kursi dan kata kunci nama/kategori/deskripsi.
         $vehicles = Vehicle::query()
             ->where('is_active', true)
             ->when(
-                isset($search['passengers']),
-                function ($query) use ($search) {
-                    $query->where(
-                        'seats',
-                        '>=',
-                        (int) $search['passengers']
-                    );
+                $searchActive && $mode === 'mobil' && $pickup !== '',
+                function ($query) use ($pickup) {
+                    $keyword = '%' . $pickup . '%';
+
+                    $query->where(function ($subQuery) use ($keyword) {
+                        $subQuery->where('name', 'like', $keyword)
+                            ->orWhere('category', 'like', $keyword)
+                            ->orWhere('description', 'like', $keyword);
+                    });
                 }
+            )
+            ->when(
+                $searchActive && $mode === 'mobil' && $passengers > 0,
+                fn ($query) => $query->where('seats', '>=', $passengers)
             )
             ->orderBy('price_per_day')
             ->limit(6)
             ->get();
 
+        $resultCount = $searchActive
+            ? ($mode === 'paket' ? $destinations->count() : $vehicles->count())
+            : 0;
+
+        $selectedDestination = $destinationOptions->firstWhere('id', (int) $destinationId);
+
         return view('pages.dashboard.beranda.index', [
             'featuredPackages' => $featuredPackages,
-            'packages' => $packages,
             'destinations' => $destinations,
+            'destinationOptions' => $destinationOptions,
             'vehicles' => $vehicles,
-            'search' => $search,
+            'searchActive' => $searchActive,
+            'mode' => $mode,
+            'pickup' => $pickup,
+            'departureDate' => $departureDate,
+            'passengers' => $passengers,
+            'selectedDestination' => $selectedDestination,
+            'resultCount' => $resultCount,
         ]);
     }
 
     // Customer Package Catalog
     public function packages(Request $request): View
     {
-        $category = $request->query('kategori');
-        $route = $request->query('rute');
-        $q = $request->query('q');
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:150'],
+            'kategori' => ['nullable', 'in:bahari,gunung,heritage'],
+            'urutkan' => ['nullable', 'in:rekomendasi,harga_terendah,harga_tertinggi,rating'],
+        ]);
 
-        $packages = Package::with(['trips', 'itineraries', 'reviews'])
+        $q = trim((string) ($filters['q'] ?? ''));
+        $category = $filters['kategori'] ?? null;
+        $sort = $filters['urutkan'] ?? 'rekomendasi';
+
+        $query = Package::with(['trips', 'itineraries', 'reviews'])
             ->where('is_active', true)
-            ->when($category, fn($query) => $query->where('category', $category))
-            ->when($route, fn($query) => $query->where('route_type', $route))
-            ->when($q, fn($query) => $query->where('name', 'like', "%{$q}%")->orWhere('description', 'like', "%{$q}%"))
-            ->latest('id')
-            ->paginate(9);
+            ->when($q !== '', function ($query) use ($q) {
+                $keyword = '%' . $q . '%';
+
+                $query->where(function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', $keyword)
+                        ->orWhere('category', 'like', $keyword)
+                        ->orWhere('badge', 'like', $keyword)
+                        ->orWhere('description', 'like', $keyword);
+                });
+            })
+            ->when(filled($category), fn ($query) => $query->where('route_type', $category));
+
+        $query = match ($sort) {
+            'harga_terendah' => $query->orderBy('price'),
+            'harga_tertinggi' => $query->orderByDesc('price'),
+            'rating' => $query->orderByDesc('rating')->orderByDesc('total_reviews'),
+            default => $query->orderByDesc('is_featured')
+                ->orderByDesc('rating')
+                ->latest('id'),
+        };
+
+        $packages = $query->paginate(9)->withQueryString();
+
+        $categories = [
+            'bahari' => 'Wisata Bahari',
+            'gunung' => 'Wisata Mendaki Gunung',
+            'heritage' => 'Wisata Kebudayaan',
+        ];
 
         return view('pages.dashboard.paket_wisata.index', compact(
             'packages',
+            'categories',
             'category',
-            'route',
-            'q'
+            'q',
+            'sort'
         ));
+    }
+
+    // Customer Vehicle Catalog (Armada)
+    public function armada(Request $request): View
+    {
+        $filters = $request->validate([
+            'q' => ['nullable', 'string', 'max:150'],
+            'kategori' => ['nullable', 'in:mpv,premium,minibus'],
+            'transmisi' => ['nullable', 'in:at,mt'],
+            'urutkan' => ['nullable', 'in:rekomendasi,harga_terendah,harga_tertinggi,kapasitas'],
+        ]);
+
+        $q = trim((string) ($filters['q'] ?? ''));
+        $category = $filters['kategori'] ?? null;
+        $transmission = $filters['transmisi'] ?? null;
+        $sort = $filters['urutkan'] ?? 'rekomendasi';
+
+        $query = Vehicle::query()
+            ->where('is_active', true)
+            ->when($q !== '', function ($query) use ($q) {
+                $keyword = '%' . $q . '%';
+
+                $query->where(function ($subQuery) use ($keyword) {
+                    $subQuery->where('name', 'like', $keyword)
+                        ->orWhere('category', 'like', $keyword)
+                        ->orWhere('badge', 'like', $keyword)
+                        ->orWhere('transmission', 'like', $keyword)
+                        ->orWhere('description', 'like', $keyword);
+                });
+            })
+            ->when(filled($category), fn ($query) => $query->where('category', $category))
+            ->when($transmission === 'at', fn ($query) => $query->where('transmission', 'like', '%matic%'))
+            ->when($transmission === 'mt', fn ($query) => $query->where('transmission', 'like', '%manual%'));
+
+        $query = match ($sort) {
+            'harga_terendah' => $query->orderBy('price_per_day'),
+            'harga_tertinggi' => $query->orderByDesc('price_per_day'),
+            'kapasitas' => $query->orderByDesc('seats'),
+            default => $query->orderBy('price_per_day')->orderBy('id'),
+        };
+
+        $vehicles = $query->paginate(9)->withQueryString();
+
+        $categories = [
+            'mpv' => 'MPV Keluarga',
+            'premium' => 'Premium & Hybrid',
+            'minibus' => 'Minibus Rombongan',
+        ];
+
+        return view('pages.dashboard.armada.index', compact(
+            'vehicles',
+            'categories',
+            'category',
+            'transmission',
+            'q',
+            'sort'
+        ));
+    }
+
+    // Customer Vehicle Detail: spesifikasi, opsi sewa (dengan/tanpa supir), dan unit terkait.
+    public function armadaDetail(Vehicle $vehicle): View
+    {
+        abort_unless($vehicle->is_active, 404);
+
+        $relatedVehicles = Vehicle::query()
+            ->active()
+            ->whereKeyNot($vehicle->getKey())
+            ->orderByRaw('CASE WHEN category = ? THEN 0 ELSE 1 END', [$vehicle->category])
+            ->orderBy('price_per_day')
+            ->limit(3)
+            ->get();
+
+        return view('pages.dashboard.armada.detail', compact(
+            'vehicle',
+            'relatedVehicles'
+        ));
+    }
+
+    // Customer Vehicle Booking Form: mempertahankan unit, opsi sewa, tanggal, dan pax dari halaman detail.
+    public function armadaBookingForm(Request $request, Vehicle $vehicle): View
+    {
+        abort_unless($vehicle->is_active, 404);
+
+        $options = collect($vehicle->rentalOptions())->values();
+        $optionKeys = $options->pluck('key')->all();
+
+        $validated = $request->validate([
+            'rental_date' => ['nullable', 'date', 'after_or_equal:today'],
+            'duration' => ['nullable', 'integer', 'min:1', 'max:30'],
+            'pax' => ['nullable', 'integer', 'min:1', 'max:' . $vehicle->seats],
+            'rental_option' => ['nullable', 'string', Rule::in($optionKeys)],
+        ]);
+
+        $selectedOptionKey = $validated['rental_option'] ?? ($optionKeys[0] ?? null);
+        $selectedOption = $options->firstWhere('key', $selectedOptionKey) ?? $options->first();
+
+        return view('pages.dashboard.armada.formulir.index', [
+            'vehicle' => $vehicle,
+            'options' => $options->all(),
+            'selectedOption' => $selectedOption,
+            'selectedOptionKey' => $selectedOptionKey,
+            'selectedRentalDate' => $validated['rental_date'] ?? null,
+            'selectedDuration' => (int) ($validated['duration'] ?? 1),
+            'selectedPax' => (int) ($validated['pax'] ?? 1),
+        ]);
     }
 
     // Customer Package Detail with Itinerary, Dynamic Schedule/Quota & Reviews
