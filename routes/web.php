@@ -242,11 +242,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // 6. Akun Customer
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
 
-    // 7. Laporan Transaksi & Bookings
+    // 7. Laporan Transaksi & Keuangan (Khusus Super Admin - Role: super_admin)
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [AdminBookingController::class, 'show'])->name('bookings.show');
-    Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
-    Route::get('/reports/export-csv', [AdminReportController::class, 'exportCsv'])->name('reports.export-csv');
+    
+    Route::middleware('admin:super_admin')->group(function () {
+        Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+        Route::get('/transactions', [AdminReportController::class, 'index'])->name('transactions.index');
+        Route::get('/reports/export-csv', [AdminReportController::class, 'exportCsv'])->name('reports.export-csv');
+        Route::post('/reports/reconcile', [AdminReportController::class, 'reconcile'])->name('reports.reconcile');
+        Route::get('/reports/detail/{transaction}', [AdminReportController::class, 'show'])->name('reports.show');
+    });
 
     // 8. Refund & Pembatalan
     Route::get('/refunds', [AdminRefundController::class, 'index'])->name('refunds.index');

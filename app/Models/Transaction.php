@@ -53,11 +53,44 @@ class Transaction extends Model
         return $this->belongsTo(Booking::class);
     }
 
-    /**
-     * Get the formatted transaction amount.
-     */
     public function getFormattedAmountAttribute(): string
     {
         return 'Rp ' . number_format($this->amount, 0, ',', '.');
+    }
+
+    public function getServiceTypeAttribute(): string
+    {
+        if ($this->booking?->vehicle_id || $this->booking?->selected_armada) {
+            return 'armada';
+        }
+        return 'paket';
+    }
+
+    public function getServiceNameAttribute(): string
+    {
+        if ($this->booking?->package) {
+            return $this->booking->package->name;
+        }
+        if ($this->booking?->vehicle) {
+            return $this->booking->vehicle->name;
+        }
+        if ($this->booking?->selected_armada) {
+            return $this->booking->selected_armada;
+        }
+        return 'Layanan Tour & Travel';
+    }
+
+    public function getServiceDetailAttribute(): string
+    {
+        if ($this->booking?->notes) {
+            return $this->booking->notes;
+        }
+        if ($this->booking?->pickup_location) {
+            return $this->booking->pickup_location;
+        }
+        if ($this->booking?->pax) {
+            return 'Pax: ' . $this->booking->pax . ' Orang';
+        }
+        return '-';
     }
 }

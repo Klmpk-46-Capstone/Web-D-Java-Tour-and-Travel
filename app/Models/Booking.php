@@ -62,6 +62,11 @@ class Booking extends Model
         return $this->belongsTo(Trip::class);
     }
 
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(Vehicle::class);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
