@@ -64,8 +64,7 @@ class PembayaranController extends Controller
         // Tahap pembayaran ditentukan otomatis.
         $stage = $dpPaid ? 'pelunasan' : 'dp';
 
-        // Jika instruksi untuk tahap ini sudah ada dan belum lunas,
-        // arahkan pengguna ke instruksi yang sama.
+        // Jika instruksi untuk tahap ini sudah ada, belum lunas, dan pengguna tidak ingin mengganti metode, arahkan ke instruksi.
         $pendingTransaction = $booking->transactions()
             ->where('payment_stage', $stage)
             ->whereNotNull('xendit_payment_request_id')
@@ -73,7 +72,7 @@ class PembayaranController extends Controller
             ->latest('id')
             ->first();
 
-        if ($pendingTransaction) {
+        if ($pendingTransaction && !$request->boolean('ganti_metode')) {
             return redirect()->route('pembayaran.instruksi', [
                 'bookingCode' => $booking->booking_code,
                 'stage' => $stage,

@@ -55,10 +55,10 @@ return [
          * Isi daftar ini setelah mencocokkan channel code di dashboard
          * atau dokumentasi Xendit untuk akunmu.
          */
-        'debit' => [
-            'label' => 'Direct Debit',
-            'icon' => '🏦',
-            'methods' => [],
-        ],
+        // 'debit' => [
+        //     'label' => 'Direct Debit',
+        //     'icon' => '🏦',
+        //     'methods' => [],
+        // ],
     ],
 ];

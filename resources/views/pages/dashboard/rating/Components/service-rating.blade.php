@@ -26,7 +26,10 @@
         @endphp
 
         @foreach ($serviceItems as $key => $item)
-            <div class="rounded-xl bg-slate-50 p-4">
+            <div
+                id="service-card-{{ $key }}"
+                class="rounded-xl border border-transparent bg-slate-50 p-4 transition"
+            >
                 <h3 class="font-semibold text-slate-900">
                     {{ $item['title'] }}
                 </h3>
@@ -42,8 +45,8 @@
                                 type="button"
                                 data-service="{{ $key }}"
                                 data-value="{{ $star }}"
-                                class="text-2xl leading-none text-slate-300 hover:text-orange-400 focus:outline-none focus:ring-2 focus:ring-teal-600"
-                                aria-label="{{ $item['title'] }}: {{ $star }}"
+                                class="service-star text-2xl leading-none text-slate-300 transition hover:scale-110 hover:text-orange-400 focus:outline-none focus:ring-2 focus:ring-teal-600"
+                                aria-label="{{ $item['title'] }}: {{ $star }} dari 5"
                                 aria-pressed="false"
                             >
                                 ★
@@ -55,7 +58,7 @@
                         id="service-label-{{ $key }}"
                         class="text-sm font-semibold text-slate-600"
                     >
-                        0.0
+                        {{ old('service_ratings.' . $key) ? number_format((float)old('service_ratings.' . $key), 1, '.', '') : 'Belum dinilai' }}
                     </span>
                 </div>
 
@@ -66,8 +69,18 @@
                     value="{{ old('service_ratings.' . $key, '') }}"
                 >
 
+                <p
+                    id="service-error-{{ $key }}"
+                    class="mt-2 hidden text-sm text-red-600"
+                    aria-live="polite"
+                >
+                    Silakan beri rating untuk {{ strtolower($item['title']) }}.
+                </p>
+
                 @error('service_ratings.' . $key)
-                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                    <p class="mt-2 text-sm text-red-600">
+                        Silakan beri rating untuk {{ strtolower($item['title']) }}.
+                    </p>
                 @enderror
             </div>
         @endforeach

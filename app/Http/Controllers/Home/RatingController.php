@@ -134,79 +134,86 @@ class RatingController extends Controller
         Request $request,
         string $bookingCode
     ): RedirectResponse {
-        $validated = $request->validate([
-            'rating' => [
-                'required',
-                'integer',
-                'between:1,5',
-            ],
+        $validated = $request->validate(
+            [
+                'rating' => [
+                    'required',
+                    'integer',
+                    'between:1,5',
+                ],
 
-            'comment' => [
-                'required',
-                'string',
-                'min:5',
-                'max:1000',
-            ],
+                'comment' => [
+                    'required',
+                    'string',
+                    'min:5',
+                    'max:1000',
+                ],
 
-            'service_ratings' => [
-                'required',
-                'array',
-            ],
+                'service_ratings' => [
+                    'required',
+                    'array',
+                ],
 
-            'service_ratings.armada' => [
-                'required',
-                'integer',
-                'between:1,5',
-            ],
+                'service_ratings.armada' => [
+                    'required',
+                    'integer',
+                    'between:1,5',
+                ],
 
-            'service_ratings.driver' => [
-                'required',
-                'integer',
-                'between:1,5',
-            ],
+                'service_ratings.driver' => [
+                    'required',
+                    'integer',
+                    'between:1,5',
+                ],
 
-            'service_ratings.route' => [
-                'required',
-                'integer',
-                'between:1,5',
-            ],
+                'service_ratings.route' => [
+                    'required',
+                    'integer',
+                    'between:1,5',
+                ],
 
-            'experience_tags' => [
-                'nullable',
-                'array',
-                'max:6',
-            ],
+                'experience_tags' => [
+                    'nullable',
+                    'array',
+                    'max:6',
+                ],
 
-            'experience_tags.*' => [
-                'required',
-                'string',
-                'distinct',
-                'in:' . implode(',', self::EXPERIENCE_TAGS),
-            ],
+                'experience_tags.*' => [
+                    'required',
+                    'string',
+                    'distinct',
+                    'in:' . implode(',', self::EXPERIENCE_TAGS),
+                ],
 
-            'photos' => [
-                'nullable',
-                'array',
-                'max:5',
-            ],
+                'photos' => [
+                    'nullable',
+                    'array',
+                    'max:5',
+                ],
 
-            'photos.*' => [
-                'required',
-                'image',
-                'mimes:jpg,jpeg,png,webp',
-                'max:5120',
-            ],
+                'photos.*' => [
+                    'required',
+                    'image',
+                    'mimes:jpg,jpeg,png,webp',
+                    'max:5120',
+                ],
 
-            'is_public' => [
-                'sometimes',
-                'boolean',
-            ],
+                'is_public' => [
+                    'sometimes',
+                    'boolean',
+                ],
 
-            'identity_verified' => [
-                'sometimes',
-                'boolean',
+                'identity_verified' => [
+                    'sometimes',
+                    'boolean',
+                ],
             ],
-        ]);
+            [
+                'service_ratings.armada.required' => 'Silakan beri rating untuk kondisi armada.',
+                'service_ratings.driver.required' => 'Silakan beri rating untuk pelayanan driver.',
+                'service_ratings.route.required' => 'Silakan beri rating untuk rute dan ketepatan.',
+            ]
+        );
 
         $booking = $this->findOwnedBooking($request, $bookingCode);
 
