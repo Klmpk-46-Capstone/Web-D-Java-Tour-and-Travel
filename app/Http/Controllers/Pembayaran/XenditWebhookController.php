@@ -8,7 +8,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Throwable;
 
 class XenditWebhookController extends Controller
@@ -62,10 +61,6 @@ class XenditWebhookController extends Controller
                     abort(404, 'Transaction not found.');
                 }
 
-                /*
-                 * Invoice harus cocok dengan transaksi yang tersimpan.
-                 * Callback tidak boleh mengganti invoice milik transaksi lain.
-                 */
                 if (
                     ! filled($transaction->xendit_invoice_id)
                     || ! hash_equals(
@@ -89,23 +84,10 @@ class XenditWebhookController extends Controller
                 }
 
                 $expectedAmount = (int) $transaction->amount;
+                $reportedAmount = (int) ($payload['paid_amount'] ?? $payload['amount'] ?? 0);
 
-                $reportedAmount = (int) (
-                    $payload['paid_amount']
-                    ?? $payload['amount']
-                    ?? 0
-                );
-
-                /*
-                 * Jangan menandai transaksi berhasil jika nominal
-                 * yang dilaporkan tidak sesuai dengan nominal tagihan.
-                 */
-                if ($payload['status'] === 'PAID'
-                    || $payload['status'] === 'SETTLED') {
-                    if (
-                        $expectedAmount < 1
-                        || $reportedAmount !== $expectedAmount
-                    ) {
+                if ($payload['status'] === 'PAID' || $payload['status'] === 'SETTLED') {
+                    if ($expectedAmount < 1 || $reportedAmount !== $expectedAmount) {
                         Log::warning('Nominal callback Xendit tidak cocok.', [
                             'transaction_id' => $transaction->id,
                             'expected_amount' => $expectedAmount,
@@ -116,10 +98,6 @@ class XenditWebhookController extends Controller
                     }
                 }
 
-                /*
-                 * Callback dapat dikirim berulang kali.
-                 * Transaksi yang sudah berhasil tidak diproses ulang.
-                 */
                 if (in_array($transaction->status, [
                     'paid',
                     'settled',
@@ -149,14 +127,10 @@ class XenditWebhookController extends Controller
                         'paid_at' => now(),
                     ])->save();
 
-                    /*
-                     * DP sudah dibayar, tetapi sisa pembayaran belum lunas.
-                     */
                     $booking->forceFill([
-                        'payment_status' => $expectedAmount
-                            >= (int) $booking->total_price
-                                ? 'paid'
-                                : 'partial',
+                        'payment_status' => $expectedAmount >= (int) $booking->total_price
+                            ? 'paid'
+                            : 'partial',
                         'booking_status' => 'confirmed',
                     ])->save();
 
@@ -185,3 +159,4 @@ class XenditWebhookController extends Controller
         }
     }
 }
+

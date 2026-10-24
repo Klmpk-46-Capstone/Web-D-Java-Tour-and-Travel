@@ -6,11 +6,11 @@ return [
             'label' => 'Transfer Bank / Virtual Account',
             'icon' => '🏦',
             'methods' => [
-                'BCA' => 'BCA Virtual Account',
-                'BNI' => 'BNI Virtual Account',
-                'BRI' => 'BRI Virtual Account',
-                'MANDIRI' => 'Mandiri Virtual Account',
-                'PERMATA' => 'Permata Virtual Account',
+                'BCA_VIRTUAL_ACCOUNT' => 'BCA Virtual Account',
+                'BNI_VIRTUAL_ACCOUNT' => 'BNI Virtual Account',
+                'BRI_VIRTUAL_ACCOUNT' => 'BRI Virtual Account',
+                'MANDIRI_VIRTUAL_ACCOUNT' => 'Mandiri Virtual Account',
+                'PERMATA_VIRTUAL_ACCOUNT' => 'Permata Virtual Account',
             ],
         ],
 
@@ -32,22 +32,22 @@ return [
             ],
         ],
 
-        'card' => [
-            'label' => 'Kartu Kredit / Debit',
-            'icon' => '💳',
-            'methods' => [
-                'CARDS' => 'Kartu Kredit / Debit',
-            ],
-        ],
+        // 'card' => [
+        //     'label' => 'Kartu Kredit / Debit',
+        //     'icon' => '💳',
+        //     'methods' => [
+        //         'CARDS' => 'Kartu Kredit / Debit',
+        //     ],
+        // ],
 
-        'retail' => [
-            'label' => 'Outlet Ritel',
-            'icon' => '🏪',
-            'methods' => [
-                'ALFAMART' => 'Alfamart',
-                'INDOMARET' => 'Indomaret',
-            ],
-        ],
+        // 'retail' => [
+        //     'label' => 'Outlet Ritel',
+        //     'icon' => '🏪',
+        //     'methods' => [
+        //         'ALFAMART' => 'Alfamart',
+        //         'INDOMARET' => 'Indomaret',
+        //     ],
+        // ],
 
         /*
          * Direct Debit memerlukan channel yang diaktifkan pada akun.
