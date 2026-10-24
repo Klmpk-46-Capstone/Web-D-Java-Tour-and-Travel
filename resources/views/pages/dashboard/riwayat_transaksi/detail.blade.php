@@ -114,15 +114,39 @@
         ? $booking->created_at->copy()->addDay()->translatedFormat('d M Y, H:i')
         : '-';
 
-    $paymentMethodTransaction = $transactions->first(
-        fn ($transaction) => filled($transaction->payment_channel)
-            || filled($transaction->payment_method)
-    );
+    $paymentMethodTransaction = $paidTransactions->sortByDesc('id')->first()
+        ?? $transactions->whereNotIn('status', ['cancelled', 'canceled'])->sortByDesc('id')->first(
+            fn ($transaction) => filled($transaction->payment_channel)
+                || filled($transaction->payment_method)
+        )
+        ?? $transactions->first();
 
-    $paymentMethod = $paymentMethodTransaction?->payment_channel
+    $channelLabels = [
+        'BCA_VIRTUAL_ACCOUNT' => 'BCA Virtual Account',
+        'BNI_VIRTUAL_ACCOUNT' => 'BNI Virtual Account',
+        'BRI_VIRTUAL_ACCOUNT' => 'BRI Virtual Account',
+        'MANDIRI_VIRTUAL_ACCOUNT' => 'Mandiri Virtual Account',
+        'PERMATA_VIRTUAL_ACCOUNT' => 'Permata Virtual Account',
+        'BCA' => 'BCA Virtual Account',
+        'BNI' => 'BNI Virtual Account',
+        'BRI' => 'BRI Virtual Account',
+        'MANDIRI' => 'Mandiri Virtual Account',
+        'PERMATA' => 'Permata Virtual Account',
+        'QRIS' => 'QRIS',
+        'DANA' => 'DANA',
+        'OVO' => 'OVO',
+        'SHOPEEPAY' => 'ShopeePay',
+        'CARDS' => 'Kartu Kredit / Debit',
+        'ALFAMART' => 'Alfamart',
+        'INDOMARET' => 'Indomaret',
+    ];
+
+    $rawPaymentMethod = $paymentMethodTransaction?->payment_channel
         ?: $paymentMethodTransaction?->payment_method
         ?: $booking->payment_method
         ?: 'Belum dipilih';
+
+    $paymentMethod = $channelLabels[strtoupper($rawPaymentMethod)] ?? $rawPaymentMethod;
 @endphp
 
 <div class="min-h-screen bg-slate-50 text-slate-800">
@@ -372,16 +396,12 @@
                         <div class="mt-5 border-t border-slate-200 pt-4">
                             <h3 class="mb-3 font-bold text-slate-900">Riwayat Transaksi</h3>
 
-                            @forelse ($transactions as $transaction)
+                            @forelse ($paidTransactions as $transaction)
                                 @php
-                                    $transactionStatus = strtolower((string) $transaction->status);
-                                    $isTransactionPaid = in_array($transactionStatus, $paidStatuses, true);
-
                                     $transactionStageLabel = match (true) {
-                                        $isTransactionPaid && $transaction->payment_stage === 'dp' => 'DP',
-                                        $isTransactionPaid && $transaction->payment_stage === 'pelunasan' => 'Pelunasan',
-                                        in_array($transactionStatus, ['pending', 'unpaid'], true) => 'Booking',
-                                        default => ucfirst((string) ($transaction->payment_stage ?: 'Booking')),
+                                        $transaction->payment_stage === 'dp' => 'DP',
+                                        $transaction->payment_stage === 'pelunasan' => 'Pelunasan',
+                                        default => ucfirst((string) ($transaction->payment_stage ?: 'Pembayaran')),
                                     };
                                 @endphp
                                 <div class="flex flex-col justify-between gap-2 border-b border-slate-100 py-3 last:border-0 sm:flex-row sm:items-center">
@@ -392,7 +412,7 @@
                                         <p class="mt-1 text-sm text-slate-500">
                                             {{ $transactionStageLabel }}
                                             <span aria-hidden="true">•</span>
-                                            {{ $transaction->created_at?->translatedFormat('d M Y, H:i') ?? '-' }}
+                                            {{ $transaction->paid_at?->translatedFormat('d M Y, H:i') ?? $transaction->created_at?->translatedFormat('d M Y, H:i') ?? '-' }}
                                         </p>
                                     </div>
 
@@ -400,14 +420,14 @@
                                         <p class="font-bold text-slate-900">
                                             Rp {{ number_format((int) $transaction->amount, 0, ',', '.') }}
                                         </p>
-                                        <p class="mt-1 text-sm font-semibold text-slate-600">
-                                            {{ ucfirst((string) $transaction->status) }}
+                                        <p class="mt-1 text-sm font-semibold text-teal-700">
+                                            Paid
                                         </p>
                                     </div>
                                 </div>
                             @empty
                                 <p class="text-sm text-slate-600">
-                                    Belum ada transaksi pembayaran.
+                                    Belum ada transaksi pembayaran yang berhasil.
                                 </p>
                             @endforelse
                         </div>
