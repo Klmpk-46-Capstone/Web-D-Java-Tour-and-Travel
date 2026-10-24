@@ -11,7 +11,12 @@ use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\AdminTripController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DesignSystemController;
-use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Home\ArmadaController;
+use App\Http\Controllers\Home\HomeController;
+use App\Http\Controllers\Home\PaketWisataController;
+use App\Http\Controllers\Home\RatingController;
+use App\Http\Controllers\Home\RiwayatTransaksiController;
+use App\Http\Controllers\Pembayaran\PembayaranController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,27 +27,153 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Paket Wisata & Detail
-Route::get('/paket-wisata', [HomeController::class, 'packages'])->name('packages.index');
+Route::get('/paket-wisata', [PaketWisataController::class, 'packages'])
+    ->name('packages.index');
 
 // Katalog Armada & Detail
-Route::get('/armada', [HomeController::class, 'armada'])->name('armada');
-Route::get('/armada/{vehicle:slug}', [HomeController::class, 'armadaDetail'])->name('armada.show');
-Route::get('/armada/{vehicle:slug}/formulir', [HomeController::class, 'armadaBookingForm'])->name('armada.booking.form');
+Route::get('/armada', [ArmadaController::class, 'armada'])
+    ->name('armada');
+
+Route::get('/armada/{vehicle:slug}', [ArmadaController::class, 'armadaDetail'])
+    ->name('armada.show');
+
+Route::get('/armada/{vehicle:slug}/formulir', [ArmadaController::class, 'armadaBookingForm'])
+    ->name('armada.booking.form');
+
+Route::post('/armada/{vehicle:slug}/booking', [
+    ArmadaController::class,
+    'storeBooking',
+])
+    ->middleware('auth')
+    ->name('armada.booking.store');
 
 // Pratinjau internal design system (local/testing only)
-Route::get('/design-system', [DesignSystemController::class, 'index'])->name('design-system');
+Route::get('/design-system', [DesignSystemController::class, 'index'])
+    ->name('design-system');
 
-Route::get('/paket-wisata/{slug}', [HomeController::class, 'packageDetail'])->name('packages.show');
-Route::get(
-    '/paket-wisata/{slug}/formulir',
-    [HomeController::class, 'bookingForm']
-)->name('booking.form');
-Route::post('/paket-wisata/{package}/review', [HomeController::class, 'storeReview'])->name('packages.review.store');
+Route::get('/paket-wisata/{slug}', [PaketWisataController::class, 'packageDetail'])
+    ->name('packages.show');
 
-// Booking & Reservation
-Route::post('/booking/store', [HomeController::class, 'storeBooking'])->name('booking.store');
-Route::get('/trips/{trip}/quota-check', [HomeController::class, 'checkTripQuota'])->name('trips.check-quota');
-Route::post('/customer/booking/{code}/refund-request', [HomeController::class, 'requestRefund'])->name('customer.refund.request');
+Route::get('/paket-wisata/{slug}/formulir', [PaketWisataController::class, 'bookingForm'])
+    ->name('booking.form');
+
+Route::post('/paket-wisata/{package}/review', [PaketWisataController::class, 'storeReview'])
+    ->name('packages.review.store');
+
+// Live Check Trip Quota
+Route::get('/trips/{trip}/quota-check', [PaketWisataController::class, 'checkTripQuota'])
+    ->name('trips.check-quota');
+
+// Riwayat Transaksi & Refund (Customer Bookings Group)
+Route::middleware('auth')->prefix('riwayat-transaksi')->name('customer.bookings.')->group(function () {
+    Route::get('/', [RiwayatTransaksiController::class, 'customerBookings'])
+        ->name('index');
+
+    Route::get('/{bookingCode}', [RiwayatTransaksiController::class, 'detail'])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('detail');
+
+    // Halaman pengajuan refund
+    Route::get('/{bookingCode}/refund', [
+        RiwayatTransaksiController::class,
+        'showRefundPage',
+    ])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('refund-page');
+
+    // Halaman pembatalan booking
+    Route::get('/{bookingCode}/batal', [
+        RiwayatTransaksiController::class,
+        'showCancelPage',
+    ])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('cancel-page');
+
+    // Halaman formulir rating
+    Route::get('/{bookingCode}/rating', [
+        RatingController::class,
+        'create',
+    ])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('rating.create');
+
+    // Menyimpan rating
+    Route::post('/{bookingCode}/rating', [
+        RatingController::class,
+        'store',
+    ])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->middleware('throttle:5,1')
+        ->name('rating');
+
+    Route::post('/{bookingCode}/refund', [RiwayatTransaksiController::class, 'requestRefund'])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('refund');
+});
+
+/*
+|--------------------------------------------------------------------------
+| Booking & Pembayaran Xendit (Protected by Auth)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->group(function () {
+    Route::post('/booking/store', [
+        PaketWisataController::class,
+        'storeBooking',
+    ])->name('booking.store');
+
+    Route::get('/pembayaran/{bookingCode}/mulai', [
+        PembayaranController::class,
+        'mulaiPembayaran',
+    ])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('pembayaran.mulai');
+
+    Route::post('/pembayaran/{bookingCode}/buat', [
+        PembayaranController::class,
+        'buatPembayaran',
+    ])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('pembayaran.buat');
+
+    Route::get('/pembayaran/{bookingCode}/instruksi', [
+        PembayaranController::class,
+        'instruksiPembayaran',
+    ])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('pembayaran.instruksi');
+
+    Route::post('/pembayaran/{bookingCode}/xendit', [
+        PembayaranController::class,
+        'buatInvoice',
+    ])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('pembayaran.xendit');
+
+    Route::post('/pembayaran/{bookingCode}/cek-status', [
+        PembayaranController::class,
+        'cekStatusPembayaran',
+    ])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('pembayaran.cek-status');
+
+    Route::get('/pembayaran/{bookingCode}/cek-status-otomatis', [
+        PembayaranController::class,
+        'cekStatusOtomatis',
+    ])
+        ->where('bookingCode', '[A-Za-z0-9_-]+')
+        ->name('pembayaran.cek-status-otomatis');
+
+    Route::get('/pembayaran/sukses', [
+        PembayaranController::class,
+        'success',
+    ])->name('pembayaran.success');
+
+    Route::get('/pembayaran/gagal', [
+        PembayaranController::class,
+        'failure',
+    ])->name('pembayaran.failure');
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -130,5 +261,4 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Logout
     Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
-
 });

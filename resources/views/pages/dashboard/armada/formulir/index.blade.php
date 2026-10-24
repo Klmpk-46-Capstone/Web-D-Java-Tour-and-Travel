@@ -79,12 +79,11 @@
     <main class="mx-auto w-full max-w-screen-2xl px-4 py-7 sm:px-6 lg:px-8 xl:py-8">
         <header class="mb-8">
             <a href="{{ route('armada.show', $vehicle->slug) }}" class="mb-3 inline-flex items-center gap-2 text-sm font-semibold text-teal-700 transition hover:text-teal-900">
-                <span aria-hidden="true">&larr;</span> Kembali / Armada / Formulir
+                <span aria-hidden="true">&larr;</span> Kembali
             </a>
 
             <div class="flex flex-col justify-between gap-4 lg:flex-row lg:items-end">
                 <div>
-                    <p class="mb-2 text-xs font-extrabold uppercase tracking-wider text-teal-700">Sewa Mobil Privat</p>
                     <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
                         Formulir Reservasi &amp; DP
                     </h1>
@@ -120,22 +119,16 @@
             </div>
         @endif
 
-        <div class="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900" role="status">
-            <span class="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-amber-100 text-xs font-black text-amber-800" aria-hidden="true">i</span>
-            <p class="m-0">
-                Halaman pratinjau formulir booking armada. Penyimpanan reservasi ke database dan pembayaran akan diaktifkan pada tahap berikutnya.
-            </p>
-        </div>
-
         <form
             id="armadaReservationForm"
-            action="#"
-            method="GET"
-            onsubmit="return false"
+            action="{{ route('armada.booking.store', ['vehicle' => $vehicle->slug]) }}"
+            method="POST"
+            enctype="multipart/form-data"
             class="grid grid-cols-1 items-start gap-6 lg:grid-cols-12 lg:gap-8"
             data-seats="{{ $vehicle->seats }}"
             data-max-duration="{{ $maxDuration }}"
         >
+            @csrf
             <input type="hidden" name="vehicle_id" value="{{ $vehicle->id }}">
             <input type="hidden" name="vehicle_slug" value="{{ $vehicle->slug }}">
 
@@ -272,6 +265,7 @@
                                         data-label="{{ $option['label'] }}"
                                         data-price="{{ $option['price'] }}"
                                         data-description="{{ $option['description'] }}"
+                                        data-rental-type="{{ str_contains(strtolower($option['label']), 'tanpa supir') || str_contains(strtolower($option['label']), 'lepas kunci') ? 'self-drive' : 'with-driver' }}"
                                         @selected($selectedOptionKey === $option['key'])
                                     >
                                         {{ $option['label'] }} — {{ $option['formatted_price'] }}/hari
@@ -295,8 +289,56 @@
                             </div>
                         </div>
 
-                        <div class="min-w-0 sm:col-span-2">
-                            <label for="pickup_location" class="mb-2 block text-sm font-semibold text-slate-700">Titik Awal Penjemputan</label>
+                        <div id="vehicleDeliverySection" class="min-w-0 sm:col-span-2 hidden">
+                            <label class="mb-2 block text-sm font-semibold text-slate-700">
+                                Opsi Penerimaan Mobil
+                            </label>
+
+                            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-teal-500 has-[:checked]:border-teal-600 has-[:checked]:bg-teal-50">
+                                    <input
+                                        type="radio"
+                                        name="delivery_method"
+                                        value="self_pickup"
+                                        id="deliverySelfPickup"
+                                        class="h-4 w-4 accent-teal-700"
+                                        checked
+                                    >
+                                    <span>
+                                        <span class="block font-bold text-slate-800">Ambil Sendiri</span>
+                                        <span class="mt-1 block text-sm text-slate-500">
+                                            Ambil mobil langsung di lokasi penyedia.
+                                        </span>
+                                    </span>
+                                </label>
+
+                                <label class="flex cursor-pointer items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 transition hover:border-teal-500 has-[:checked]:border-teal-600 has-[:checked]:bg-teal-50">
+                                    <input
+                                        type="radio"
+                                        name="delivery_method"
+                                        value="delivery"
+                                        id="deliveryToAddress"
+                                        class="h-4 w-4 accent-teal-700"
+                                    >
+                                    <span>
+                                        <span class="block font-bold text-slate-800">Mobil Diantar</span>
+                                        <span class="mt-1 block text-sm text-slate-500">
+                                            Mobil diantar ke alamat pilihan Anda.
+                                        </span>
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="pickupAddressSection" class="min-w-0 sm:col-span-2 hidden">
+                            <label
+                                for="pickup_location"
+                                id="pickupLocationLabel"
+                                class="mb-2 block text-sm font-semibold text-slate-700"
+                            >
+                                Alamat Pengantaran Mobil
+                            </label>
+
                             <input
                                 id="pickup_location"
                                 name="pickup_location"
@@ -304,22 +346,27 @@
                                 value="{{ old('pickup_location') }}"
                                 maxlength="200"
                                 autocomplete="street-address"
-                                placeholder="Contoh: Bandara Internasional Juanda (SUB)"
-                                required
+                                placeholder="Contoh: Jl. Melati No. 10, Tangerang, Banten"
                                 class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
                             >
-                        </div>
 
-                        <div class="min-w-0 sm:col-span-2">
-                            <label for="pickup_details" class="mb-2 block text-sm font-semibold text-slate-700">Detail Jam &amp; Alamat Spesifik</label>
-                            <textarea
-                                id="pickup_details"
-                                name="pickup_details"
-                                rows="2"
-                                maxlength="500"
-                                placeholder="Contoh: Penjemputan pukul 08:00 WIB di lobi hotel atau alamat lengkap"
-                                class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
-                            >{{ old('pickup_details') }}</textarea>
+                            <div id="pickupDetailsSection" class="mt-5 hidden">
+                                <label
+                                    for="pickup_details"
+                                    class="mb-2 block text-sm font-semibold text-slate-700"
+                                >
+                                    Detail Jam
+                                </label>
+
+                                <textarea
+                                    id="pickup_details"
+                                    name="pickup_details"
+                                    rows="2"
+                                    maxlength="500"
+                                    placeholder="Contoh: Mobil diantar pukul 08.00 WIB. Mohon tiba 15 menit sebelum waktu yang ditentukan."
+                                    class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
+                                >{{ old('pickup_details') }}</textarea>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -495,43 +542,18 @@
                         </div>
                     </div>
 
-                    <fieldset class="mt-5">
-                        <legend class="mb-3 text-sm font-extrabold text-slate-900">Pilih Metode Pembayaran DP</legend>
-                        <div class="space-y-3">
-                            <label class="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-teal-500 has-[:checked]:border-teal-600 has-[:checked]:bg-teal-50">
-                                <span>
-                                    <span class="block font-bold text-slate-900">Transfer Bank BCA</span>
-                                    <span class="mt-1 block text-sm text-slate-500">Instruksi pembayaran ditampilkan setelah pemesanan</span>
-                                </span>
-                                <input type="radio" name="payment_method" value="BCA Virtual Account" @checked(old('payment_method', 'BCA Virtual Account') === 'BCA Virtual Account') required class="h-4 w-4 accent-teal-700">
-                            </label>
-
-                            <label class="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-slate-200 p-4 transition hover:border-teal-500 has-[:checked]:border-teal-600 has-[:checked]:bg-teal-50">
-                                <span>
-                                    <span class="block font-bold text-slate-900">Transfer Bank Mandiri</span>
-                                    <span class="mt-1 block text-sm text-slate-500">Instruksi pembayaran ditampilkan setelah pemesanan</span>
-                                </span>
-                                <input type="radio" name="payment_method" value="Mandiri Virtual Account" @checked(old('payment_method') === 'Mandiri Virtual Account') required class="h-4 w-4 accent-teal-700">
-                            </label>
-                        </div>
-                    </fieldset>
-
                     <p class="mt-4 rounded-lg bg-slate-50 p-3 text-xs leading-5 text-slate-600">
                         Pemesanan belum dianggap lunas sebelum pembayaran DP diverifikasi. Jangan mengirimkan pembayaran ke rekening yang belum diverifikasi oleh pihak D'Java Tour &amp; Travel.
                     </p>
 
                     <button
-                        type="button"
+                        type="submit"
                         id="continueToPayment"
                         class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     >
                         Lanjutkan ke Pembayaran
                         <span aria-hidden="true">&rarr;</span>
                     </button>
-
-                    <div id="armadaFormNotice" class="mt-3 hidden rounded-xl border border-teal-200 bg-teal-50 px-4 py-3 text-sm leading-6 text-teal-900" role="status">
-                        Formulir pratinjau sudah lengkap. Penyimpanan booking armada belum diaktifkan, jadi tidak ada data yang dikirim atau disimpan.
-                    </div>
 
                     <div class="mt-5 grid grid-cols-3 gap-3 text-center text-xs font-semibold text-slate-600">
                         <div>
@@ -561,7 +583,7 @@
                         </div>
                     </div>
                 </section>
-            </aside>
+            </div>
         </form>
     </main>
 
