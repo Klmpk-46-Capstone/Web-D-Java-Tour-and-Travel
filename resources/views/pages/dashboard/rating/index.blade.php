@@ -90,10 +90,6 @@
 
         {{-- PAGE INTRO --}}
         <section class="mb-8">
-            <span class="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-blue-800">
-                Trip Selesai · Ulasan Pengguna
-            </span>
-
             <h1 class="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
                 Bagaimana Pengalaman Trip Anda?
             </h1>
@@ -105,13 +101,20 @@
         </section>
 
         @if ($errors->any())
-            <div class="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700" role="alert">
-                <p class="font-bold">Periksa kembali data ulasan:</p>
-                <ul class="mt-2 list-inside list-disc">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
+            <div
+                id="review-error"
+                class="mb-6 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900"
+                role="alert"
+                aria-live="polite"
+            >
+                <span class="text-lg" aria-hidden="true">ⓘ</span>
+
+                <div>
+                    <p class="font-bold">Ulasan belum lengkap</p>
+                    <p class="mt-1 leading-6">
+                        Silakan periksa kembali penilaian dan lengkapi bagian yang masih kosong.
+                    </p>
+                </div>
             </div>
         @endif
 
