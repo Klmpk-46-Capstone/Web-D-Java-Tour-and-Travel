@@ -8,10 +8,10 @@ const formatRupiah = (amount) =>
 const formatDate = (date) =>
     date
         ? new Intl.DateTimeFormat('id-ID', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
-          }).format(date)
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+        }).format(date)
         : 'Pilih tanggal';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -45,6 +45,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const increaseDuration = document.getElementById('increaseDuration');
     const decreasePax = document.getElementById('decreasePax');
     const increasePax = document.getElementById('increasePax');
+
+    // Elemen Logika Delivery / Penjemputan Mobil
+    const deliverySection = document.getElementById('vehicleDeliverySection');
+    const pickupAddressSection = document.getElementById('pickupAddressSection');
+    const pickupDetailsSection = document.getElementById('pickupDetailsSection');
+    const pickupLocationLabel = document.getElementById('pickupLocationLabel');
+    const pickupLocation = document.getElementById('pickup_location');
+    const pickupDetails = document.getElementById('pickup_details');
+    const deliverySelfPickup = document.getElementById('deliverySelfPickup');
+    const deliveryToAddress = document.getElementById('deliveryToAddress');
 
     const seats = Math.max(1, Number.parseInt(form.dataset.seats, 10) || 1);
     const maxDuration = Math.max(1, Number.parseInt(form.dataset.maxDuration, 10) || 30);
@@ -91,6 +101,58 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getTotal = () => state.rate * state.duration;
     const getDownPayment = () => Math.round((getTotal() * downPaymentRate) / 100);
+
+    const updateDeliveryFields = () => {
+        if (!optionSelect || !pickupLocation) {
+            return;
+        }
+
+        const selectedOption = optionSelect.selectedOptions[0];
+        const isSelfDrive = selectedOption?.dataset.rentalType === 'self-drive';
+        const isDelivery = deliveryToAddress?.checked === true;
+
+        // Opsi penerimaan mobil hanya berlaku untuk sewa tanpa supir.
+        deliverySection?.classList.toggle('hidden', !isSelfDrive);
+
+        // Dengan supir: tampilkan titik awal penjemputan.
+        // Tanpa supir: tampilkan alamat hanya jika mobil diantar.
+        const showAddress = !isSelfDrive || isDelivery;
+
+        pickupAddressSection?.classList.toggle('hidden', !showAddress);
+        pickupLocation.required = showAddress;
+
+        pickupDetailsSection?.classList.toggle('hidden', !showAddress);
+
+        if (pickupDetails) {
+            pickupDetails.required = false;
+        }
+
+        if (pickupLocationLabel) {
+            pickupLocationLabel.textContent = isSelfDrive
+                ? 'Alamat Pengantaran Mobil'
+                : 'Titik Awal Penjemputan';
+        }
+
+        // Placeholder alamat disesuaikan dengan opsi sewa.
+        pickupLocation.placeholder = isSelfDrive
+            ? 'Contoh: Jl. Melati No. 10, Tangerang, Banten'
+            : 'Contoh: Lobi hotel, Bandara Juanda (SUB), atau alamat penjemputan';
+
+        // Placeholder detail jam disesuaikan dengan opsi sewa.
+        if (pickupDetails) {
+            pickupDetails.placeholder = isSelfDrive
+                ? 'Contoh: Mobil diantar pukul 08.00 WIB. Mohon tiba 15 menit sebelum waktu yang ditentukan.'
+                : 'Contoh: Penjemputan pukul 08.00 WIB di lobi hotel.';
+
+            if (!showAddress) {
+                pickupDetails.value = '';
+            }
+        }
+
+        if (!showAddress) {
+            pickupLocation.value = '';
+        }
+    };
 
     const syncDurationControls = () => {
         if (durationInput.value !== String(state.duration)) {
@@ -171,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         syncSummary();
+        updateDeliveryFields();
     };
 
     const setDuration = (value) => {
@@ -249,6 +312,9 @@ document.addEventListener('DOMContentLoaded', () => {
         hideNotice();
     });
 
+    deliverySelfPickup?.addEventListener('change', updateDeliveryFields);
+    deliveryToAddress?.addEventListener('change', updateDeliveryFields);
+
     decreaseDuration?.addEventListener('click', () => {
         setDuration(state.duration - 1);
     });
@@ -281,28 +347,41 @@ document.addEventListener('DOMContentLoaded', () => {
         setPax(passengerInput.value);
     });
 
-    paymentButton.addEventListener('click', () => {
+    const validateBookingForm = () => {
         hideDateError();
 
         if (!state.date) {
             showDateError();
+
             const focusTarget = picker.altInput || dateInput;
             focusTarget.focus();
-            focusTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            return;
+            focusTarget.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+            });
+
+            return false;
         }
 
         if (!form.checkValidity()) {
             form.reportValidity();
-            return;
+            return false;
         }
 
-        showNotice();
+        hideNotice();
+        return true;
+    };
+
+    paymentButton.addEventListener('click', (event) => {
+        if (!validateBookingForm()) {
+            event.preventDefault();
+        }
     });
 
     form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        paymentButton.click();
+        if (!validateBookingForm()) {
+            event.preventDefault();
+        }
     });
 
     form.addEventListener('input', hideNotice);
@@ -312,4 +391,5 @@ document.addEventListener('DOMContentLoaded', () => {
     syncPaxControls();
     syncOption();
     syncSummary();
+    updateDeliveryFields();
 });

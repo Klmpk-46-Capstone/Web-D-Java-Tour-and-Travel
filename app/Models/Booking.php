@@ -17,10 +17,23 @@ class Booking extends Model
         'user_id',
         'trip_id',
         'package_id',
+
+        // Data Armada
+        'vehicle_id',
+        'rental_date',
+        'duration',
+        'rental_option',
+        'rate',
+        'down_payment',
+        'delivery_method',
+        'identity_file_path',
+
+        // Data customer dan booking
         'customer_name',
         'customer_email',
         'customer_phone',
         'pax',
+        'selected_armada',
         'pickup_location',
         'pickup_details',
         'total_price',
@@ -33,6 +46,10 @@ class Booking extends Model
     protected $casts = [
         'pax' => 'integer',
         'total_price' => 'integer',
+        'down_payment' => 'integer',
+        'rate' => 'integer',
+        'duration' => 'integer',
+        'rental_date' => 'date',
     ];
 
     public function package(): BelongsTo
