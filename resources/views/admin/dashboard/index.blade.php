@@ -499,15 +499,13 @@
                                     Sisa {{ $wt->remaining_seats }} Kursi {{ $isUrgent ? 'Tersedia' : '(Normal)' }}
                                 </span>
 
-                                @if (auth()->user()?->isSuperAdmin())
-                                    <form action="{{ route('admin.trips.quick-add-batch') }}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="trip_id" value="{{ $wt->id }}">
-                                        <button type="submit" class="text-[11px] font-extrabold text-teal-700 hover:text-teal-900 hover:underline cursor-pointer">
-                                            + Buka Batch Baru
-                                        </button>
-                                    </form>
-                                @endif
+                                <form action="{{ route('admin.trips.quick-add-batch') }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="trip_id" value="{{ $wt->id }}">
+                                    <button type="submit" class="text-[11px] font-extrabold text-teal-700 hover:text-teal-900 hover:underline cursor-pointer">
+                                        + Buka Batch Baru
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     @empty
@@ -517,21 +515,12 @@
             </div>
 
             {{-- Bottom Quick Action Configuration --}}
-            @if (auth()->user()?->isSuperAdmin())
-                <a 
-                    href="{{ route('admin.trips.index') }}" 
-                    class="mt-4 w-full py-2.5 px-3 rounded-xl border border-dashed border-teal-600/50 bg-teal-50/50 text-teal-800 text-xs font-bold text-center hover:bg-teal-100/60 transition block no-underline"
-                >
-                    ✦ Konfigurasi Alokasi Armada &amp; Kuota Tambahan
-                </a>
-            @else
-                <a 
-                    href="{{ route('admin.manifest.index') }}" 
-                    class="mt-4 w-full py-2.5 px-3 rounded-xl border border-dashed border-teal-600/50 bg-teal-50/50 text-teal-800 text-xs font-bold text-center hover:bg-teal-100/60 transition block no-underline"
-                >
-                    ✦ Buka Manifes Penumpang Trip
-                </a>
-            @endif
+            <a 
+                href="{{ route('admin.trips.index') }}" 
+                class="mt-4 w-full py-2.5 px-3 rounded-xl border border-dashed border-teal-600/50 bg-teal-50/50 text-teal-800 text-xs font-bold text-center hover:bg-teal-100/60 transition block no-underline"
+            >
+                ✦ Konfigurasi Alokasi Armada &amp; Kuota Tambahan
+            </a>
         </div>
     </div>
 

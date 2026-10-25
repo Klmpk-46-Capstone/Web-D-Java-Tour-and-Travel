@@ -59,17 +59,15 @@
 
         {{-- Right: Actions & Profile --}}
         <div class="flex items-center gap-3">
-            {{-- Quick action button (khusus Super Admin) --}}
-            @if ($isSuper)
-                <button 
-                    type="button"
-                    onclick="document.getElementById('modalQuickTrip').classList.remove('hidden')"
-                    class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-teal-600/30 text-teal-700 bg-teal-50/60 hover:bg-teal-100/70 text-xs font-bold transition shadow-xs cursor-pointer"
-                >
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-                    Buat Trip Baru
-                </button>
-            @endif
+            {{-- Quick action button --}}
+            <button 
+                type="button"
+                onclick="document.getElementById('modalQuickTrip').classList.remove('hidden')"
+                class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-teal-600/30 text-teal-700 bg-teal-50/60 hover:bg-teal-100/70 text-xs font-bold transition shadow-xs cursor-pointer"
+            >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                Buat Trip Baru
+            </button>
 
             {{-- Notification Badge --}}
             <a href="{{ route('admin.refunds.index') }}" class="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition" title="{{ $pendingRefunds }} refund menunggu">
@@ -153,19 +151,17 @@
                             </span>
                         </a>
 
-                        {{-- Jadwal & Detail Trip (khusus Super Admin) --}}
-                        @if ($isSuper)
-                            <a 
-                                href="{{ route('admin.trips.index') }}" 
-                                class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('admin.trips.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
-                            >
-                                <div class="flex items-center gap-3">
-                                    <svg class="w-4 h-4 {{ request()->routeIs('admin.trips.*') ? 'text-teal-700' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                    <span>Jadwal &amp; Detail Trip</span>
-                                </div>
-                                <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-teal-100 text-teal-800">Super Admin</span>
-                            </a>
-                        @endif
+                        {{-- Jadwal & Detail Trip --}}
+                        <a 
+                            href="{{ route('admin.trips.index') }}" 
+                            class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('admin.trips.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
+                        >
+                            <div class="flex items-center gap-3">
+                                <svg class="w-4 h-4 {{ request()->routeIs('admin.trips.*') ? 'text-teal-700' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                <span>Jadwal &amp; Detail Trip</span>
+                            </div>
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-teal-100 text-teal-800">Trip</span>
+                        </a>
 
                         {{-- Manifes Penumpang (admin_ops & super_admin) --}}
                         <a 
@@ -196,19 +192,17 @@
                             <span>Akun Customer</span>
                         </a>
 
-                        {{-- Laporan Transaksi & Keuangan (Khusus Super Admin) --}}
-                        @if ($isSuper)
-                            <a 
-                                href="{{ route('admin.reports.index') }}" 
-                                class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.transactions.*') ? 'bg-teal-50 text-teal-800 ring-1 ring-teal-600/20' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
-                            >
-                                <div class="flex items-center gap-3">
-                                    <svg class="w-4 h-4 {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.transactions.*') ? 'text-teal-700' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                                    <span>Laporan Transaksi &amp; Keuangan</span>
-                                </div>
-                                <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-teal-100 text-teal-800">Super Admin</span>
-                            </a>
-                        @endif
+                        {{-- Laporan Transaksi & Keuangan --}}
+                        <a 
+                            href="{{ route('admin.reports.index') }}" 
+                            class="flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.transactions.*') ? 'bg-teal-50 text-teal-800 ring-1 ring-teal-600/20' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
+                        >
+                            <div class="flex items-center gap-3">
+                                <svg class="w-4 h-4 {{ request()->routeIs('admin.reports.*') || request()->routeIs('admin.transactions.*') ? 'text-teal-700' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                <span>Laporan Transaksi &amp; Keuangan</span>
+                            </div>
+                            <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold uppercase bg-teal-100 text-teal-800">Finance</span>
+                        </a>
 
                         {{-- Refund & Pembatalan --}}
                         <a 
@@ -316,8 +310,7 @@
         </main>
     </div>
 
-    {{-- MODAL QUICK TRIP CREATION (khusus Super Admin) --}}
-    @if ($isSuper)
+    {{-- MODAL QUICK TRIP CREATION --}}
     <div id="modalQuickTrip" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 relative animate-in fade-in zoom-in duration-200">
             <button type="button" onclick="document.getElementById('modalQuickTrip').classList.add('hidden')" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl font-bold">&times;</button>
@@ -378,7 +371,6 @@
             </form>
         </div>
     </div>
-    @endif
 
     @stack('scripts')
 </body>

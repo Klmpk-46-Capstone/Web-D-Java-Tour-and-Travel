@@ -243,17 +243,15 @@ Route::middleware(['auth', 'admin', 'setlocale:id'])->prefix('admin')->name('adm
     // 3. Rekomendasi Utama (Featured)
     Route::get('/featured-packages', [AdminPackageController::class, 'featured'])->name('packages.featured');
 
-    // 4. Jadwal & Detail Trip (Khusus Super Admin - keputusan strategis)
-    Route::middleware('admin:super_admin')->group(function () {
-        Route::get('/trips', [AdminTripController::class, 'index'])->name('trips.index');
-        Route::post('/trips', [AdminTripController::class, 'store'])->name('trips.store');
-        Route::post('/trips/sync', [AdminTripController::class, 'sync'])->name('trips.sync');
-        Route::post('/trips/quick-add-batch', [AdminTripController::class, 'quickAddBatch'])->name('trips.quick-add-batch');
-        Route::put('/trips/{trip}', [AdminTripController::class, 'update'])->name('trips.update');
-        Route::delete('/trips/{trip}', [AdminTripController::class, 'destroy'])->name('trips.destroy');
-    });
+    // 4. Jadwal & Detail Trip
+    Route::get('/trips', [AdminTripController::class, 'index'])->name('trips.index');
+    Route::post('/trips', [AdminTripController::class, 'store'])->name('trips.store');
+    Route::post('/trips/sync', [AdminTripController::class, 'sync'])->name('trips.sync');
+    Route::post('/trips/quick-add-batch', [AdminTripController::class, 'quickAddBatch'])->name('trips.quick-add-batch');
+    Route::put('/trips/{trip}', [AdminTripController::class, 'update'])->name('trips.update');
+    Route::delete('/trips/{trip}', [AdminTripController::class, 'destroy'])->name('trips.destroy');
 
-    // 5. Manifes Penumpang (Operasional harian - admin_ops & super_admin)
+    // 5. Manifes Penumpang
     Route::get('/manifest', [AdminManifestController::class, 'index'])->name('manifest.index');
     Route::get('/manifest/export', [AdminManifestController::class, 'export'])->name('manifest.export');
     Route::post('/manifest/passengers', [AdminManifestController::class, 'storePassenger'])->name('manifest.passengers.store');
@@ -262,17 +260,14 @@ Route::middleware(['auth', 'admin', 'setlocale:id'])->prefix('admin')->name('adm
     // 6. Akun Customer
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
 
-    // 7. Laporan Transaksi & Keuangan (Khusus Super Admin - Role: super_admin)
+    // 7. Laporan Transaksi & Keuangan
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [AdminBookingController::class, 'show'])->name('bookings.show');
-    
-    Route::middleware('admin:super_admin')->group(function () {
-        Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
-        Route::get('/transactions', [AdminReportController::class, 'index'])->name('transactions.index');
-        Route::get('/reports/export-csv', [AdminReportController::class, 'exportCsv'])->name('reports.export-csv');
-        Route::post('/reports/reconcile', [AdminReportController::class, 'reconcile'])->name('reports.reconcile');
-        Route::get('/reports/detail/{transaction}', [AdminReportController::class, 'show'])->name('reports.show');
-    });
+    Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
+    Route::get('/transactions', [AdminReportController::class, 'index'])->name('transactions.index');
+    Route::get('/reports/export-csv', [AdminReportController::class, 'exportCsv'])->name('reports.export-csv');
+    Route::post('/reports/reconcile', [AdminReportController::class, 'reconcile'])->name('reports.reconcile');
+    Route::get('/reports/detail/{transaction}', [AdminReportController::class, 'show'])->name('reports.show');
 
     // 8. Refund & Pembatalan
     Route::get('/refunds', [AdminRefundController::class, 'index'])->name('refunds.index');

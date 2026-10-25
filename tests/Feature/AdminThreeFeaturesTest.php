@@ -86,18 +86,17 @@ class AdminThreeFeaturesTest extends TestCase
         $this->actingAs($this->customer)->get('/admin/manifest')->assertRedirect('/');
         $this->actingAs($this->customer)->get('/admin/reports')->assertRedirect('/');
 
-        // 3. Admin Ops access
-        // Manifest is permitted (200)
+        // 3. Admin Ops access (all features accessible for checking)
         $this->actingAs($this->adminOps)->get('/admin/manifest')->assertStatus(200);
+        $this->actingAs($this->adminOps)->get('/admin/trips')->assertStatus(200);
+        $this->actingAs($this->adminOps)->get('/admin/reports')->assertStatus(200);
 
-        // Trips & Reports blocked (restricted to super_admin) -> redirects to admin.dashboard with error
-        $this->actingAs($this->adminOps)->get('/admin/trips')
-            ->assertRedirect(route('admin.dashboard'))
-            ->assertSessionHas('error');
-
-        $this->actingAs($this->adminOps)->get('/admin/reports')
-            ->assertRedirect(route('admin.dashboard'))
-            ->assertSessionHas('error');
+        // Sidebar renders all items for admin_ops
+        $dashRes = $this->actingAs($this->adminOps)->get('/admin/dashboard');
+        $dashRes->assertStatus(200);
+        $dashRes->assertSee('Jadwal &amp; Detail Trip', false);
+        $dashRes->assertSee('Laporan Transaksi &amp; Keuangan', false);
+        $dashRes->assertSee('Manifes Penumpang', false);
 
         // 4. Super Admin access
         $this->actingAs($this->superAdmin)->get('/admin/trips')->assertStatus(200);
