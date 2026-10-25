@@ -10,9 +10,15 @@ return new class extends Migration
     public function up(): void
     {
         // Ulasan armada tidak selalu memiliki package_id.
-        DB::statement(
-            'ALTER TABLE reviews MODIFY package_id BIGINT UNSIGNED NULL'
-        );
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement(
+                'ALTER TABLE reviews MODIFY package_id BIGINT UNSIGNED NULL'
+            );
+        } else {
+            Schema::table('reviews', function (Blueprint $table) {
+                $table->foreignId('package_id')->nullable()->change();
+            });
+        }
 
         Schema::table('reviews', function (Blueprint $table) {
             $table->foreignId('vehicle_id')
@@ -30,8 +36,14 @@ return new class extends Migration
             $table->dropColumn('vehicle_id');
         });
 
-        DB::statement(
-            'ALTER TABLE reviews MODIFY package_id BIGINT UNSIGNED NOT NULL'
-        );
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement(
+                'ALTER TABLE reviews MODIFY package_id BIGINT UNSIGNED NOT NULL'
+            );
+        } else {
+            Schema::table('reviews', function (Blueprint $table) {
+                $table->foreignId('package_id')->nullable(false)->change();
+            });
+        }
     }
 };
