@@ -34,6 +34,7 @@
             </div>
 
             {{-- Export CSV --}}
+            @if (auth()->user()?->isSuperAdmin())
             <a 
                 href="{{ route('admin.reports.export-csv') }}" 
                 class="inline-flex items-center gap-1.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-bold px-3.5 py-2.5 rounded-xl shadow-2xs transition"
@@ -41,6 +42,7 @@
                 <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Export CSV
             </a>
+            @endif
 
             {{-- Download Ringkasan PDF --}}
             <button 
@@ -260,9 +262,11 @@
                     <svg class="w-4 h-4 text-teal-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                     <span>Konversi libur panjang Hari Raya Waisak &amp; Kenaikan Isa Almasih melonjak <strong>38.6%</strong> pada pekan ke-3 Mei.</span>
                 </div>
-                <a href="{{ route('admin.reports.index') }}" class="font-bold text-teal-700 hover:text-teal-900 whitespace-nowrap">
-                    Lihat Log Rinci &gt;
-                </a>
+                @if (auth()->user()?->isSuperAdmin())
+                    <a href="{{ route('admin.reports.index') }}" class="font-bold text-teal-700 hover:text-teal-900 whitespace-nowrap">
+                        Lihat Log Rinci &gt;
+                    </a>
+                @endif
             </div>
         </div>
 
@@ -495,13 +499,15 @@
                                     Sisa {{ $wt->remaining_seats }} Kursi {{ $isUrgent ? 'Tersedia' : '(Normal)' }}
                                 </span>
 
-                                <form action="{{ route('admin.trips.quick-add-batch') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="trip_id" value="{{ $wt->id }}">
-                                    <button type="submit" class="text-[11px] font-extrabold text-teal-700 hover:text-teal-900 hover:underline cursor-pointer">
-                                        + Buka Batch Baru
-                                    </button>
-                                </form>
+                                @if (auth()->user()?->isSuperAdmin())
+                                    <form action="{{ route('admin.trips.quick-add-batch') }}" method="POST">
+                                        @csrf
+                                        <input type="hidden" name="trip_id" value="{{ $wt->id }}">
+                                        <button type="submit" class="text-[11px] font-extrabold text-teal-700 hover:text-teal-900 hover:underline cursor-pointer">
+                                            + Buka Batch Baru
+                                        </button>
+                                    </form>
+                                @endif
                             </div>
                         </div>
                     @empty
@@ -511,12 +517,21 @@
             </div>
 
             {{-- Bottom Quick Action Configuration --}}
-            <a 
-                href="{{ route('admin.trips.index') }}" 
-                class="mt-4 w-full py-2.5 px-3 rounded-xl border border-dashed border-teal-600/50 bg-teal-50/50 text-teal-800 text-xs font-bold text-center hover:bg-teal-100/60 transition block no-underline"
-            >
-                ✦ Konfigurasi Alokasi Armada &amp; Kuota Tambahan
-            </a>
+            @if (auth()->user()?->isSuperAdmin())
+                <a 
+                    href="{{ route('admin.trips.index') }}" 
+                    class="mt-4 w-full py-2.5 px-3 rounded-xl border border-dashed border-teal-600/50 bg-teal-50/50 text-teal-800 text-xs font-bold text-center hover:bg-teal-100/60 transition block no-underline"
+                >
+                    ✦ Konfigurasi Alokasi Armada &amp; Kuota Tambahan
+                </a>
+            @else
+                <a 
+                    href="{{ route('admin.manifest.index') }}" 
+                    class="mt-4 w-full py-2.5 px-3 rounded-xl border border-dashed border-teal-600/50 bg-teal-50/50 text-teal-800 text-xs font-bold text-center hover:bg-teal-100/60 transition block no-underline"
+                >
+                    ✦ Buka Manifes Penumpang Trip
+                </a>
+            @endif
         </div>
     </div>
 

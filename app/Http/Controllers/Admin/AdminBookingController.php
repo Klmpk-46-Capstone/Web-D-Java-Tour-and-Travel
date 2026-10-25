@@ -29,33 +29,6 @@ class AdminBookingController extends Controller
         return view('admin.bookings.index', compact('bookings', 'status', 'search'));
     }
 
-    public function manifest(Request $request): View
-    {
-        $tripId = $request->query('trip_id');
-        $trips = Trip::with('package')->orderBy('departure_date', 'asc')->get();
-
-        $selectedTrip = null;
-        $passengers = collect();
-
-        if ($tripId) {
-            $selectedTrip = Trip::with(['package', 'bookings'])->find($tripId);
-            if ($selectedTrip) {
-                $passengers = Booking::with('transactions')
-                    ->where('trip_id', $selectedTrip->id)
-                    ->whereIn('booking_status', ['confirmed', 'completed'])
-                    ->get();
-            }
-        } elseif ($trips->isNotEmpty()) {
-            $selectedTrip = $trips->first();
-            $passengers = Booking::with('transactions')
-                ->where('trip_id', $selectedTrip->id)
-                ->whereIn('booking_status', ['confirmed', 'completed'])
-                ->get();
-        }
-
-        return view('admin.manifest.index', compact('trips', 'selectedTrip', 'passengers'));
-    }
-
     public function show(Booking $booking): View
     {
         $booking->load(['package', 'trip', 'user', 'transactions', 'refunds']);

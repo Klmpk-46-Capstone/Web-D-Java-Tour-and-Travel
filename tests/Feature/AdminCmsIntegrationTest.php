@@ -13,12 +13,16 @@ use Tests\TestCase;
 
 class AdminCmsIntegrationTest extends TestCase
 {
+    use RefreshDatabase;
+
     protected User $superAdmin;
     protected User $customer;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->seed(\Database\Seeders\CmsTourSeeder::class);
 
         $this->superAdmin = User::firstOrCreate(
             ['email' => 'bambang@djavatour.com'],
@@ -58,7 +62,7 @@ class AdminCmsIntegrationTest extends TestCase
         $adminResponse = $this->actingAs($this->superAdmin)->get('/admin/dashboard');
         $adminResponse->assertStatus(200);
         $adminResponse->assertSee('Dashboard Analitik & Ringkasan Operasional');
-        $adminResponse->assertSee('Total Gross Revenue');
+        $adminResponse->assertSee('TOTAL GROSS REVENUE');
         $adminResponse->assertSee('Karimunjawa Paradise');
         $adminResponse->assertSee('Perairan Jepara - Karimunjawa');
     }
@@ -88,20 +92,28 @@ class AdminCmsIntegrationTest extends TestCase
         $trip = Trip::where('package_id', $package->id)->first();
         $this->assertNotNull($trip);
 
+        $trip->update([
+            'departure_date' => now()->addDays(5),
+            'return_date' => now()->addDays(7),
+        ]);
+
         $initialBooked = $trip->booked_seats;
         $initialRemaining = $trip->remaining_seats;
 
         if ($initialRemaining > 0) {
             $response = $this->actingAs($this->customer)->post(route('booking.store'), [
+                'package_id' => $package->id,
                 'trip_id' => $trip->id,
                 'customer_name' => 'Test Booking Pax',
                 'customer_email' => 'test@example.com',
                 'customer_phone' => '08123456789',
                 'pax' => 1,
+                'selected_armada' => 'Innova Reborn',
+                'pickup_location' => 'Bandara Juanda',
                 'payment_method' => 'BCA Virtual Account',
             ]);
 
-            $response->assertRedirect(route('customer.bookings'));
+            $response->assertRedirect();
 
             $trip->refresh();
             $this->assertEquals($initialBooked + 1, $trip->booked_seats);

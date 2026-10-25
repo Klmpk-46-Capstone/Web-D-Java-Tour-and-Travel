@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminBookingController;
+use App\Http\Controllers\Admin\AdminManifestController;
 use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminPackageController;
@@ -223,7 +224,7 @@ Route::post('/admin/gate-auth', [AdminAuthController::class, 'login'])->name('ad
 | CMS OPS CONSOLE (Protected by Admin Auth & Role Authorization)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'admin', 'setlocale:id'])->prefix('admin')->name('admin.')->group(function () {
     // 1. Dashboard Analitik
     Route::get('/', [AdminDashboardController::class, 'index'])->name('root');
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
@@ -242,15 +243,21 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // 3. Rekomendasi Utama (Featured)
     Route::get('/featured-packages', [AdminPackageController::class, 'featured'])->name('packages.featured');
 
-    // 4. Jadwal & Kuota Trip
-    Route::get('/trips', [AdminTripController::class, 'index'])->name('trips.index');
-    Route::post('/trips', [AdminTripController::class, 'store'])->name('trips.store');
-    Route::put('/trips/{trip}', [AdminTripController::class, 'update'])->name('trips.update');
-    Route::delete('/trips/{trip}', [AdminTripController::class, 'destroy'])->name('trips.destroy');
-    Route::post('/trips/quick-add-batch', [AdminTripController::class, 'quickAddBatch'])->name('trips.quick-add-batch');
+    // 4. Jadwal & Detail Trip (Khusus Super Admin - keputusan strategis)
+    Route::middleware('admin:super_admin')->group(function () {
+        Route::get('/trips', [AdminTripController::class, 'index'])->name('trips.index');
+        Route::post('/trips', [AdminTripController::class, 'store'])->name('trips.store');
+        Route::post('/trips/sync', [AdminTripController::class, 'sync'])->name('trips.sync');
+        Route::post('/trips/quick-add-batch', [AdminTripController::class, 'quickAddBatch'])->name('trips.quick-add-batch');
+        Route::put('/trips/{trip}', [AdminTripController::class, 'update'])->name('trips.update');
+        Route::delete('/trips/{trip}', [AdminTripController::class, 'destroy'])->name('trips.destroy');
+    });
 
-    // 5. Manifes Penumpang
-    Route::get('/manifest', [AdminBookingController::class, 'manifest'])->name('manifest.index');
+    // 5. Manifes Penumpang (Operasional harian - admin_ops & super_admin)
+    Route::get('/manifest', [AdminManifestController::class, 'index'])->name('manifest.index');
+    Route::get('/manifest/export', [AdminManifestController::class, 'export'])->name('manifest.export');
+    Route::post('/manifest/passengers', [AdminManifestController::class, 'storePassenger'])->name('manifest.passengers.store');
+    Route::post('/manifest/{booking}/check-in', [AdminManifestController::class, 'checkIn'])->name('manifest.check-in');
 
     // 6. Akun Customer
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');

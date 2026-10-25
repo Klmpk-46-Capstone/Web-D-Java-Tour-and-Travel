@@ -12,6 +12,11 @@ class Booking extends Model
 {
     use HasFactory;
 
+    /**
+     * Status booking yang masih menahan kursi trip.
+     */
+    public const SEAT_HOLDING_STATUSES = ['pending', 'confirmed', 'completed', 'refund_requested'];
+
     protected $fillable = [
         'booking_code',
         'user_id',
@@ -41,6 +46,8 @@ class Booking extends Model
         'payment_status',
         'booking_status',
         'notes',
+        'checked_in_at',
+        'checked_in_by',
     ];
 
     protected $casts = [
@@ -50,6 +57,7 @@ class Booking extends Model
         'rate' => 'integer',
         'duration' => 'integer',
         'rental_date' => 'date',
+        'checked_in_at' => 'datetime',
     ];
 
     public function package(): BelongsTo
@@ -90,6 +98,20 @@ class Booking extends Model
     public function refund(): HasOne
     {
         return $this->hasOne(Refund::class)->latestOfMany();
+    }
+
+    public function getIsCheckedInAttribute(): bool
+    {
+        return $this->checked_in_at !== null;
+    }
+
+    /**
+     * Check-in hanya untuk booking yang sudah terkonfirmasi dan sudah membayar (DP/lunas).
+     */
+    public function getCanCheckInAttribute(): bool
+    {
+        return in_array($this->booking_status, ['confirmed', 'completed'], true)
+            && in_array($this->payment_status, ['partial', 'paid'], true);
     }
 
     public function getFormattedTotalPriceAttribute(): string
