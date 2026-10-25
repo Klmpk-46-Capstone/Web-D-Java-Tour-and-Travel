@@ -65,9 +65,6 @@
         fn ($transaction) => $transaction->payment_stage === 'pelunasan'
     );
 
-    $isPaid = strtolower((string) $booking->payment_status) === 'paid'
-        || ($dpPaid && $pelunasanPaid);
-
     $isCancelled = in_array(
         strtolower((string) $booking->booking_status),
         ['cancelled', 'canceled'],
@@ -95,15 +92,15 @@
     $statusLabel = match (true) {
         $isCancelled => 'Dibatalkan',
         $isRefundRequested => 'Menunggu Refund',
+        $isCompleted => 'Selesai',
         $isPaid => 'Lunas',
         $dpPaid => 'DP Dibayar',
-        $isCompleted => 'Selesai',
         default => 'Menunggu Pembayaran',
     };
 
     $statusClass = match (true) {
         $isCancelled, $isRefundRequested => 'bg-rose-100 text-rose-800',
-        $isPaid => 'bg-blue-100 text-blue-800',
+        $isCompleted, $isPaid => 'bg-blue-100 text-blue-800',
         $dpPaid => 'bg-teal-100 text-teal-800',
         default => 'bg-amber-100 text-amber-900',
     };
@@ -489,7 +486,7 @@
                                 Nominal dan status pembayaran ditentukan oleh server.
                             </p>
                         </section>
-                    @elseif ($isPaid && !$isCancelled && !$isRefundRequested)
+                    @elseif ($isPaid && $isCompleted && !$isCancelled && !$isRefundRequested)
                         <section class="rounded-xl border border-teal-200 bg-teal-50 p-5 sm:p-6">
                             <h2 class="text-xl font-bold text-slate-900">
                                 Terima kasih telah memilih D’Java Tour!

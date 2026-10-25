@@ -137,7 +137,7 @@ class HomeController extends Controller
 
         $selectedDestination = $destinationOptions->firstWhere('id', (int) $destinationId);
 
-        return view('pages.dashboard.beranda.index', [
+        return view($this->dashboardView('beranda.index'), [
             'featuredPackages' => $featuredPackages,
             'destinations' => $destinations,
             'destinationOptions' => $destinationOptions,

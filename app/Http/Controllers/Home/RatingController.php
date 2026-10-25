@@ -44,7 +44,7 @@ class RatingController extends Controller
         abort_unless($user, 401);
 
         return Booking::query()
-            ->with(['package', 'trip', 'transactions'])
+            ->with(['package', 'trip', 'vehicle', 'transactions'])
             ->where('booking_code', $bookingCode)
             ->where(function ($query) use ($user) {
                 $query->where('user_id', $user->id)
@@ -75,6 +75,7 @@ class RatingController extends Controller
      */
     private function ensureEligibleBooking(Booking $booking): void
     {
+        $isEnglish = app()->getLocale() === 'en';
         $bookingStatus = strtolower(
             (string) $booking->booking_status
         );
@@ -84,7 +85,15 @@ class RatingController extends Controller
             ['cancelled', 'canceled', 'refund_requested'],
             true
         )) {
-            abort(403, 'Booking yang dibatalkan tidak dapat diberi rating.');
+            abort(403, $isEnglish
+                ? 'Cancelled or refunded bookings cannot be reviewed.'
+                : 'Booking yang dibatalkan tidak dapat diberi rating.');
+        }
+
+        if (! in_array($bookingStatus, ['completed', 'finished'], true)) {
+            abort(403, $isEnglish
+                ? 'Reviews are available only after the trip has been completed.'
+                : 'Rating hanya tersedia setelah perjalanan selesai.');
         }
 
         $totalPrice = (int) $booking->total_price;
@@ -93,7 +102,9 @@ class RatingController extends Controller
             $totalPrice <= 0
             || $this->paidAmount($booking) < $totalPrice
         ) {
-            abort(403, 'Rating hanya tersedia untuk booking yang sudah lunas.');
+            abort(403, $isEnglish
+                ? 'Reviews are available only for fully paid bookings.'
+                : 'Rating hanya tersedia untuk booking yang sudah lunas.');
         }
     }
 
@@ -115,13 +126,18 @@ class RatingController extends Controller
 
         if ($existingReview) {
             return redirect()
-                ->route('customer.bookings.detail', [
+                ->to(localized_route('customer.bookings.detail', [
                     'bookingCode' => $bookingCode,
-                ])
-                ->with('warning', 'Booking ini sudah memiliki ulasan.');
+                ]))
+                ->with(
+                    'warning',
+                    app()->getLocale() === 'en'
+                        ? 'This booking already has a review.'
+                        : 'Booking ini sudah memiliki ulasan.'
+                );
         }
 
-        return view('pages.dashboard.rating.index', [
+        return view($this->dashboardView('rating.index'), [
             'booking' => $booking,
             'existingReview' => null,
         ]);
@@ -208,11 +224,17 @@ class RatingController extends Controller
                     'boolean',
                 ],
             ],
-            [
-                'service_ratings.armada.required' => 'Silakan beri rating untuk kondisi armada.',
-                'service_ratings.driver.required' => 'Silakan beri rating untuk pelayanan driver.',
-                'service_ratings.route.required' => 'Silakan beri rating untuk rute dan ketepatan.',
-            ]
+            app()->getLocale() === 'en'
+                ? [
+                    'service_ratings.armada.required' => 'Please rate the vehicle condition.',
+                    'service_ratings.driver.required' => 'Please rate the driver service.',
+                    'service_ratings.route.required' => 'Please rate the route and punctuality.',
+                ]
+                : [
+                    'service_ratings.armada.required' => 'Silakan beri rating untuk kondisi armada.',
+                    'service_ratings.driver.required' => 'Silakan beri rating untuk pelayanan driver.',
+                    'service_ratings.route.required' => 'Silakan beri rating untuk rute dan ketepatan.',
+                ]
         );
 
         $booking = $this->findOwnedBooking($request, $bookingCode);
@@ -243,7 +265,9 @@ class RatingController extends Controller
 
                 if ($existingReview) {
                     throw ValidationException::withMessages([
-                        'rating' => 'Booking ini sudah memiliki rating.',
+                        'rating' => app()->getLocale() === 'en'
+                            ? 'This booking already has a review.'
+                            : 'Booking ini sudah memiliki rating.',
                     ]);
                 }
 
@@ -257,6 +281,7 @@ class RatingController extends Controller
                 Review::query()->create([
                     'booking_id' => $lockedBooking->id,
                     'package_id' => $lockedBooking->package_id,
+                    'vehicle_id' => $lockedBooking->vehicle_id,
                     'user_id' => $user->id,
                     'customer_name' => $lockedBooking->customer_name,
                     'rating' => $validated['rating'],
@@ -281,9 +306,14 @@ class RatingController extends Controller
         }
 
         return redirect()
-            ->route('customer.bookings.detail', [
+            ->to(localized_route('customer.bookings.detail', [
                 'bookingCode' => $bookingCode,
-            ])
-            ->with('success', 'Terima kasih! Rating kamu berhasil dikirim.');
+            ]))
+            ->with(
+                'success',
+                app()->getLocale() === 'en'
+                    ? 'Thank you! Your review has been submitted.'
+                    : 'Terima kasih! Rating kamu berhasil dikirim.'
+            );
     }
 }

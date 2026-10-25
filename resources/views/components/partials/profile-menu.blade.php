@@ -1,4 +1,5 @@
 @php
+    $isEnglish = app()->getLocale() === 'en';
     $isMobileMenu = ($display ?? 'desktop') === 'mobile';
     $itemClass = $isMobileMenu
         ? 'block rounded-lg px-4 py-3 text-sm text-slate-700 no-underline hover:bg-teal-50 hover:text-teal-700'
@@ -10,12 +11,12 @@
 </a>
 
 <a href="{{ url('/settings') }}" class="{{ $itemClass }}">
-    Pengaturan
+    {{ $isEnglish ? 'Settings' : 'Pengaturan' }}
 </a>
 
 <div class="my-1 border-t border-slate-100"></div>
 
-<form action="{{ route('logout') }}" method="POST">
+<form action="{{ localized_route('logout') }}" method="POST">
     @csrf
     <button
         type="submit"

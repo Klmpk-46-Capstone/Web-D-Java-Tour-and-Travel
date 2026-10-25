@@ -246,6 +246,32 @@
                         </div>
                     </x-ui.card>
 
+                    {{-- Ulasan pelanggan --}}
+                    @if ($reviews->isNotEmpty())
+                        <section aria-labelledby="ulasan-armada">
+                            <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h2 id="ulasan-armada" class="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
+                                        Ulasan Pelanggan
+                                    </h2>
+                                    <p class="mt-1 text-sm text-slate-500">
+                                        Ulasan dari pelanggan yang telah menyelesaikan sewa.
+                                    </p>
+                                </div>
+
+                                <span class="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-900">
+                                    ★ {{ number_format((float) $averageRating, 1) }} / 5
+                                </span>
+                            </div>
+
+                            <div class="space-y-4">
+                                @foreach ($reviews as $review)
+                                    <x-reviews.card :review="$review" />
+                                @endforeach
+                            </div>
+                        </section>
+                    @endif
+
                     {{-- Armada terkait --}}
                     @if ($relatedVehicles->isNotEmpty())
                         <section aria-labelledby="armada-terkait">

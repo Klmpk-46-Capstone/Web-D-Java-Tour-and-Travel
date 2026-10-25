@@ -20,7 +20,7 @@ class AuthController extends Controller
     public function showLogin(): View|RedirectResponse
     {
         if (Auth::check()) {
-            return redirect()->route('home');
+            return redirect()->to(localized_route('home'));
         }
 
         return view('pages.auth.login');
@@ -32,10 +32,26 @@ class AuthController extends Controller
     public function showRegister(): View|RedirectResponse
     {
         if (Auth::check()) {
-            return redirect()->route('home');
+            return redirect()->to(localized_route('home'));
         }
 
         return view('pages.auth.register');
+    }
+
+    /**
+     * Mendeteksi alur login/registrasi yang berasal dari halaman Inggris.
+     */
+    private function prefersEnglish(Request $request): bool
+    {
+        if (app()->getLocale() === 'en') {
+            return true;
+        }
+
+        $intended = (string) session('url.intended', '');
+        $referer = (string) $request->headers->get('referer', '');
+
+        return str_starts_with($intended, url('/en'))
+            || str_starts_with($referer, url('/en'));
     }
 
     /**
@@ -204,10 +220,12 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         return redirect()
-            ->route('home')
+            ->to(localized_route('home'))
             ->with(
                 'success',
-                'Pendaftaran berhasil. Selamat datang!'
+                $this->prefersEnglish($request)
+                    ? 'Registration successful. Welcome!'
+                    : 'Pendaftaran berhasil. Selamat datang!'
             );
     }
 
@@ -327,10 +345,12 @@ class AuthController extends Controller
         $request->session()->regenerate();
 
         return redirect()
-            ->intended(route('home'))
+            ->intended(localized_route('home'))
             ->with(
                 'success',
-                'Berhasil masuk ke akun kamu.'
+                $this->prefersEnglish($request)
+                    ? 'You are now signed in.'
+                    : 'Berhasil masuk ke akun kamu.'
             );
     }
 
@@ -345,10 +365,12 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()
-            ->route('login')
+            ->to(localized_route('login'))
             ->with(
                 'success',
-                'Kamu telah keluar dari akun.'
+                $this->prefersEnglish($request)
+                    ? 'You have been signed out.'
+                    : 'Kamu telah keluar dari akun.'
             );
     }
 }

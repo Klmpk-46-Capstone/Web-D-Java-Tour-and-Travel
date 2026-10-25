@@ -55,13 +55,15 @@ class ArmadaController extends Controller
 
         $vehicles = $query->paginate(9)->withQueryString();
 
+        $isEnglish = app()->getLocale() === 'en';
+
         $categories = [
-            'mpv' => 'MPV Keluarga',
-            'premium' => 'Premium & Hybrid',
-            'minibus' => 'Minibus Rombongan',
+            'mpv' => $isEnglish ? 'Family MPV' : 'MPV Keluarga',
+            'premium' => $isEnglish ? 'Premium & Hybrid' : 'Premium & Hybrid',
+            'minibus' => $isEnglish ? 'Group Minibus' : 'Minibus Rombongan',
         ];
 
-        return view('pages.dashboard.armada.index', compact(
+        return view($this->dashboardView('armada.index'), compact(
             'vehicles',
             'categories',
             'category',
@@ -85,9 +87,16 @@ class ArmadaController extends Controller
             ->limit(3)
             ->get();
 
-        return view('pages.dashboard.armada.detail', compact(
+        $reviews = $vehicle->reviews()->latest('id')->limit(6)->get();
+        $averageRating = $reviews->isNotEmpty()
+            ? round((float) $reviews->avg('rating'), 1)
+            : 0;
+
+        return view($this->dashboardView('armada.detail'), compact(
             'vehicle',
-            'relatedVehicles'
+            'relatedVehicles',
+            'reviews',
+            'averageRating'
         ));
     }
 
@@ -110,7 +119,7 @@ class ArmadaController extends Controller
         $selectedOptionKey = $validated['rental_option'] ?? ($optionKeys[0] ?? null);
         $selectedOption = $options->firstWhere('key', $selectedOptionKey) ?? $options->first();
 
-        return view('pages.dashboard.armada.formulir.index', [
+        return view($this->dashboardView('armada.formulir.index'), [
             'vehicle' => $vehicle,
             'options' => $options->all(),
             'selectedOption' => $selectedOption,
@@ -205,9 +214,14 @@ class ArmadaController extends Controller
             'booking_status' => 'pending',
         ]);
 
-        return redirect()->route('pembayaran.mulai', [
+        return redirect()->to(localized_route('pembayaran.mulai', [
             'bookingCode' => $booking->booking_code,
-        ]);
+        ]))->with(
+            'success',
+            app()->getLocale() === 'en'
+                ? 'Your vehicle booking was created. Booking code: ' . $booking->booking_code
+                : 'Reservasi armada berhasil dibuat. Kode booking: ' . $booking->booking_code
+        );
     }
 
     // Customer Package Detail with Itinerary, Dynamic Schedule/Quota & Reviews

@@ -1,0 +1,123 @@
+{{-- DESTINASI --}}
+@php
+    $isSearchResult = $searchActive ?? false;
+@endphp
+
+<section class="py-6 pb-10 md:py-8 md:pb-12" id="destinasi">
+    <div class="container mx-auto px-4">
+        <div class="mb-5 flex flex-col items-start gap-2 md:mb-7 md:flex-row md:items-end md:justify-between md:gap-7">
+            <div>
+                <span class="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-teal-700">
+                    {{ $isSearchResult ? 'SEARCH RESULTS' : 'CURATED LANDSCAPES' }}
+                </span>
+                <h2 class="m-0 text-3xl leading-tight tracking-tight md:text-4xl">
+                    {{ $isSearchResult ? 'Tour Packages Found' : 'Selected Destinations' }}
+                </h2>
+            </div>
+
+            <p class="mb-0 mt-0 max-w-md text-sm leading-relaxed text-slate-500 md:mb-0.5">
+                {{ $isSearchResult
+                    ? 'Packages that match your keyword, route, date, and capacity.'
+                    : 'Discover destinations to make your travel plan easier and more focused.' }}
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6 xl:grid-cols-4">
+            @forelse ($destinations as $destination)
+                <article class="group min-w-0 overflow-hidden rounded-2xl border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:shadow-lg">
+
+                    {{-- GAMBAR DESTINASI --}}
+                    <div class="relative h-64 overflow-hidden bg-slate-100 sm:h-80 md:h-72 xl:h-80 2xl:h-96">
+                        @php
+                            $imageUrl = data_get($destination, 'image_url');
+                        @endphp
+
+                        @if ($imageUrl)
+                            <img
+                                class="block h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                                src="{{ $imageUrl }}"
+                                alt="{{ data_get($destination, 'name', 'Tourist destination') }}"
+                                loading="lazy"
+                            >
+                        @else
+                            <div class="grid h-full w-full place-items-center px-6 py-10 text-center text-slate-500">
+                                Destination photo is not available yet.
+                            </div>
+                        @endif
+
+                        <div class="pointer-events-none absolute inset-x-0 bottom-0 top-1/3 bg-gradient-to-b from-transparent to-slate-900"></div>
+
+                        <div class="absolute bottom-4 left-4 right-4 text-white">
+                            <span class="mb-1 block text-xs font-extrabold uppercase tracking-wide text-teal-200">
+                                {{ data_get($destination, 'category', 'TOURIST DESTINATION') }}
+                            </span>
+
+                            <h3 class="m-0 pr-10 text-xl leading-snug">
+                                {{ data_get($destination, 'name', 'Tourist Destination') }}
+                            </h3>
+
+                            <span
+                                class="absolute bottom-0 right-0 grid h-9 w-9 place-items-center rounded-full bg-white/25"
+                                aria-hidden="true"
+                            >
+                                ↗
+                            </span>
+                        </div>
+                    </div>
+
+                    {{-- INFORMASI DESTINASI --}}
+                    <div class="flex items-center justify-between gap-2 px-4 py-3">
+                        <span class="whitespace-nowrap text-xs text-slate-600">
+                            <svg
+                                class="mr-1 inline-block align-[-3px] text-teal-700"
+                                width="14"
+                                height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                aria-hidden="true"
+                            >
+                                <circle cx="12" cy="12" r="9"/>
+                                <path d="M12 7v5l3 2"/>
+                            </svg>
+
+                            {{ data_get($destination, 'duration', 'Contact us') }}
+                        </span>
+
+                        <div class="text-right">
+                            <small class="block text-xs text-slate-400">
+                                Starting from
+                            </small>
+
+                            @php
+                                $destinationPrice = data_get($destination, 'price');
+                            @endphp
+
+                            @if ($destinationPrice !== null)
+                                <strong class="text-sm text-teal-700">
+                                    {{ $formatRupiah($destinationPrice) }}
+                                </strong>
+                                <span class="text-xs text-slate-500">/person</span>
+                            @else
+                                <strong class="text-sm text-teal-700">
+                                    Consultation
+                                </strong>
+                            @endif
+                        </div>
+                    </div>
+                </article>
+            @empty
+                <div class="col-span-full rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center text-slate-500">
+                    <strong class="mb-2 block text-lg text-slate-900">
+                        {{ $isSearchResult ? 'No tour packages found' : 'No destinations available yet' }}
+                    </strong>
+
+                    {{ $isSearchResult
+                        ? 'Try changing the keyword, route, date, or search capacity.'
+                        : 'There are no active destinations in the database yet. Please add destination data first.' }}
+                </div>
+            @endforelse
+        </div>
+    </div>
+</section>

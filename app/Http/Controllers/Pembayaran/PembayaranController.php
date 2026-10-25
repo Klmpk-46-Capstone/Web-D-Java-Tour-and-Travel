@@ -38,12 +38,18 @@ class PembayaranController extends Controller
         $booking->load('transactions');
 
         if ($this->isBookingClosed($booking)) {
-            return $this->bookingRedirect('error', 'Booking ini tidak dapat dibayar.');
+            return $this->bookingRedirect('error', $this->message(
+                'Booking ini tidak dapat dibayar.',
+                'This booking cannot be paid.'
+            ));
         }
 
         $stage = $this->determinePaymentStage($booking);
         if (!$stage) {
-            return $this->bookingRedirect('success', 'Booking ini sudah lunas.');
+            return $this->bookingRedirect('success', $this->message(
+                'Booking ini sudah lunas.',
+                'This booking is already fully paid.'
+            ));
         }
 
         // Jika instruksi aktif sudah ada dan pengguna tidak meminta ganti metode, arahkan langsung ke instruksi.
@@ -55,10 +61,10 @@ class PembayaranController extends Controller
             ->first();
 
         if ($pendingTransaction && !$request->boolean('ganti_metode')) {
-            return redirect()->route('pembayaran.instruksi', [
+            return redirect()->to(localized_route('pembayaran.instruksi', [
                 'bookingCode' => $booking->booking_code,
                 'stage' => $stage,
-            ]);
+            ]));
         }
 
         $amount = $this->calculateBillAmount($booking, $stage);
@@ -77,7 +83,10 @@ class PembayaranController extends Controller
         $booking = $this->findOwnedBooking($request, $bookingCode);
 
         if ($this->isBookingClosed($booking)) {
-            return back()->with('error', 'Booking ini tidak dapat dibayar.');
+            return back()->with('error', $this->message(
+                'Booking ini tidak dapat dibayar.',
+                'This booking cannot be paid.'
+            ));
         }
 
         $validated = $request->validate([
@@ -86,7 +95,10 @@ class PembayaranController extends Controller
 
         $stage = $this->determinePaymentStage($booking);
         if (!$stage) {
-            return $this->bookingRedirect('success', 'Booking ini sudah lunas.');
+            return $this->bookingRedirect('success', $this->message(
+                'Booking ini sudah lunas.',
+                'This booking is already fully paid.'
+            ));
         }
 
         $channel = strtoupper(trim($validated['channel_code']));
@@ -94,27 +106,39 @@ class PembayaranController extends Controller
 
         if (!in_array($channel, $availableChannels, true)) {
             return back()->withErrors([
-                'channel_code' => 'Metode pembayaran ini belum diaktifkan.',
+                'channel_code' => $this->message(
+                    'Metode pembayaran ini belum diaktifkan.',
+                    'This payment method is not enabled yet.'
+                ),
             ])->withInput();
         }
 
         if ($channel === 'CARDS') {
             return back()->with(
                 'error',
-                'Pembayaran kartu belum diaktifkan. Konfigurasikan alur kartu dan autentikasi terlebih dahulu.'
+                $this->message(
+                    'Pembayaran kartu belum diaktifkan. Konfigurasikan alur kartu dan autentikasi terlebih dahulu.',
+                    'Card payments are not enabled yet. Configure the card flow and authentication first.'
+                )
             );
         }
 
         if (str_starts_with($channel, 'DIRECT_DEBIT_') || str_starts_with($channel, 'DD_')) {
             return back()->with(
                 'error',
-                'Direct Debit memerlukan proses penautan akun dan token pembayaran terlebih dahulu.'
+                $this->message(
+                    'Direct Debit memerlukan proses penautan akun dan token pembayaran terlebih dahulu.',
+                    'Direct Debit requires account linking and a payment token first.'
+                )
             );
         }
 
         $amount = $this->calculateBillAmount($booking, $stage);
         if ($amount < 1) {
-            return back()->with('error', 'Nominal pembayaran tidak valid.');
+            return back()->with('error', $this->message(
+                'Nominal pembayaran tidak valid.',
+                'The payment amount is invalid.'
+            ));
         }
 
         // Periksa apakah tahap ini sudah dibayar sebelumnya
@@ -124,7 +148,10 @@ class PembayaranController extends Controller
             ->first();
 
         if ($latest && in_array(strtolower((string) $latest->status), self::PAID_STATUSES, true)) {
-            return $this->bookingRedirect('success', 'Tahap pembayaran ini sudah berhasil dibayar.');
+            return $this->bookingRedirect('success', $this->message(
+                'Tahap pembayaran ini sudah berhasil dibayar.',
+                'This payment stage has already been paid successfully.'
+            ));
         }
 
         // Batalkan transaksi pending terdahulu jika pengguna mengganti channel
@@ -137,10 +164,10 @@ class PembayaranController extends Controller
 
         if ($existingPending) {
             if (strtoupper((string) $existingPending->payment_channel) === $channel) {
-                return redirect()->route('pembayaran.instruksi', [
+                return redirect()->to(localized_route('pembayaran.instruksi', [
                     'bookingCode' => $booking->booking_code,
                     'stage' => $stage,
-                ]);
+                ]));
             }
 
             $existingPending->forceFill(['status' => 'cancelled'])->save();
@@ -153,7 +180,10 @@ class PembayaranController extends Controller
 
         $channelProperties = $this->buildChannelProperties($channel, $booking, $customerPhone);
         if ($channel === 'OVO' && empty($channelProperties['account_mobile_number'])) {
-            return back()->withInput()->with('error', 'Nomor HP pelanggan diperlukan untuk pembayaran OVO.');
+            return back()->withInput()->with('error', $this->message(
+                'Nomor HP pelanggan diperlukan untuk pembayaran OVO.',
+                'The customer phone number is required for OVO payments.'
+            ));
         }
 
         $isRetailOutlet = in_array($channel, ['ALFAMART', 'INDOMARET'], true);
@@ -183,12 +213,18 @@ class PembayaranController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'Gagal membuat pembayaran. Periksa channel dan konfigurasi Xendit.');
+            return back()->with('error', $this->message(
+                'Gagal membuat pembayaran. Periksa channel dan konfigurasi Xendit.',
+                'Failed to create the payment. Check the channel and Xendit configuration.'
+            ));
         }
 
         $requestId = $result['payment_request_id'] ?? $result['id'] ?? null;
         if (!$requestId) {
-            return back()->with('error', 'Xendit tidak mengembalikan ID pembayaran.');
+            return back()->with('error', $this->message(
+                'Xendit tidak mengembalikan ID pembayaran.',
+                'Xendit did not return a payment ID.'
+            ));
         }
 
         $actions = $result['actions'] ?? [];
@@ -211,7 +247,10 @@ class PembayaranController extends Controller
         if ($isQrPlaceholder && !$xendit->isDevelopmentMode()) {
             return back()->with(
                 'error',
-                'Kode QRIS asli tidak diterima dari Xendit. Silakan coba lagi atau hubungi layanan pelanggan.'
+                $this->message(
+                    'Kode QRIS asli tidak diterima dari Xendit. Silakan coba lagi atau hubungi layanan pelanggan.',
+                    'The original QRIS code was not received from Xendit. Please try again or contact customer service.'
+                )
             );
         }
 
@@ -266,10 +305,10 @@ class PembayaranController extends Controller
             ]);
         });
 
-        return redirect()->route('pembayaran.instruksi', [
+        return redirect()->to(localized_route('pembayaran.instruksi', [
             'bookingCode' => $booking->booking_code,
             'stage' => $stage,
-        ]);
+        ]));
     }
 
     /**
@@ -323,7 +362,10 @@ class PembayaranController extends Controller
             ->firstOrFail();
 
         if (!$transaction->xendit_payment_request_id) {
-            return back()->with('error', 'Transaksi belum mempunyai Payment Request Xendit.');
+            return back()->with('error', $this->message(
+                'Transaksi belum mempunyai Payment Request Xendit.',
+                'This transaction does not have an Xendit Payment Request yet.'
+            ));
         }
 
         try {
@@ -335,7 +377,10 @@ class PembayaranController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'Belum berhasil mengambil status terbaru dari Xendit.');
+            return back()->with('error', $this->message(
+                'Belum berhasil mengambil status terbaru dari Xendit.',
+                'Could not retrieve the latest status from Xendit.'
+            ));
         }
 
         $remoteRequestId = $remote['payment_request_id'] ?? $remote['id'] ?? null;
@@ -343,7 +388,10 @@ class PembayaranController extends Controller
             $remoteRequestId !== $transaction->xendit_payment_request_id
             || (int) ($remote['request_amount'] ?? 0) !== (int) $transaction->amount
         ) {
-            return back()->with('error', 'Data pembayaran dari Xendit tidak cocok dengan transaksi.');
+            return back()->with('error', $this->message(
+                'Data pembayaran dari Xendit tidak cocok dengan transaksi.',
+                'The payment data from Xendit does not match this transaction.'
+            ));
         }
 
         $status = strtoupper((string) ($remote['status'] ?? ''));
@@ -351,13 +399,17 @@ class PembayaranController extends Controller
 
         if ($status === self::XENDIT_SUCCEEDED) {
             return redirect()
-                ->route('customer.bookings.index')
-                ->with('success', 'Pembayaran berhasil dikonfirmasi oleh Xendit.');
+                ->to(localized_route('customer.bookings.index'))
+                ->with('success', $this->message(
+                    'Pembayaran berhasil dikonfirmasi oleh Xendit.',
+                    'The payment was successfully confirmed by Xendit.'
+                ));
         }
 
         return back()->with(
             'status_message',
-            'Status pembayaran dari Xendit: ' . ($status ?: 'BELUM DIKETAHUI')
+            $this->message('Status pembayaran dari Xendit: ', 'Payment status from Xendit: ')
+                . ($status ?: $this->message('BELUM DIKETAHUI', 'UNKNOWN'))
         );
     }
 
@@ -381,7 +433,7 @@ class PembayaranController extends Controller
             return response()->json([
                 'success' => false,
                 'status' => 'pending',
-                'message' => 'Transaksi belum ditemukan.',
+                'message' => $this->message('Transaksi belum ditemukan.', 'Transaction not found.'),
             ]);
         }
 
@@ -404,7 +456,10 @@ class PembayaranController extends Controller
                 return response()->json([
                     'success' => false,
                     'status' => 'pending',
-                    'message' => 'Data transaksi tidak cocok.',
+                    'message' => $this->message(
+                        'Data transaksi tidak cocok.',
+                        'The transaction data does not match.'
+                    ),
                 ], 422);
             }
 
@@ -431,7 +486,10 @@ class PembayaranController extends Controller
             return response()->json([
                 'success' => false,
                 'status' => 'pending',
-                'message' => 'Status pembayaran belum berhasil diperiksa.',
+                'message' => $this->message(
+                    'Status pembayaran belum berhasil diperiksa.',
+                    'The payment status could not be checked yet.'
+                ),
             ], 503);
         }
     }
@@ -457,11 +515,17 @@ class PembayaranController extends Controller
             ->firstOrFail();
 
         if (strtoupper((string) $transaction->payment_channel) !== 'QRIS') {
-            return back()->with('error', 'Simulasi melalui fitur ini hanya tersedia untuk transaksi QRIS.');
+            return back()->with('error', $this->message(
+                'Simulasi melalui fitur ini hanya tersedia untuk transaksi QRIS.',
+                'Simulation through this feature is only available for QRIS transactions.'
+            ));
         }
 
         if (in_array(strtolower((string) $transaction->status), self::PAID_STATUSES, true)) {
-            return back()->with('success', 'Transaksi ini sudah dibayar.');
+            return back()->with('success', $this->message(
+                'Transaksi ini sudah dibayar.',
+                'This transaction has already been paid.'
+            ));
         }
 
         try {
@@ -472,7 +536,10 @@ class PembayaranController extends Controller
 
             return back()->with(
                 'status_message',
-                $result['message'] ?? 'Simulasi pembayaran dimulai. Tunggu konfirmasi status dari Xendit.'
+                $result['message'] ?? $this->message(
+                    'Simulasi pembayaran dimulai. Tunggu konfirmasi status dari Xendit.',
+                    'Payment simulation started. Wait for the status confirmation from Xendit.'
+                )
             );
         } catch (Throwable $e) {
             Log::error('Simulasi pembayaran gagal.', [
@@ -481,7 +548,10 @@ class PembayaranController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return back()->with('error', 'Simulasi pembayaran gagal dimulai. Periksa konfigurasi Xendit Development Mode.');
+            return back()->with('error', $this->message(
+                'Simulasi pembayaran gagal dimulai. Periksa konfigurasi Xendit Development Mode.',
+                'The payment simulation could not be started. Check the Xendit Development Mode configuration.'
+            ));
         }
     }
 
@@ -490,7 +560,12 @@ class PembayaranController extends Controller
      */
     public function success(): RedirectResponse
     {
-        return redirect()->route('customer.bookings.index')->with('success', 'Pembayaran berhasil diproses.');
+        return redirect()
+            ->to(localized_route('customer.bookings.index'))
+            ->with('success', $this->message(
+                'Pembayaran berhasil diproses.',
+                'The payment was processed successfully.'
+            ));
     }
 
     /**
@@ -498,7 +573,12 @@ class PembayaranController extends Controller
      */
     public function failure(): RedirectResponse
     {
-        return redirect()->route('customer.bookings.index')->with('error', 'Pembayaran dibatalkan atau gagal.');
+        return redirect()
+            ->to(localized_route('customer.bookings.index'))
+            ->with('error', $this->message(
+                'Pembayaran dibatalkan atau gagal.',
+                'The payment was cancelled or failed.'
+            ));
     }
 
     // --------------------------------------------------------------------------
@@ -639,14 +719,14 @@ class PembayaranController extends Controller
             ];
         } elseif (in_array($channel, ['DANA', 'SHOPEEPAY'], true)) {
             $properties = [
-                'success_return_url' => route('customer.bookings.index'),
+                'success_return_url' => localized_route('customer.bookings.index'),
             ];
         } elseif ($channel === 'OVO') {
             $phone = preg_replace('/[^0-9+]/', '', (string) $customerPhone);
             if ($phone) {
                 $properties = [
                     'account_mobile_number' => $phone,
-                    'success_return_url' => route('customer.bookings.index'),
+                    'success_return_url' => localized_route('customer.bookings.index'),
                 ];
             }
         } elseif ($channel === 'QRIS') {
@@ -665,7 +745,10 @@ class PembayaranController extends Controller
     {
         $user = $request->user();
         if (!$user) {
-            abort(401, 'Silakan login terlebih dahulu.');
+            abort(401, $this->message(
+                'Silakan login terlebih dahulu.',
+                'Please log in first.'
+            ));
         }
 
         $query = Booking::query()
@@ -686,6 +769,16 @@ class PembayaranController extends Controller
      */
     private function bookingRedirect(string $type, string $message): RedirectResponse
     {
-        return redirect()->route('customer.bookings.index')->with($type, $message);
+        return redirect()
+            ->to(localized_route('customer.bookings.index'))
+            ->with($type, $message);
+    }
+
+    /**
+     * Memilih teks flash message sesuai bahasa aktif.
+     */
+    private function message(string $indonesian, string $english): string
+    {
+        return app()->getLocale() === 'en' ? $english : $indonesian;
     }
 }

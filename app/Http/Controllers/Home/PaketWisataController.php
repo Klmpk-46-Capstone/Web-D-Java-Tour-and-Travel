@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Home;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Package;
-use App\Models\Review;
 use App\Models\Trip;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -55,13 +54,15 @@ class PaketWisataController extends Controller
 
         $packages = $query->paginate(9)->withQueryString();
 
+        $isEnglish = app()->getLocale() === 'en';
+
         $categories = [
-            'bahari' => 'Wisata Bahari',
-            'gunung' => 'Wisata Mendaki Gunung',
-            'heritage' => 'Wisata Kebudayaan',
+            'bahari' => $isEnglish ? 'Marine Tourism' : 'Wisata Bahari',
+            'gunung' => $isEnglish ? 'Mountain Trekking' : 'Wisata Mendaki Gunung',
+            'heritage' => $isEnglish ? 'Cultural Tourism' : 'Wisata Kebudayaan',
         ];
 
-        return view('pages.dashboard.paket_wisata.index', compact(
+        return view($this->dashboardView('paket_wisata.index'), compact(
             'packages',
             'categories',
             'category',
@@ -86,7 +87,7 @@ class PaketWisataController extends Controller
             ->limit(3)
             ->get();
 
-        return view('pages.dashboard.paket_wisata.detail.detail_package', compact(
+        return view($this->dashboardView('paket_wisata.detail.detail_package'), compact(
             'package',
             'relatedPackages'
         ));
@@ -114,18 +115,24 @@ class PaketWisataController extends Controller
             ->whereDate('departure_date', '>=', now()->toDateString())
             ->first();
 
+        $isEnglish = app()->getLocale() === 'en';
+
         if (! $selectedTrip) {
-            return redirect()->route('packages.show', $package->slug)
-                ->with('error', 'Jadwal keberangkatan tidak tersedia. Silakan pilih jadwal lain.');
+            return redirect()->to(localized_route('packages.show', $package->slug))
+                ->with('error', $isEnglish
+                    ? 'The departure schedule is no longer available. Please choose another schedule.'
+                    : 'Jadwal keberangkatan tidak tersedia. Silakan pilih jadwal lain.');
         }
 
         $remainingSeats = max(0, (int) $selectedTrip->quota - (int) $selectedTrip->booked_seats);
         if ($remainingSeats < 1 || $validated['pax'] > $remainingSeats) {
-            return redirect()->route('packages.show', $package->slug)
-                ->with('error', 'Sisa kuota jadwal berubah. Silakan pilih ulang jadwal dan jumlah peserta.');
+            return redirect()->to(localized_route('packages.show', $package->slug))
+                ->with('error', $isEnglish
+                    ? 'The remaining quota has changed. Please choose the schedule and participant count again.'
+                    : 'Sisa kuota jadwal berubah. Silakan pilih ulang jadwal dan jumlah peserta.');
         }
 
-        return view('pages.dashboard.paket_wisata.formulir.index', [
+        return view($this->dashboardView('paket_wisata.formulir.index'), [
             'package' => $package,
             'selectedTrip' => $selectedTrip,
             'selectedPax' => (int) $validated['pax'],
@@ -138,7 +145,12 @@ class PaketWisataController extends Controller
     public function storeBooking(Request $request): RedirectResponse
     {
         if (! Auth::check()) {
-            return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu untuk melanjutkan pemesanan.');
+            return redirect()->to(localized_route('login'))->with(
+                'error',
+                app()->getLocale() === 'en'
+                    ? 'Please log in first to continue your booking.'
+                    : 'Silakan login terlebih dahulu untuk melanjutkan pemesanan.'
+            );
         }
 
         $validated = $request->validate([
@@ -162,7 +174,9 @@ class PaketWisataController extends Controller
                 ->firstOrFail();
 
             if ((int) $trip->package_id !== (int) $validated['package_id']) {
-                abort(422, 'Jadwal tidak sesuai dengan paket yang dipilih.');
+                abort(422, app()->getLocale() === 'en'
+                    ? 'The selected schedule does not match this tour package.'
+                    : 'Jadwal tidak sesuai dengan paket yang dipilih.');
             }
 
             $remainingSeats = max(0, (int) $trip->quota - (int) $trip->booked_seats);
@@ -170,7 +184,9 @@ class PaketWisataController extends Controller
                 || $trip->departure_date < now()->toDateString()
                 || $remainingSeats < (int) $validated['pax']) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
-                    'trip_id' => 'Kuota jadwal tidak mencukupi. Silakan kembali ke halaman detail dan pilih ulang jadwal atau jumlah peserta.',
+                    'trip_id' => app()->getLocale() === 'en'
+                        ? 'The schedule quota is insufficient. Please return to the details page and choose another schedule or participant count.'
+                        : 'Kuota jadwal tidak mencukupi. Silakan kembali ke halaman detail dan pilih ulang jadwal atau jumlah peserta.',
                 ]);
             }
 
@@ -223,11 +239,13 @@ class PaketWisataController extends Controller
             return $booking;
         });
 
-        return redirect()->route('pembayaran.mulai', [
+        return redirect()->to(localized_route('pembayaran.mulai', [
             'bookingCode' => $booking->booking_code,
-        ])->with(
+        ]))->with(
             'success',
-            'Reservasi berhasil dibuat. Silakan Lanjutkan Proses Pembayaran. Kode booking: '
+            (app()->getLocale() === 'en'
+                ? 'Your booking was created successfully. Please continue to payment. Booking code: '
+                : 'Reservasi berhasil dibuat. Silakan Lanjutkan Proses Pembayaran. Kode booking: ')
                 . $booking->booking_code
         );
     }
@@ -252,26 +270,4 @@ class PaketWisataController extends Controller
         ]);
     }
 
-    // Customer Booking History & Cancellation / Refund Flow
-
-    public function storeReview(Request $request, int $packageId): RedirectResponse
-    {
-        $validated = $request->validate([
-            'customer_name' => ['required', 'string', 'max:150'],
-            'rating' => ['required', 'integer', 'between:1,5'],
-            'comment' => ['required', 'string', 'max:1000'],
-        ]);
-
-        Review::create([
-            'package_id' => $packageId,
-            'user_id' => Auth::id(),
-            'customer_name' => $validated['customer_name'],
-            'rating' => $validated['rating'],
-            'comment' => $validated['comment'],
-            'is_approved' => true,
-            'is_hidden' => false,
-        ]);
-
-        return back()->with('success', 'Terima kasih! Ulasan Anda telah terkirim dan masuk ke antrean CMS.');
-    }
 }

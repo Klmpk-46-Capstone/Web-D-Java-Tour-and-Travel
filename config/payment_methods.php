@@ -4,6 +4,7 @@ return [
     'groups' => [
         'va' => [
             'label' => 'Transfer Bank / Virtual Account',
+            'label_en' => 'Bank Transfer / Virtual Account',
             'icon' => '🏦',
             'methods' => [
                 'BCA_VIRTUAL_ACCOUNT' => 'BCA Virtual Account',
@@ -16,6 +17,7 @@ return [
 
         'qris' => [
             'label' => 'Pembayaran QR',
+            'label_en' => 'QR Payment',
             'icon' => '▦',
             'methods' => [
                 'QRIS' => 'QRIS',
@@ -24,6 +26,7 @@ return [
 
         'ewallet' => [
             'label' => 'E-Wallet',
+            'label_en' => 'E-Wallet',
             'icon' => '📱',
             'methods' => [
                 'DANA' => 'DANA',

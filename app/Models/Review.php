@@ -10,6 +10,7 @@ class Review extends Model
     protected $fillable = [
         'booking_id',
         'package_id',
+        'vehicle_id',
         'user_id',
         'customer_name',
         'rating',
@@ -45,6 +46,11 @@ class Review extends Model
     public function package(): BelongsTo
     {
         return $this->belongsTo(Package::class);
+    }
+
+    public function vehicle(): BelongsTo
+    {
+        return $this->belongsTo(Vehicle::class);
     }
 
     public function user(): BelongsTo

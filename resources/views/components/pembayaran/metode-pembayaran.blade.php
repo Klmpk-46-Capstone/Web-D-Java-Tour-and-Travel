@@ -1,12 +1,12 @@
 
 <!DOCTYPE html>
-<html lang="id">
+<html lang="{{ app()->getLocale() === 'en' ? 'en' : 'id' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Metode Pembayaran - D'Java Tour &amp; Travel</title>
+    <title>{{ app()->getLocale() === 'en' ? 'Payment Method' : 'Metode Pembayaran' }} - D'Java Tour &amp; Travel</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -15,6 +15,7 @@
     @include('components.navbar.navbar')
 
     @php
+        $isEnglish = app()->getLocale() === 'en';
         $paymentGroups = config('payment_methods.groups', []);
 
         $paymentGroupLogos = [
@@ -28,7 +29,7 @@
                 'CIMB' => 'CIMB',
                 'SAHABAT_SAMPOERNA' => 'Sampoerna',
                 'BNC' => 'BNC',
-                'OTHER' => 'Lainnya',
+                'OTHER' => $isEnglish ? 'Others' : 'Lainnya',
             ],
             'qr' => [
                 'QRIS' => 'QRIS',
@@ -42,7 +43,7 @@
                 'ASTRAPAY' => 'AstraPay',
             ],
             'card' => [
-                'CARDS' => 'Kartu',
+                'CARDS' => $isEnglish ? 'Card' : 'Kartu',
             ],
             'retail' => [
                 'ALFAMART' => 'Alfamart',
@@ -75,7 +76,7 @@
                 role="alert"
                 class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
             >
-                <p class="font-semibold">Periksa kembali data pembayaran:</p>
+                <p class="font-semibold">{{ $isEnglish ? 'Please check the payment details:' : 'Periksa kembali data pembayaran:' }}</p>
 
                 <ul class="mt-2 list-inside list-disc space-y-1">
                     @foreach ($errors->all() as $error)
@@ -87,11 +88,11 @@
 
         <header class="mb-6">
             <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                Lanjutkan Pembayaran
+                {{ $isEnglish ? 'Continue Payment' : 'Lanjutkan Pembayaran' }}
             </h1>
 
             <p class="mt-2 text-sm text-slate-600">
-                Booking:
+                {{ $isEnglish ? 'Booking:' : 'Booking:' }}
                 <span class="font-semibold text-slate-900">
                     {{ $booking->booking_code }}
                 </span>
@@ -100,42 +101,42 @@
 
         {{-- Ringkasan pembayaran --}}
         <section
-            aria-label="Ringkasan pembayaran"
+            aria-label="{{ $isEnglish ? 'Payment summary' : 'Ringkasan pembayaran' }}"
             class="mb-8 rounded-xl border border-slate-200 bg-slate-50 p-5"
         >
             <div class="flex items-start justify-between gap-4">
                 <span class="text-sm text-slate-600">
-                    Total pesanan
+                    {{ $isEnglish ? 'Order total' : 'Total pesanan' }}
                 </span>
 
                 <span class="text-right font-semibold text-slate-900">
-                    Rp {{ number_format((int) $booking->total_price, 0, ',', '.') }}
+                    Rp {{ $isEnglish ? number_format((int) $booking->total_price, 0, '.', ',') : number_format((int) $booking->total_price, 0, ',', '.') }}
                 </span>
             </div>
 
             <div class="mt-4 border-t border-slate-200 pt-4">
                 <p class="text-sm font-medium text-slate-600">
-                    {{ $stage === 'dp' ? 'Pembayaran DP 30%' : 'Pelunasan' }}
+                    {{ $stage === 'dp' ? ($isEnglish ? '30% DP Payment' : 'Pembayaran DP 30%') : ($isEnglish ? 'Balance Payment' : 'Pelunasan') }}
                 </p>
 
                 <p class="mt-1 text-2xl font-bold tracking-tight text-green-700">
-                    Rp {{ number_format((int) $amount, 0, ',', '.') }}
+                    Rp {{ $isEnglish ? number_format((int) $amount, 0, '.', ',') : number_format((int) $amount, 0, ',', '.') }}
                 </p>
 
                 <p class="mt-1 text-sm leading-6 text-slate-500">
                     {{ $stage === 'dp'
-                        ? 'Bayar uang muka untuk melanjutkan reservasi.'
-                        : 'Bayar sisa tagihan setelah DP berhasil dibayar.' }}
+                        ? ($isEnglish ? 'Pay the down payment to continue your reservation.' : 'Bayar uang muka untuk melanjutkan reservasi.')
+                        : ($isEnglish ? 'Pay the remaining balance after the DP has been successfully paid.' : 'Bayar sisa tagihan setelah DP berhasil dibayar.') }}
                 </p>
             </div>
         </section>
 
         <h2 class="mb-3 text-sm font-bold uppercase tracking-wide text-slate-800">
-            Metode Pembayaran
+            {{ $isEnglish ? 'Payment Method' : 'Metode Pembayaran' }}
         </h2>
 
         <form
-            action="{{ route('pembayaran.buat', ['bookingCode' => $booking->booking_code]) }}"
+            action="{{ localized_route('pembayaran.buat', ['bookingCode' => $booking->booking_code]) }}"
             method="POST"
             id="payment-form"
         >
@@ -145,7 +146,9 @@
                 @forelse ($paymentGroups as $groupKey => $group)
                     @php
                         $methods = $group['methods'] ?? [];
-                        $groupLabel = $group['label'] ?? 'Metode Pembayaran';
+                        $groupLabel = $isEnglish
+                            ? ($group['label_en'] ?? $group['label'] ?? 'Payment Method')
+                            : ($group['label'] ?? 'Metode Pembayaran');
                         $normalizedLabel = strtolower($groupLabel);
 
                         $groupType = match (true) {
@@ -331,7 +334,7 @@
 
                                             @if ($isUnsupportedCard)
                                                 <span class="text-xs text-slate-500">
-                                                    Belum aktif
+                                                    {{ $isEnglish ? 'Not active' : 'Belum aktif' }}
                                                 </span>
                                             @endif
                                         </label>
@@ -340,20 +343,25 @@
 
                                 @if ($isCardGroup)
                                     <p class="mt-3 text-xs leading-5 text-slate-500">
-                                        Pembayaran kartu belum diaktifkan pada sistem saat ini.
+                                        {{ $isEnglish
+                                            ? 'Card payments are not enabled in the system yet.'
+                                            : 'Pembayaran kartu belum diaktifkan pada sistem saat ini.' }}
                                     </p>
                                 @endif
                             @else
                                 <p class="text-sm leading-6 text-slate-600">
-                                    Metode ini belum diaktifkan. Channel perlu
-                                    dikonfigurasi di akun Xendit terlebih dahulu.
+                                    {{ $isEnglish
+                                        ? 'This method is not enabled yet. The channel must be configured in your Xendit account first.'
+                                        : 'Metode ini belum diaktifkan. Channel perlu dikonfigurasi di akun Xendit terlebih dahulu.' }}
                                 </p>
                             @endif
                         </div>
                     </details>
                 @empty
                     <p class="p-5 text-sm leading-6 text-slate-600">
-                        Belum ada metode pembayaran yang tersedia. Silakan hubungi layanan pelanggan.
+                        {{ $isEnglish
+                            ? 'No payment methods are available yet. Please contact customer service.'
+                            : 'Belum ada metode pembayaran yang tersedia. Silakan hubungi layanan pelanggan.' }}
                     </p>
                 @endforelse
             </div>
@@ -362,16 +370,17 @@
                 type="submit"
                 class="mt-6 flex w-full items-center justify-center rounded-xl bg-green-600 px-5 py-3.5 font-semibold text-white transition-colors hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2"
             >
-                {{ $stage === 'dp' ? 'Bayar DP 30%' : 'Bayar Pelunasan 70%' }}
+                {{ $stage === 'dp'
+                    ? ($isEnglish ? 'Pay 30% DP' : 'Bayar DP 30%')
+                    : ($isEnglish ? 'Pay 70% Balance' : 'Bayar Pelunasan 70%') }}
                 <span class="ml-2" aria-hidden="true">→</span>
             </button>
         </form>
 
         <p class="mt-4 text-xs leading-5 text-slate-500">
-            Pembayaran akan dikonfirmasi setelah statusnya diverifikasi melalui
-            Xendit. Pastikan nominal dan metode pembayaran sudah sesuai.
-            Jangan membagikan informasi pembayaran sensitif kepada pihak yang
-            tidak dikenal.
+            {{ $isEnglish
+                ? 'Payment will be confirmed after its status is verified through Xendit. Make sure the amount and payment method are correct. Do not share sensitive payment information with unknown parties.'
+                : 'Pembayaran akan dikonfirmasi setelah statusnya diverifikasi melalui Xendit. Pastikan nominal dan metode pembayaran sudah sesuai. Jangan membagikan informasi pembayaran sensitif kepada pihak yang tidak dikenal.' }}
         </p>
     </main>
 

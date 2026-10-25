@@ -20,11 +20,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(
             fn (Request $request) => $request->is('admin*')
                 ? route('admin.login')
-                : route('login')
+                : localized_route('login')
         );
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'setlocale' => \App\Http\Middleware\SetLocale::class,
         ]);
     })
     // Untuk tahap hosting, sesuaikan konfigurasi

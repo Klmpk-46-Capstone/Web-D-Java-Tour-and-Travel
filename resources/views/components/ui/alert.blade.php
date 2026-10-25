@@ -57,7 +57,7 @@
             type="button"
             onclick="this.parentElement.remove()"
             class="shrink-0 text-xl font-bold leading-none opacity-60 transition hover:opacity-100"
-            aria-label="Tutup notifikasi"
+            aria-label="{{ app()->getLocale() === 'en' ? 'Dismiss notification' : 'Tutup notifikasi' }}"
         >
             &times;
         </button>

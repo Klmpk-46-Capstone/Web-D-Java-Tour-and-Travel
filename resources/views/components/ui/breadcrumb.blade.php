@@ -8,7 +8,7 @@
 <nav aria-label="Breadcrumb" {{ $attributes->merge(['class' => 'mb-5 flex flex-wrap items-center gap-2 text-sm text-slate-500']) }}>
     @if ($back)
         <a href="{{ $back['url'] ?? '#' }}" class="font-medium transition hover:text-teal-700">
-            <span aria-hidden="true">&larr;</span> {{ $back['label'] ?? 'Kembali' }}
+            <span aria-hidden="true">&larr;</span> {{ $back['label'] ?? (app()->getLocale() === 'en' ? 'Back' : 'Kembali') }}
         </a>
     @endif
 

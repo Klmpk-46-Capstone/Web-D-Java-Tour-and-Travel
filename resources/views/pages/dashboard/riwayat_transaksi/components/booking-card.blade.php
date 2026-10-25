@@ -9,7 +9,6 @@
     $isCancelled = in_array($bookingStatus, ['cancelled', 'canceled'], true);
     $isRefundRequested = $bookingStatus === 'refund_requested';
 
-    $isPaid = $paymentStatus === 'paid';
     $isTripCompleted = in_array(
         $bookingStatus,
         ['completed', 'finished'],
@@ -17,17 +16,30 @@
     );
     $isCompleted = $isTripCompleted;
     $isConfirmed = in_array($bookingStatus, ['confirmed', 'completed', 'finished'], true);
+    $hasReviewed = (bool) $booking->review;
 
-    $isWaitingDp = in_array(
-        $paymentStatus,
-        ['pending', 'unpaid', 'waiting_dp'],
-        true
-    ) && !$isCancelled
-      && !$isRefundRequested
-      && $paymentStatus !== 'partial'
-      && $paymentStatus !== 'paid';
+    $paidAmount = (int) $booking->transactions
+        ->filter(fn ($transaction) => in_array(
+            strtolower((string) $transaction->status),
+            ['success', 'paid', 'settled', 'settlement', 'completed', 'capture'],
+            true
+        ))
+        ->sum('amount');
 
-    $isWaitingPelunasan = $paymentStatus === 'partial'
+    $totalPrice = (int) $booking->total_price;
+    $isPaid = $totalPrice > 0 && $paidAmount >= $totalPrice;
+
+    $isWaitingDp = ! $isPaid
+        && in_array(
+            $paymentStatus,
+            ['pending', 'unpaid', 'waiting_dp'],
+            true
+        )
+        && !$isCancelled
+        && !$isRefundRequested;
+
+    $isWaitingPelunasan = ! $isPaid
+        && $paymentStatus === 'partial'
         && !$isCancelled
         && !$isRefundRequested
         && !$isCompleted;
@@ -35,29 +47,20 @@
     $statusLabel = match (true) {
         $isCancelled => 'Dibatalkan',
         $isRefundRequested => 'Menunggu Refund',
-        $paymentStatus === 'paid' => 'Lunas',
-        $paymentStatus === 'partial' => 'DP Dibayar',
         $isCompleted => 'Selesai',
+        $isPaid => 'Lunas',
+        $paymentStatus === 'partial' => 'DP Dibayar',
         $isConfirmed => 'Dikonfirmasi',
         default => 'Menunggu DP',
     };
 
     $statusClass = match (true) {
         $isCancelled, $isRefundRequested => 'bg-rose-100 text-rose-800',
-        $paymentStatus === 'paid' || $isCompleted => 'bg-blue-100 text-blue-800',
+        $isCompleted, $isPaid => 'bg-blue-100 text-blue-800',
         $paymentStatus === 'partial' || $isConfirmed => 'bg-teal-100 text-teal-800',
         default => 'bg-orange-100 text-orange-900',
     };
 
-    $paidAmount = (int) $booking->transactions
-        ->filter(fn ($transaction) => in_array(
-            strtolower((string) $transaction->status),
-            ['success', 'paid', 'settlement', 'capture'],
-            true
-        ))
-        ->sum('amount');
-
-    $totalPrice = (int) $booking->total_price;
     $downPayment = (int) round($totalPrice * 0.30);
     $remainingAmount = max(0, $totalPrice - $paidAmount);
 
@@ -220,15 +223,21 @@
                     @endif
                 @endif
 
-                @if ($isPaid && !$isCancelled && !$isRefundRequested)
-                    <a
-                        href="{{ route('customer.bookings.rating', [
-                            'bookingCode' => $booking->booking_code
-                        ]) }}"
-                        class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-amber-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-amber-600"
-                    >
-                        ★ Beri Rating
-                    </a>
+                @if ($isPaid && $isCompleted && !$isCancelled && !$isRefundRequested)
+                    @if ($hasReviewed)
+                        <span class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700">
+                            ✓ Ulasan Terkirim
+                        </span>
+                    @else
+                        <a
+                            href="{{ route('customer.bookings.rating', [
+                                'bookingCode' => $booking->booking_code
+                            ]) }}"
+                            class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-amber-500 px-3.5 py-2 text-sm font-semibold text-white hover:bg-amber-600"
+                        >
+                            ★ Beri Rating
+                        </a>
+                    @endif
                 @endif
 
                 @if ($isCompleted && !$isCancelled && !$isRefundRequested)

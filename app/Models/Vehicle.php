@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -17,6 +18,24 @@ class Vehicle extends Model
         'premium' => 'Premium & Hybrid',
         'minibus' => 'Minibus Rombongan',
     ];
+
+    public const CATEGORIES_EN = [
+        'mpv' => 'Family MPV',
+        'premium' => 'Premium & Hybrid',
+        'minibus' => 'Group Minibus',
+    ];
+
+    /**
+     * Label kategori sesuai bahasa aktif.
+     *
+     * @return array<string, string>
+     */
+    public static function categoryOptions(): array
+    {
+        return app()->getLocale() === 'en'
+            ? self::CATEGORIES_EN
+            : self::CATEGORIES;
+    }
 
     protected $fillable = [
         'name',
@@ -72,13 +91,13 @@ class Vehicle extends Model
     protected function categoryLabel(): Attribute
     {
         return Attribute::get(
-            fn (): string => self::CATEGORIES[$this->category] ?? 'Armada'
+            fn (): string => self::categoryOptions()[$this->category] ?? (app()->getLocale() === 'en' ? 'Vehicle' : 'Armada')
         );
     }
 
     public function getFormattedPriceAttribute(): string
     {
-        return 'Rp ' . number_format((float) $this->price_per_day, 0, ',', '.');
+        return $this->formatRupiah((float) $this->price_per_day);
     }
 
     /**
@@ -98,7 +117,7 @@ class Vehicle extends Model
     public function getFormattedLowestPriceAttribute(): ?string
     {
         return $this->lowest_price !== null
-            ? 'Rp ' . number_format((float) $this->lowest_price, 0, ',', '.')
+            ? $this->formatRupiah((float) $this->lowest_price)
             : null;
     }
 
@@ -117,34 +136,59 @@ class Vehicle extends Model
 
         $options = [];
 
+        $isEnglish = app()->getLocale() === 'en';
+
         if ($withDriver) {
             $options[] = [
                 'key' => 'with_driver',
-                'label' => 'Dengan Supir',
+                'label' => $isEnglish ? 'With Driver' : 'Dengan Supir',
                 'price' => (int) $withDriver,
-                'description' => 'Termasuk driver profesional untuk seluruh rute perjalanan Anda.',
+                'description' => $isEnglish
+                    ? 'Includes a professional driver for your entire travel route.'
+                    : 'Termasuk driver profesional untuk seluruh rute perjalanan Anda.',
             ];
         }
 
         if ($withoutDriver) {
             $options[] = [
                 'key' => 'without_driver',
-                'label' => 'Tanpa Supir (Lepas Kunci)',
+                'label' => $isEnglish ? 'Without Driver (Self-Drive)' : 'Tanpa Supir (Lepas Kunci)',
                 'price' => (int) $withoutDriver,
-                'description' => 'Sewa unit saja. Wajib menunjukkan SIM A yang masih berlaku saat serah terima.',
+                'description' => $isEnglish
+                    ? 'Vehicle rental only. A valid driver’s license must be shown at handover.'
+                    : 'Sewa unit saja. Wajib menunjukkan SIM A yang masih berlaku saat serah terima.',
             ];
         }
 
         if ($options === [] && $this->price_per_day) {
             $options[] = [
                 'key' => 'daily',
-                'label' => 'Sewa Harian',
+                'label' => $isEnglish ? 'Daily Rental' : 'Sewa Harian',
                 'price' => (int) $this->price_per_day,
-                'description' => 'Tarif sewa harian unit armada.',
+                'description' => $isEnglish
+                    ? 'Daily rental rate for the vehicle unit.'
+                    : 'Tarif sewa harian unit armada.',
             ];
         }
 
         return $options;
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class)
+            ->where('is_approved', true)
+            ->where('is_hidden', false);
+    }
+
+    /**
+     * Format nominal rupiah sesuai bahasa aktif.
+     */
+    private function formatRupiah(float $amount): string
+    {
+        return app()->getLocale() === 'en'
+            ? 'Rp ' . number_format($amount, 0, '.', ',')
+            : 'Rp ' . number_format($amount, 0, ',', '.');
     }
 
     public function scopeActive($query)

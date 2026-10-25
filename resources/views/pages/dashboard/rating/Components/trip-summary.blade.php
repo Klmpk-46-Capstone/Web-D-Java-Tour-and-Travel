@@ -2,8 +2,15 @@
     <div class="flex flex-col gap-5 sm:flex-row">
         <div class="h-32 w-full shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:w-40">
             @php
-                $imageUrl = $booking->package->image_url ?? $booking->package->image ?? $booking->trip->image ?? null;
-                $bookingTitle = $booking->package->name ?? $booking->trip->batch_name ?? $booking->selected_armada ?? 'Perjalanan Anda';
+                $imageUrl = $booking->package?->image_url
+                    ?? $booking->vehicle?->image_url
+                    ?? $booking->trip?->image
+                    ?? null;
+                $bookingTitle = $booking->package?->name
+                    ?? $booking->trip?->batch_name
+                    ?? $booking->selected_armada
+                    ?? $booking->vehicle?->name
+                    ?? 'Perjalanan Anda';
                 $imageSrc = null;
 
                 if (!empty($imageUrl)) {
@@ -62,7 +69,7 @@
                 <div>
                     <p class="text-slate-500">Peserta</p>
                     <p class="mt-1 font-semibold text-slate-800">
-                        {{ $booking->participant_count ?? 1 }} Peserta
+                        {{ $booking->pax ?? 1 }} Peserta
                     </p>
                 </div>
 

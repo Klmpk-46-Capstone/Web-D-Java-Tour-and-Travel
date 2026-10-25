@@ -1,3 +1,7 @@
+@php
+    $isEnglish = app()->getLocale() === 'en';
+@endphp
+
 <header
     id="mainNavbar"
     class="sticky top-0 z-50 bg-indigo-50 py-2 transition-all duration-300 md:py-3"
@@ -5,11 +9,11 @@
     <div class="container mx-auto px-4">
         <nav
             class="relative flex min-h-14 items-center justify-between gap-2 rounded-3xl border border-slate-200 bg-white px-3 py-2 shadow-sm transition-all duration-300 md:min-h-16 md:gap-3 md:rounded-full md:px-5"
-            aria-label="Navigasi utama"
+            aria-label="{{ $isEnglish ? 'Main navigation' : 'Navigasi utama' }}"
         >
             {{-- LOGO --}}
             <a
-                href="{{ route('home') }}"
+                href="{{ localized_route('home') }}"
                 class="flex min-w-0 items-center gap-2 text-slate-900 no-underline md:shrink-0"
             >
                 <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-teal-100 bg-teal-50 text-xl font-extrabold text-teal-700 md:h-10 md:w-10">
@@ -33,61 +37,43 @@
             >
                 <a
                     data-nav-key="beranda"
-                    href="{{ route('home') }}"
-                    class="{{ request()->routeIs('home') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
+                    href="{{ localized_route('home') }}"
+                    class="{{ request()->routeIs('home', 'en.home') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
                 >
-                    Beranda
+                    {{ $isEnglish ? 'Home' : 'Beranda' }}
                 </a>
 
                 <a
                     data-nav-key="armada"
-                    href="{{ url('/armada') }}"
-                    class="{{ request()->is('armada*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
+                    href="{{ localized_route('armada') }}"
+                    class="{{ request()->is('armada*', 'en/armada*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
                 >
-                    Armada
+                    {{ $isEnglish ? 'Vehicles' : 'Armada' }}
                 </a>
 
                 <a
                     data-nav-key="paket"
-                    href="{{ url('/paket-wisata') }}"
-                    class="{{ request()->is('paket-wisata*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
+                    href="{{ localized_route('packages.index') }}"
+                    class="{{ request()->is('paket-wisata*', 'en/paket-wisata*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
                 >
-                    Paket Wisata
+                    {{ $isEnglish ? 'Tour Packages' : 'Paket Wisata' }}
                 </a>
 
                 <a
                     data-nav-key="booking"
-                    href="{{ url('/riwayat-transaksi') }}"
-                    class="{{ request()->is('riwayat-transaksi*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
+                    href="{{ localized_route('customer.bookings.index') }}"
+                    class="{{ request()->is('riwayat-transaksi*', 'en/riwayat-transaksi*') ? 'bg-teal-700 text-white' : 'text-slate-600 hover:bg-teal-700 hover:text-white' }} block rounded-full px-4 py-3 text-sm font-semibold no-underline transition-colors lg:whitespace-nowrap lg:px-3 lg:py-2.5"
                 >
-                    Riwayat Transaksi
+                    {{ $isEnglish ? 'Transaction History' : 'Riwayat Transaksi' }}
                 </a>
 
                 {{-- PILIH BAHASA KHUSUS MOBILE --}}
                 <div class="mt-2 border-t border-slate-200 pt-3 lg:hidden">
                     <p class="mb-2 px-1 text-xs font-semibold text-slate-500">
-                        Pilih Bahasa / Language
+                        {{ $isEnglish ? 'Choose Language' : 'Pilih Bahasa' }}
                     </p>
 
-                    <div class="flex gap-2">
-                        <button
-                            type="button"
-                            data-lang="id"
-                            aria-pressed="true"
-                            class="rounded-full border border-teal-100 bg-teal-50 px-4 py-2 text-xs font-semibold text-teal-700"
-                        >
-                            ID - Indonesia
-                        </button>
-
-                        <button
-                            type="button"
-                            data-lang="en"
-                            aria-pressed="false"
-                            class="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-500"
-                        >
-                            EN - English
-                        </button>
-                    </div>
+                    @include('components.language-switcher')
                 </div>
 
                 {{-- WHATSAPP CS KHUSUS MOBILE --}}
@@ -102,7 +88,7 @@
                     </a>
                 @else
                     <a
-                        href="{{ route('home') }}#kontak"
+                        href="{{ localized_route('home') }}#kontak"
                         class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-green-500 px-4 py-3 text-sm font-bold text-white no-underline transition hover:bg-green-600 lg:hidden"
                     >
                         WhatsApp Customer Service
@@ -124,7 +110,7 @@
                                     <circle cx="12" cy="8" r="4"/>
                                     <path d="M5 21v-2a7 7 0 0 1 14 0v2"/>
                                 </svg>
-                                Profile
+                                {{ $isEnglish ? 'Profile' : 'Profil' }}
                             </span>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path d="m6 9 6 6 6-6"/>
@@ -137,34 +123,17 @@
                     </div>
                 @else
                     <a
-                        href="{{ route('login') }}"
+                        href="{{ localized_route('login') }}"
                         class="mt-2 inline-flex w-full items-center justify-center rounded-xl bg-teal-700 px-4 py-3 text-sm font-semibold text-white no-underline lg:hidden"
                     >
-                        Login / Masuk
+                        {{ $isEnglish ? 'Login / Sign In' : 'Login / Masuk' }}
                     </a>
                 @endauth
             </div>
 
             {{-- AKSI DI SISI KANAN (Hanya Desktop) --}}
             <div class="hidden shrink-0 items-center gap-2 lg:flex">
-                <div class="hidden items-center gap-1 xl:flex" aria-label="Pilih bahasa">
-                    <button
-                        type="button"
-                        data-lang="id"
-                        aria-pressed="true"
-                        class="rounded-full border border-teal-100 bg-teal-50 px-2 py-1 text-xs font-semibold text-teal-700"
-                    >
-                        ID
-                    </button>
-                    <button
-                        type="button"
-                        data-lang="en"
-                        aria-pressed="false"
-                        class="rounded-full border border-slate-200 bg-white px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-teal-50 hover:text-teal-700"
-                    >
-                        EN
-                    </button>
-                </div>
+                @include('components.language-switcher', ['compact' => true])
 
                 @if (!empty($whatsappUrl))
                     <a
@@ -180,7 +149,7 @@
                     </a>
                 @else
                     <a
-                        href="{{ route('home') }}#kontak"
+                        href="{{ localized_route('home') }}#kontak"
                         class="inline-flex items-center whitespace-nowrap rounded-full bg-green-500 px-3 py-2 text-xs font-bold text-white no-underline md:px-4 md:py-3"
                     >
                         WhatsApp CS
@@ -201,7 +170,7 @@
                                 <circle cx="12" cy="8" r="4"/>
                                 <path d="M5 21v-2a7 7 0 0 1 14 0v2"/>
                             </svg>
-                            Profile
+                            {{ $isEnglish ? 'Profile' : 'Profil' }}
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                                 <path d="m6 9 6 6 6-6"/>
                             </svg>
@@ -213,11 +182,11 @@
                     </div>
                 @else
                     <a
-                        href="{{ route('login') }}"
+                        href="{{ localized_route('login') }}"
                         data-i18n="login"
                         class="hidden items-center whitespace-nowrap rounded-full bg-teal-700 px-4 py-2.5 text-xs font-bold text-white no-underline transition hover:bg-teal-800 lg:inline-flex"
                     >
-                        Login / Masuk
+                        {{ $isEnglish ? 'Login / Sign In' : 'Login / Masuk' }}
                     </a>
                 @endauth
             </div>
@@ -226,7 +195,7 @@
             <button
                 id="menuToggle"
                 type="button"
-                aria-label="Buka navigasi"
+                aria-label="{{ $isEnglish ? 'Open navigation' : 'Buka navigasi' }}"
                 aria-expanded="false"
                 aria-controls="navLinks"
                 class="grid h-9 w-9 shrink-0 place-items-center rounded-full border-0 bg-teal-700 text-white lg:hidden"
@@ -241,6 +210,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const isEnglish = @json($isEnglish);
     const mobileBreakpoint = 1024;
     const menuToggle = document.getElementById('menuToggle');
     const navLinks = document.getElementById('navLinks');
@@ -282,7 +252,9 @@ document.addEventListener('DOMContentLoaded', function () {
         navLinks.classList.toggle('hidden', !open);
         navLinks.classList.toggle('flex', open);
         menuToggle.setAttribute('aria-expanded', String(open));
-        menuToggle.setAttribute('aria-label', open ? 'Tutup navigasi' : 'Buka navigasi');
+        menuToggle.setAttribute('aria-label', open
+            ? (isEnglish ? 'Close navigation' : 'Tutup navigasi')
+            : (isEnglish ? 'Open navigation' : 'Buka navigasi'));
     }
 
     if (menuToggle && navLinks) {
@@ -304,65 +276,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 navLinks.classList.remove('hidden');
                 navLinks.classList.add('flex');
                 menuToggle.setAttribute('aria-expanded', 'false');
-                menuToggle.setAttribute('aria-label', 'Buka navigasi');
+                menuToggle.setAttribute('aria-label', isEnglish ? 'Open navigation' : 'Buka navigasi');
             } else {
                 setMobileMenu(false);
             }
         });
     }
 
-    // 3. Translation Dictionary & Logic
-    const translations = {
-        id: {
-            beranda: 'Beranda',
-            armada: 'Armada',
-            paket: 'Paket Wisata',
-            booking: 'Riwayat Transaksi',
-            login: 'Login / Masuk'
-        },
-        en: {
-            beranda: 'Home',
-            armada: 'Vehicles',
-            paket: 'Tour Packages',
-            booking: 'How to Book',
-            login: 'Login / Sign In'
-        }
-    };
-
-    document.querySelectorAll('[data-lang]').forEach(function (button) {
-        button.addEventListener('click', function () {
-            const language = button.dataset.lang;
-            const dictionary = translations[language];
-
-            if (!dictionary) return;
-
-            document.documentElement.lang = language;
-
-            document.querySelectorAll('[data-lang]').forEach(function (languageButton) {
-                const selected = languageButton === button;
-
-                languageButton.classList.toggle('border-teal-100', selected);
-                languageButton.classList.toggle('bg-teal-50', selected);
-                languageButton.classList.toggle('text-teal-700', selected);
-                languageButton.classList.toggle('border-slate-200', !selected);
-                languageButton.classList.toggle('bg-white', !selected);
-                languageButton.classList.toggle('text-slate-500', !selected);
-                languageButton.setAttribute('aria-pressed', String(selected));
-            });
-
-            document.querySelectorAll('[data-nav-key]').forEach(function (link) {
-                const key = link.dataset.navKey;
-                if (dictionary[key]) link.textContent = dictionary[key];
-            });
-
-            document.querySelectorAll('[data-i18n]').forEach(function (element) {
-                const key = element.dataset.i18n;
-                if (dictionary[key]) element.textContent = dictionary[key];
-            });
-        });
-    });
-
-    // 4. Profile Dropdown Logic
+    // 3. Profile Dropdown Logic
     const profileToggles = document.querySelectorAll('[data-profile-toggle]');
 
     function closeProfileMenus(exceptToggle) {

@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Route;
 | Customer Frontend Routes
 |--------------------------------------------------------------------------
 */
+$customerRoutes = function () {
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // Paket Wisata & Detail
@@ -56,9 +57,6 @@ Route::get('/paket-wisata/{slug}', [PaketWisataController::class, 'packageDetail
 
 Route::get('/paket-wisata/{slug}/formulir', [PaketWisataController::class, 'bookingForm'])
     ->name('booking.form');
-
-Route::post('/paket-wisata/{package}/review', [PaketWisataController::class, 'storeReview'])
-    ->name('packages.review.store');
 
 // Live Check Trip Quota
 Route::get('/trips/{trip}/quota-check', [PaketWisataController::class, 'checkTripQuota'])
@@ -113,10 +111,32 @@ Route::middleware('auth')->prefix('riwayat-transaksi')->name('customer.bookings.
 
 /*
 |--------------------------------------------------------------------------
+| Customer Authentication Routes
+|--------------------------------------------------------------------------
+*/
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:10,1')
+        ->name('login.store');
+
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])
+        ->middleware('throttle:5,1')
+        ->name('register.store');
+});
+
+Route::post('/logout', [AuthController::class, 'logout'])
+    ->middleware('auth')
+    ->name('logout');
+};
+
+/*
+|--------------------------------------------------------------------------
 | Booking & Pembayaran Xendit (Protected by Auth)
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')->group(function () {
+$bookingPaymentRoutes = function () {
     Route::post('/booking/store', [
         PaketWisataController::class,
         'storeBooking',
@@ -173,28 +193,21 @@ Route::middleware('auth')->group(function () {
         PembayaranController::class,
         'failure',
     ])->name('pembayaran.failure');
-});
+};
 
-/*
-|--------------------------------------------------------------------------
-| Customer Authentication Routes
-|--------------------------------------------------------------------------
-*/
-Route::middleware('guest')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])
-        ->middleware('throttle:10,1')
-        ->name('login.store');
+Route::middleware('auth')->group($bookingPaymentRoutes);
 
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])
-        ->middleware('throttle:5,1')
-        ->name('register.store');
-});
+Route::prefix('en')
+    ->name('en.')
+    ->middleware(['setlocale:en', 'auth'])
+    ->group($bookingPaymentRoutes);
 
-Route::post('/logout', [AuthController::class, 'logout'])
-    ->middleware('auth')
-    ->name('logout');
+Route::middleware('setlocale:id')->group($customerRoutes);
+
+Route::prefix('en')
+    ->name('en.')
+    ->middleware('setlocale:en')
+    ->group($customerRoutes);
 
 /*
 |--------------------------------------------------------------------------

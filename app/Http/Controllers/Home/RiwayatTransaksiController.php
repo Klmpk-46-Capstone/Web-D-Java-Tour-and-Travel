@@ -5,11 +5,10 @@ namespace App\Http\Controllers\Home;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Refund;
+use App\Models\Review;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class RiwayatTransaksiController extends Controller
@@ -25,6 +24,7 @@ class RiwayatTransaksiController extends Controller
             ->with([
                 'package',
                 'trip',
+                'review',
                 'transactions' => fn ($transactionQuery) => $transactionQuery
                     ->latest('id'),
                 'refund',
@@ -108,7 +108,7 @@ class RiwayatTransaksiController extends Controller
                 })->count(),
         ];
 
-        return view('pages.dashboard.riwayat_transaksi.index', [
+        return view($this->dashboardView('riwayat_transaksi.index'), [
             'bookings' => $bookings,
             'counts' => $counts,
             'activeStatus' => $status,
@@ -207,15 +207,13 @@ class RiwayatTransaksiController extends Controller
 
         $latestTransaction = $booking->transactions->first();
 
-        $hasReviewed = $booking->package
-            ? $booking->package->reviews()
-                ->where('user_id', $user->id)
-                ->where('booking_id', $booking->id)
-                ->exists()
-            : false;
+        $hasReviewed = Review::query()
+            ->where('booking_id', $booking->id)
+            ->where('user_id', $user->id)
+            ->exists();
 
         return view(
-            'pages.dashboard.riwayat_transaksi.detail',
+            $this->dashboardView('riwayat_transaksi.detail'),
             compact(
                 'booking',
                 'paidAmount',
@@ -235,98 +233,6 @@ class RiwayatTransaksiController extends Controller
                 'hasReviewed'
             )
         );
-    }
-
-    /**
-     * Menyimpan rating hanya untuk booking yang sudah lunas.
-     */
-    public function storeRating(
-        Request $request,
-        string $bookingCode
-    ): RedirectResponse {
-        $validated = $request->validate([
-            'rating' => ['required', 'integer', 'between:1,5'],
-            'comment' => ['required', 'string', 'min:5', 'max:1000'],
-        ]);
-
-        $user = $request->user();
-
-        DB::transaction(function () use (
-            $bookingCode,
-            $user,
-            $validated
-        ): void {
-            $booking = Booking::query()
-                ->with(['transactions', 'package'])
-                ->where('booking_code', $bookingCode)
-                ->where(function ($query) use ($user) {
-                    $query->where('user_id', $user->id)
-                        ->orWhere(function ($legacy) use ($user) {
-                            $legacy->whereNull('user_id')
-                                ->where('customer_email', $user->email);
-                        });
-                })
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $paidStatuses = [
-                'success',
-                'paid',
-                'settled',
-                'settlement',
-                'completed',
-                'capture',
-            ];
-
-            $paidAmount = (int) $booking->transactions
-                ->filter(fn ($transaction) => in_array(
-                    strtolower((string) $transaction->status),
-                    $paidStatuses,
-                    true
-                ))
-                ->sum('amount');
-
-            if (
-                (int) $booking->total_price <= 0
-                || $paidAmount < (int) $booking->total_price
-                || in_array(
-                    strtolower((string) $booking->booking_status),
-                    ['cancelled', 'canceled', 'refund_requested'],
-                    true
-                )
-            ) {
-                throw ValidationException::withMessages([
-                    'rating' => 'Rating hanya dapat diberikan untuk booking yang sudah lunas dan tidak dibatalkan.',
-                ]);
-            }
-
-            $alreadyReviewed = \App\Models\Review::query()
-                ->where('booking_id', $booking->id)
-                ->exists();
-
-            if ($alreadyReviewed) {
-                throw ValidationException::withMessages([
-                    'rating' => 'Booking ini sudah memiliki rating.',
-                ]);
-            }
-
-            \App\Models\Review::query()->create([
-                'booking_id' => $booking->id,
-                'package_id' => $booking->package_id,
-                'user_id' => $user->id,
-                'customer_name' => $booking->customer_name,
-                'rating' => $validated['rating'],
-                'comment' => $validated['comment'],
-                'is_approved' => true,
-                'is_hidden' => false,
-            ]);
-        });
-
-        return redirect()
-            ->route('customer.bookings.detail', [
-                'bookingCode' => $bookingCode,
-            ])
-            ->with('success', 'Terima kasih! Rating kamu berhasil dikirim.');
     }
 
     /**
@@ -361,7 +267,9 @@ class RiwayatTransaksiController extends Controller
         ], true)) {
             return back()->with(
                 'warning',
-                'Booking ini tidak dapat diajukan refund karena statusnya saat ini.'
+                app()->getLocale() === 'en'
+                    ? 'A refund cannot be requested for this booking in its current status.'
+                    : 'Booking ini tidak dapat diajukan refund karena statusnya saat ini.'
             );
         }
 
@@ -390,7 +298,9 @@ class RiwayatTransaksiController extends Controller
 
         return back()->with(
             'success',
-            'Permintaan pembatalan dan refund berhasil diproses jika belum ada pengajuan aktif.'
+            app()->getLocale() === 'en'
+                ? 'The cancellation and refund request has been processed if no active request existed.'
+                : 'Permintaan pembatalan dan refund berhasil diproses jika belum ada pengajuan aktif.'
         );
     }
 }

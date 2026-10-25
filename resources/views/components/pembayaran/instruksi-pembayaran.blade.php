@@ -1,6 +1,8 @@
 {{-- resources/views/components/pembayaran/instruksi-pembayaran.blade.php --}}
 
 @php
+    $isEnglish = app()->getLocale() === 'en';
+
     /*
     |----------------------------------------------------------
     | Data Tampilan Pembayaran
@@ -152,7 +154,7 @@
             'label' => ucwords(strtolower(str_replace(
                 '_',
                 ' ',
-                $action['descriptor'] ?? 'Instruksi Pembayaran'
+                $action['descriptor'] ?? 'Payment Instruction'
             ))),
             'value' => $action['value'] ?? '',
         ])
@@ -160,13 +162,13 @@
 @endphp
 
 <!DOCTYPE html>
-<html lang="id">
+<html lang="{{ $isEnglish ? 'en' : 'id' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Instruksi Pembayaran | D'Java Tour &amp; Travel</title>
+    <title>{{ $isEnglish ? 'Payment Instructions' : 'Instruksi Pembayaran' }} | D'Java Tour &amp; Travel</title>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -181,20 +183,20 @@
 
         {{-- BREADCRUMB --}}
         <nav aria-label="Breadcrumb" class="mb-6 text-sm text-slate-500">
-            <a href="{{ route('home') }}" class="hover:text-teal-700">
-                Beranda
+            <a href="{{ localized_route('home') }}" class="hover:text-teal-700">
+                {{ $isEnglish ? 'Home' : 'Beranda' }}
             </a>
 
             <span class="mx-2">›</span>
 
-            <a href="{{ route('customer.bookings.index') }}" class="hover:text-teal-700">
-                Riwayat Transaksi
+            <a href="{{ localized_route('customer.bookings.index') }}" class="hover:text-teal-700">
+                {{ $isEnglish ? 'Transaction History' : 'Riwayat Transaksi' }}
             </a>
 
             <span class="mx-2">›</span>
 
             <span class="font-semibold text-slate-900">
-                Instruksi Pembayaran
+                {{ $isEnglish ? 'Payment Instructions' : 'Instruksi Pembayaran' }}
             </span>
         </nav>
 
@@ -213,7 +215,7 @@
 
         @if ($errors->any())
             <div class="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-                <p class="font-bold">Terjadi kesalahan:</p>
+                <p class="font-bold">{{ $isEnglish ? 'An error occurred:' : 'Terjadi kesalahan:' }}</p>
                 <ul class="mt-2 list-inside list-disc">
                     @foreach ($errors->all() as $error)
                         <li>{{ $error }}</li>
@@ -230,11 +232,11 @@
                 <div class="flex items-start justify-between gap-4">
                     <div>
                         <h1 class="mt-3 text-2xl font-extrabold text-slate-900 sm:text-3xl">
-                            Instruksi Pembayaran
+                            {{ $isEnglish ? 'Payment Instructions' : 'Instruksi Pembayaran' }}
                         </h1>
 
                         <p class="mt-2 text-sm text-slate-500">
-                            Kode booking:
+                            {{ $isEnglish ? 'Booking code:' : 'Kode booking:' }}
                             <span class="font-semibold text-slate-800">
                                 {{ $bookingCode }}
                             </span>
@@ -261,21 +263,21 @@
                         <div>
                             <p class="font-bold {{ $isPaid ? 'text-green-800' : ($isExpired ? 'text-red-800' : 'text-blue-800') }}">
                                 @if ($isPaid)
-                                    Pembayaran Berhasil
+                                    {{ $isEnglish ? 'Payment Successful' : 'Pembayaran Berhasil' }}
                                 @elseif ($isExpired)
-                                    Waktu Pembayaran Berakhir
+                                    {{ $isEnglish ? 'Payment Time Expired' : 'Waktu Pembayaran Berakhir' }}
                                 @else
-                                    Menunggu Pembayaran
+                                    {{ $isEnglish ? 'Awaiting Payment' : 'Menunggu Pembayaran' }}
                                 @endif
                             </p>
 
                             <p class="mt-1 text-sm leading-6 {{ $isPaid ? 'text-green-700' : ($isExpired ? 'text-red-700' : 'text-blue-700') }}">
                                 @if ($isPaid)
-                                    Pembayaran Anda telah dikonfirmasi.
+                                    {{ $isEnglish ? 'Your payment has been confirmed.' : 'Pembayaran Anda telah dikonfirmasi.' }}
                                 @elseif ($isExpired)
-                                    Transaksi ini sudah kedaluwarsa. Silakan periksa status booking Anda.
+                                    {{ $isEnglish ? 'This transaction has expired. Please check your booking status.' : 'Transaksi ini sudah kedaluwarsa. Silakan periksa status booking Anda.' }}
                                 @else
-                                    Silakan selesaikan pembayaran sebelum batas waktu berakhir.
+                                    {{ $isEnglish ? 'Please complete the payment before the deadline.' : 'Silakan selesaikan pembayaran sebelum batas waktu berakhir.' }}
                                 @endif
                             </p>
                         </div>
@@ -285,17 +287,17 @@
                 {{-- NOMINAL --}}
                 <div class="rounded-xl bg-slate-50 p-5">
                     <p class="text-sm font-medium text-slate-500">
-                        Nominal yang harus dibayar
+                        {{ $isEnglish ? 'Amount to pay' : 'Nominal yang harus dibayar' }}
                     </p>
 
                     <p class="mt-2 text-3xl font-extrabold tracking-tight text-teal-700 sm:text-4xl">
-                        Rp {{ number_format((float) $paymentAmount, 0, ',', '.') }}
+                        Rp {{ $isEnglish ? number_format((float) $paymentAmount, 0, '.', ',') : number_format((float) $paymentAmount, 0, ',', '.') }}
                     </p>
 
                     <div class="mt-5 grid gap-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
                         <div>
                             <p class="text-sm text-slate-500">
-                                Metode pembayaran
+                                {{ $isEnglish ? 'Payment method' : 'Metode pembayaran' }}
                             </p>
 
                             <p class="mt-1 font-bold text-slate-900">
@@ -305,11 +307,11 @@
 
                         <div>
                             <p class="text-sm text-slate-500">
-                                Status transaksi
+                                {{ $isEnglish ? 'Transaction status' : 'Status transaksi' }}
                             </p>
 
                             <p class="mt-1 font-bold {{ $isPaid ? 'text-green-700' : ($isExpired ? 'text-red-700' : 'text-amber-700') }}">
-                                {{ $isPaid ? 'Berhasil' : ($isExpired ? 'Kedaluwarsa' : 'Menunggu Pembayaran') }}
+                                {{ $isPaid ? ($isEnglish ? 'Successful' : 'Berhasil') : ($isExpired ? ($isEnglish ? 'Expired' : 'Kedaluwarsa') : ($isEnglish ? 'Awaiting Payment' : 'Menunggu Pembayaran')) }}
                             </p>
                         </div>
                     </div>
@@ -324,10 +326,12 @@
                     && !$isExpired
                 )
                     <div class="rounded-xl border border-teal-200 bg-teal-50 p-5 text-center">
-                        <h2 class="font-bold text-teal-900">Scan QRIS untuk Membayar</h2>
+                        <h2 class="font-bold text-teal-900">{{ $isEnglish ? 'Scan QRIS to Pay' : 'Scan QRIS untuk Membayar' }}</h2>
 
                         <p class="mt-2 text-sm text-teal-800">
-                            Buka aplikasi mobile banking atau e-wallet, lalu pindai kode QR berikut.
+                            {{ $isEnglish
+                                ? 'Open your mobile banking or e-wallet app, then scan the QR code below.'
+                                : 'Buka aplikasi mobile banking atau e-wallet, lalu pindai kode QR berikut.' }}
                         </p>
 
                         <div class="mt-4 flex justify-center">
@@ -338,7 +342,9 @@
                         </div>
 
                         <p class="mt-3 text-xs text-slate-600">
-                            Pastikan nama merchant dan nominal pembayaran sesuai sebelum mengonfirmasi.
+                            {{ $isEnglish
+                                ? 'Make sure the merchant name and payment amount are correct before confirming.'
+                                : 'Pastikan nama merchant dan nominal pembayaran sesuai sebelum mengonfirmasi.' }}
                         </p>
                     </div>
                 @endif
@@ -347,7 +353,7 @@
                 @if ($paymentDetails->isNotEmpty())
                     <div class="space-y-3 rounded-xl border border-teal-200 bg-teal-50 p-5">
                         <h2 class="font-bold text-teal-900">
-                            Detail Pembayaran
+                            {{ $isEnglish ? 'Payment Details' : 'Detail Pembayaran' }}
                         </h2>
 
                         @foreach ($paymentDetails as $detail)
@@ -371,7 +377,7 @@
                          class="rounded-xl border border-amber-200 bg-amber-50 p-5">
 
                         <p class="text-sm font-semibold text-amber-900">
-                            Selesaikan pembayaran sebelum
+                            {{ $isEnglish ? 'Complete payment before' : 'Selesaikan pembayaran sebelum' }}
                         </p>
 
                         <p class="mt-1 text-sm text-amber-800">
@@ -387,21 +393,23 @@
                                 <p id="countdown"
                                    class="text-2xl font-extrabold tabular-nums text-amber-900 sm:text-3xl"
                                    aria-live="polite">
-                                    Menghitung waktu...
+                                    {{ $isEnglish ? 'Calculating time...' : 'Menghitung waktu...' }}
                                 </p>
 
                                 <p class="mt-1 text-xs text-amber-800">
-                                    Sisa waktu pembayaran
+                                    {{ $isEnglish ? 'Remaining payment time' : 'Sisa waktu pembayaran' }}
                                 </p>
                             </div>
                         </div>
                     </div>
                 @elseif (!$isPaid && !$isExpired)
                     <div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-                        <p class="font-bold">Perhatikan batas waktu pembayaran</p>
+                        <p class="font-bold">{{ $isEnglish ? 'Pay attention to the payment deadline' : 'Perhatikan batas waktu pembayaran' }}</p>
 
                         <p class="mt-1">
-                            Batas waktu pembayaran belum tersedia. Silakan lanjutkan pembayaran atau periksa kembali status transaksi.
+                            {{ $isEnglish
+                                ? 'The payment deadline is not available yet. Please continue the payment or check the transaction status again.'
+                                : 'Batas waktu pembayaran belum tersedia. Silakan lanjutkan pembayaran atau periksa kembali status transaksi.' }}
                         </p>
                     </div>
                 @endif
@@ -412,45 +420,49 @@
                         <a href="{{ $paymentUrl }}"
                            id="continue-payment-button"
                            class="flex w-full items-center justify-center rounded-xl bg-green-600 px-5 py-4 text-center font-bold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
-                            Lanjutkan Pembayaran
+                            {{ $isEnglish ? 'Continue Payment' : 'Lanjutkan Pembayaran' }}
                             <span class="ml-2">→</span>
                         </a>
                     @else
                         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
-                            Instruksi pembayaran belum tersedia. Silakan tekan tombol cek status atau hubungi layanan pelanggan.
+                            {{ $isEnglish
+                                ? 'Payment instructions are not available yet. Please press the check status button or contact customer service.'
+                                : 'Instruksi pembayaran belum tersedia. Silakan tekan tombol cek status atau hubungi layanan pelanggan.' }}
                         </div>
                     @endif
 
                     <p class="text-sm leading-6 text-slate-500">
-                        Pastikan nominal dan metode pembayaran sudah sesuai. Setelah pembayaran berhasil, status transaksi akan diperbarui.
+                        {{ $isEnglish
+                            ? 'Make sure the amount and payment method are correct. Once the payment succeeds, the transaction status will be updated.'
+                            : 'Pastikan nominal dan metode pembayaran sudah sesuai. Setelah pembayaran berhasil, status transaksi akan diperbarui.' }}
                     </p>
                 @endif
 
                 {{-- CEK STATUS --}}
-                <form method="POST" action="{{ route('pembayaran.cek-status', ['bookingCode' => $bookingCode]) }}">
+                <form method="POST" action="{{ localized_route('pembayaran.cek-status', ['bookingCode' => $bookingCode]) }}">
                     @csrf
 
                     <input type="hidden" name="transaction_id" value="{{ $transaction->id ?? '' }}">
 
                     <button type="submit"
                             class="w-full rounded-xl border border-teal-600 px-5 py-3.5 font-bold text-teal-700 transition hover:bg-teal-50 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2">
-                        Cek Status Pembayaran
+                        {{ $isEnglish ? 'Check Payment Status' : 'Cek Status Pembayaran' }}
                     </button>
                 </form>
 
                 {{-- GANTI METODE PEMBAYARAN --}}
                 @if (!$isPaid)
-                    <a href="{{ route('pembayaran.mulai', ['bookingCode' => $bookingCode, 'ganti_metode' => 1]) }}"
+                    <a href="{{ localized_route('pembayaran.mulai', ['bookingCode' => $bookingCode, 'ganti_metode' => 1]) }}"
                        class="flex w-full items-center justify-center rounded-xl border border-slate-200 px-5 py-3.5 text-center font-semibold text-slate-700 transition hover:border-teal-500 hover:bg-teal-50 hover:text-teal-700">
                         <span class="mr-2">←</span>
-                        Ganti Metode Pembayaran
+                        {{ $isEnglish ? 'Change Payment Method' : 'Ganti Metode Pembayaran' }}
                     </a>
                 @endif
 
                 <div class="border-t border-slate-100 pt-5 text-center">
-                    <a href="{{ route('customer.bookings.index') }}"
+                    <a href="{{ localized_route('customer.bookings.index') }}"
                        class="text-sm font-medium text-slate-500 underline underline-offset-4 hover:text-teal-700">
-                        Kembali ke Riwayat Transaksi
+                        {{ $isEnglish ? 'Back to Transaction History' : 'Kembali ke Riwayat Transaksi' }}
                     </a>
                 </div>
             </div>
@@ -459,14 +471,14 @@
         {{-- INFORMASI TAMBAHAN --}}
         <div class="mt-6 rounded-xl border border-slate-200 bg-white p-5">
             <h2 class="font-bold text-slate-900">
-                Informasi Pembayaran
+                {{ $isEnglish ? 'Payment Information' : 'Informasi Pembayaran' }}
             </h2>
 
             <ul class="mt-3 list-inside list-disc space-y-2 text-sm leading-6 text-slate-600">
-                <li>Pastikan Anda membayar sesuai nominal yang tertera.</li>
-                <li>Simpan bukti pembayaran jika diperlukan.</li>
-                <li>Jangan melakukan pembayaran ulang jika transaksi sudah berhasil.</li>
-                <li>Jika menemui kendala, hubungi layanan pelanggan.</li>
+                <li>{{ $isEnglish ? 'Make sure you pay the exact amount shown.' : 'Pastikan Anda membayar sesuai nominal yang tertera.' }}</li>
+                <li>{{ $isEnglish ? 'Keep the payment receipt in case it is needed.' : 'Simpan bukti pembayaran jika diperlukan.' }}</li>
+                <li>{{ $isEnglish ? 'Do not pay again if the transaction has already succeeded.' : 'Jangan melakukan pembayaran ulang jika transaksi sudah berhasil.' }}</li>
+                <li>{{ $isEnglish ? 'Contact customer service if you encounter any issues.' : 'Jika menemui kendala, hubungi layanan pelanggan.' }}</li>
             </ul>
         </div>
     </main>
@@ -501,7 +513,7 @@
 
                         const message = document.createElement('p');
                         message.className = 'mt-3 text-sm font-semibold text-red-700';
-                        message.textContent = 'Waktu pembayaran telah berakhir. Silakan cek status transaksi Anda.';
+                        message.textContent = '{{ $isEnglish ? 'Payment time has expired. Please check your transaction status.' : 'Waktu pembayaran telah berakhir. Silakan cek status transaksi Anda.' }}';
 
                         if (!countdownCard.querySelector('[data-expired-message]')) {
                             message.dataset.expiredMessage = 'true';
@@ -554,7 +566,7 @@
                 const qrString = element.dataset.qrString;
 
                 if (!qrString || ['some-random-qr-string', 'test-qr-string'].includes(qrString)) {
-                    element.textContent = 'Kode QRIS asli belum tersedia.';
+                    element.textContent = '{{ $isEnglish ? 'The original QRIS code is not available yet.' : 'Kode QRIS asli belum tersedia.' }}';
                     return;
                 }
 
