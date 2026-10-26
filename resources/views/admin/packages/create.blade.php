@@ -24,7 +24,7 @@
     </div>
 
     {{-- FORM CARD --}}
-    <form action="{{ route('admin.packages.store') }}" method="POST" class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-2xs space-y-6">
+    <form action="{{ route('admin.packages.store') }}" method="POST" enctype="multipart/form-data" class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-2xs space-y-6">
         @csrf
 
         {{-- BASIC INFORMATION --}}
@@ -69,10 +69,7 @@
                     <input type="text" name="badge" value="{{ old('badge', 'OPEN TRIP REGULER') }}" placeholder="Cth: BAHARI OPEN TRIP / BEST SELLER" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">URL Foto Sampul</label>
-                    <input type="url" name="image_url" value="{{ old('image_url', 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=1200&q=80') }}" placeholder="https://images.unsplash.com/..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
-                </div>
+                @include('admin.packages._cover-image')
 
                 <div class="md:col-span-2">
                     <label class="block text-xs font-bold text-slate-700 mb-1">Deskripsi Paket Wisata</label>

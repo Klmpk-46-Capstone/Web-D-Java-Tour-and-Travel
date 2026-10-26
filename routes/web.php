@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\AdminRefundController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\AdminTripController;
+use App\Http\Controllers\Admin\AdminVehicleController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DesignSystemController;
 use App\Http\Controllers\Home\ArmadaController;
@@ -240,10 +241,19 @@ Route::middleware(['auth', 'admin', 'setlocale:id'])->prefix('admin')->name('adm
     Route::post('/packages/{package}/toggle-featured', [AdminPackageController::class, 'toggleFeatured'])->name('packages.toggle-featured');
     Route::post('/packages/{package}/toggle-status', [AdminPackageController::class, 'toggleStatus'])->name('packages.toggle-status');
 
-    // 3. Rekomendasi Utama (Featured)
+    // 3. Manajemen Armada
+    Route::get('/armada', [AdminVehicleController::class, 'index'])->name('armada.index');
+    Route::get('/armada/create', [AdminVehicleController::class, 'create'])->name('armada.create');
+    Route::post('/armada', [AdminVehicleController::class, 'store'])->name('armada.store');
+    Route::get('/armada/{vehicle}/edit', [AdminVehicleController::class, 'edit'])->name('armada.edit');
+    Route::put('/armada/{vehicle}', [AdminVehicleController::class, 'update'])->name('armada.update');
+    Route::delete('/armada/{vehicle}', [AdminVehicleController::class, 'destroy'])->name('armada.destroy');
+    Route::post('/armada/{vehicle}/toggle-status', [AdminVehicleController::class, 'toggleStatus'])->name('armada.toggle-status');
+
+    // 4. Rekomendasi Utama (Featured)
     Route::get('/featured-packages', [AdminPackageController::class, 'featured'])->name('packages.featured');
 
-    // 4. Jadwal & Detail Trip
+    // 5. Jadwal & Detail Trip
     Route::get('/trips', [AdminTripController::class, 'index'])->name('trips.index');
     Route::post('/trips', [AdminTripController::class, 'store'])->name('trips.store');
     Route::post('/trips/sync', [AdminTripController::class, 'sync'])->name('trips.sync');
@@ -251,16 +261,16 @@ Route::middleware(['auth', 'admin', 'setlocale:id'])->prefix('admin')->name('adm
     Route::put('/trips/{trip}', [AdminTripController::class, 'update'])->name('trips.update');
     Route::delete('/trips/{trip}', [AdminTripController::class, 'destroy'])->name('trips.destroy');
 
-    // 5. Manifes Penumpang
+    // 6. Manifes Penumpang
     Route::get('/manifest', [AdminManifestController::class, 'index'])->name('manifest.index');
     Route::get('/manifest/export', [AdminManifestController::class, 'export'])->name('manifest.export');
     Route::post('/manifest/passengers', [AdminManifestController::class, 'storePassenger'])->name('manifest.passengers.store');
     Route::post('/manifest/{booking}/check-in', [AdminManifestController::class, 'checkIn'])->name('manifest.check-in');
 
-    // 6. Akun Customer
+    // 7. Akun Customer
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
 
-    // 7. Laporan Transaksi & Keuangan
+    // 8. Laporan Transaksi & Keuangan
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/{booking}', [AdminBookingController::class, 'show'])->name('bookings.show');
     Route::get('/reports', [AdminReportController::class, 'index'])->name('reports.index');
@@ -269,12 +279,12 @@ Route::middleware(['auth', 'admin', 'setlocale:id'])->prefix('admin')->name('adm
     Route::post('/reports/reconcile', [AdminReportController::class, 'reconcile'])->name('reports.reconcile');
     Route::get('/reports/detail/{transaction}', [AdminReportController::class, 'show'])->name('reports.show');
 
-    // 8. Refund & Pembatalan
+    // 9. Refund & Pembatalan
     Route::get('/refunds', [AdminRefundController::class, 'index'])->name('refunds.index');
     Route::post('/refunds/{refund}/approve', [AdminRefundController::class, 'approve'])->name('refunds.approve');
     Route::post('/refunds/{refund}/reject', [AdminRefundController::class, 'reject'])->name('refunds.reject');
 
-    // 9. Moderasi Ulasan
+    // 10. Moderasi Ulasan
     Route::get('/reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
     Route::post('/reviews/{review}/toggle-visibility', [AdminReviewController::class, 'toggleVisibility'])->name('reviews.toggle-visibility');
     Route::post('/reviews/{review}/approve', [AdminReviewController::class, 'approve'])->name('reviews.approve');

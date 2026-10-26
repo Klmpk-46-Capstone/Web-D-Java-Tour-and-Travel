@@ -24,6 +24,7 @@ class RiwayatTransaksiController extends Controller
             ->with([
                 'package',
                 'trip',
+                'vehicle',
                 'review',
                 'transactions' => fn ($transactionQuery) => $transactionQuery
                     ->latest('id'),
@@ -129,6 +130,7 @@ class RiwayatTransaksiController extends Controller
             ->with([
                 'package',
                 'trip',
+                'vehicle',
                 'transactions' => fn ($query) => $query->latest('id'),
                 'refund',
             ])

@@ -137,6 +137,15 @@
                             <span>Paket &amp; Itinerary</span>
                         </a>
 
+                        {{-- Armada --}}
+                        <a
+                            href="{{ route('admin.armada.index') }}"
+                            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('admin.armada.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
+                        >
+                            <svg class="w-4 h-4 {{ request()->routeIs('admin.armada.*') ? 'text-teal-700' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 17h14M6 17l-1-4 2-5h10l2 5-1 4M6 17v2m12-2v2M7 13h10"/></svg>
+                            <span>Armada</span>
+                        </a>
+
                         {{-- Rekomendasi Utama (Featured) --}}
                         <a 
                             href="{{ route('admin.packages.featured') }}" 

@@ -174,6 +174,11 @@ class Vehicle extends Model
         return $options;
     }
 
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class)

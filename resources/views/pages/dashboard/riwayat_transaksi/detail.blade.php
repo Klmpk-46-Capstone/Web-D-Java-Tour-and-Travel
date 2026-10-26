@@ -16,13 +16,14 @@
 @php
     $package = $booking->package;
     $trip = $booking->trip;
+    $vehicle = $booking->vehicle;
     $refund = $booking->refund;
 
     $bookingTitle = $package?->name
         ?? $booking->selected_armada
         ?? 'Reservasi D’Java Tour';
 
-    $imageUrl = $package?->image_url;
+    $imageUrl = $package?->image_url ?? $vehicle?->image_url;
 
     $imageIsSafe = is_string($imageUrl)
         && in_array(parse_url($imageUrl, PHP_URL_SCHEME), ['https', 'http'], true);

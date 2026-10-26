@@ -1,6 +1,7 @@
 @php
     $package = $booking->package;
     $trip = $booking->trip;
+    $vehicle = $booking->vehicle;
     $latestTransaction = $booking->transactions->first();
 
     $paymentStatus = strtolower((string) $booking->payment_status);
@@ -101,7 +102,7 @@
         ?? $booking->selected_armada
         ?? 'Reservasi D’Java Tour';
 
-    $imageUrl = $package?->image_url;
+    $imageUrl = $package?->image_url ?? $vehicle?->image_url;
     $imageUrlIsSafe = $imageUrl && in_array(
         parse_url($imageUrl, PHP_URL_SCHEME),
         ['https', 'http'],

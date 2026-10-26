@@ -8,6 +8,7 @@ use App\Models\Package;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -56,6 +57,7 @@ class AdminPackageController extends Controller
             'price' => ['required', 'integer', 'min:0'],
             'badge' => ['nullable', 'string', 'max:80'],
             'image_url' => ['nullable', 'url'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'description' => ['nullable', 'string'],
             'is_featured' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
@@ -67,6 +69,10 @@ class AdminPackageController extends Controller
         $validated['is_featured'] = $request->boolean('is_featured');
         $validated['is_active'] = $request->has('is_active') ? $request->boolean('is_active') : true;
         $validated['slug'] = Str::slug($validated['name']) . '-' . Str::random(4);
+        unset($validated['image']);
+
+        $uploadedImageUrl = $this->storeUploadedImage($request);
+        $validated['image_url'] = $uploadedImageUrl ?? ($validated['image_url'] ?? null);
 
         $package = Package::create($validated);
 
@@ -101,6 +107,7 @@ class AdminPackageController extends Controller
             'price' => ['required', 'integer', 'min:0'],
             'badge' => ['nullable', 'string', 'max:80'],
             'image_url' => ['nullable', 'url'],
+            'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'description' => ['nullable', 'string'],
             'is_featured' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
@@ -108,6 +115,16 @@ class AdminPackageController extends Controller
 
         $validated['is_featured'] = $request->boolean('is_featured');
         $validated['is_active'] = $request->boolean('is_active');
+        unset($validated['image']);
+
+        $uploadedImageUrl = $this->storeUploadedImage($request);
+        $newImageUrl = $uploadedImageUrl ?? ($validated['image_url'] ?? null);
+
+        if ($newImageUrl !== $package->image_url) {
+            $this->deleteStoredImage($package->image_url);
+        }
+
+        $validated['image_url'] = $newImageUrl;
 
         $package->update($validated);
 
@@ -118,7 +135,11 @@ class AdminPackageController extends Controller
     public function destroy(Package $package): RedirectResponse
     {
         $name = $package->name;
+        $imageUrl = $package->image_url;
+
         $package->delete();
+
+        $this->deleteStoredImage($imageUrl);
 
         return redirect()->route('admin.packages.index')
             ->with('success', "Paket '{$name}' telah dihapus dari sistem.");
@@ -158,5 +179,54 @@ class AdminPackageController extends Controller
         }
 
         return back()->with('success', "Status aktif paket '{$package->name}' diperbarui.");
+    }
+
+    private function storeUploadedImage(Request $request): ?string
+    {
+        if (! $request->hasFile('image')) {
+            return null;
+        }
+
+        $path = $request->file('image')->store('packages', 'public');
+
+        if (! is_string($path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+
+    private function deleteStoredImage(?string $imageUrl): void
+    {
+        if (blank($imageUrl)) {
+            return;
+        }
+
+        $urlPath = parse_url($imageUrl, PHP_URL_PATH);
+
+        if (is_string($urlPath) && Str::startsWith($urlPath, '/storage/')) {
+            $imageHost = parse_url($imageUrl, PHP_URL_HOST);
+            $appHost = parse_url((string) config('app.url'), PHP_URL_HOST);
+
+            if ($imageHost && $appHost && $imageHost !== $appHost) {
+                return;
+            }
+
+            $relativePath = ltrim(Str::after($urlPath, '/storage/'), '/');
+        } elseif (! Str::startsWith($imageUrl, ['http://', 'https://'])) {
+            $relativePath = ltrim($imageUrl, '/');
+        } else {
+            return;
+        }
+
+        if (
+            $relativePath === ''
+            || ! Str::startsWith($relativePath, 'packages/')
+            || Str::contains($relativePath, '..')
+        ) {
+            return;
+        }
+
+        Storage::disk('public')->delete($relativePath);
     }
 }
