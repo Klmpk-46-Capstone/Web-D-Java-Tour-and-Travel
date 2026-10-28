@@ -337,7 +337,8 @@
                         <div class="mt-4 flex justify-center">
                             <div id="qris-code"
                                  class="rounded-xl bg-white p-3"
-                                 data-qr-string="{{ e($qrString) }}">
+                                 data-qr-string="{{ e($qrString) }}"
+                                 data-empty-message="{{ $isEnglish ? 'The original QRIS code is not available yet.' : 'Kode QRIS asli belum tersedia.' }}">
                             </div>
                         </div>
 
@@ -374,6 +375,7 @@
                 @if (!$isPaid && !$isExpired && $expiresAtTimestamp)
                     <div id="countdown-card"
                          data-expires-at="{{ (int) $expiresAtTimestamp }}"
+                         data-expired-message="{{ $isEnglish ? 'Payment time has expired. Please check your transaction status.' : 'Waktu pembayaran telah berakhir. Silakan cek status transaksi Anda.' }}"
                          class="rounded-xl border border-amber-200 bg-amber-50 p-5">
 
                         <p class="text-sm font-semibold text-amber-900">
@@ -513,7 +515,7 @@
 
                         const message = document.createElement('p');
                         message.className = 'mt-3 text-sm font-semibold text-red-700';
-                        message.textContent = '{{ $isEnglish ? 'Payment time has expired. Please check your transaction status.' : 'Waktu pembayaran telah berakhir. Silakan cek status transaksi Anda.' }}';
+                        message.textContent = countdownCard.dataset.expiredMessage || '';
 
                         if (!countdownCard.querySelector('[data-expired-message]')) {
                             message.dataset.expiredMessage = 'true';
@@ -566,7 +568,7 @@
                 const qrString = element.dataset.qrString;
 
                 if (!qrString || ['some-random-qr-string', 'test-qr-string'].includes(qrString)) {
-                    element.textContent = '{{ $isEnglish ? 'The original QRIS code is not available yet.' : 'Kode QRIS asli belum tersedia.' }}';
+                    element.textContent = element.dataset.emptyMessage || '';
                     return;
                 }
 

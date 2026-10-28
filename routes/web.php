@@ -197,7 +197,7 @@ $bookingPaymentRoutes = function () {
     ])->name('pembayaran.failure');
 };
 
-Route::middleware('auth')->group($bookingPaymentRoutes);
+Route::middleware(['auth', 'setlocale:id'])->group($bookingPaymentRoutes);
 
 Route::prefix('en')
     ->name('en.')

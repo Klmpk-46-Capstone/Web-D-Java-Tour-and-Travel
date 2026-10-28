@@ -90,18 +90,11 @@ class RatingController extends Controller
                 : 'Booking yang dibatalkan tidak dapat diberi rating.');
         }
 
-        if (! in_array($bookingStatus, ['completed', 'finished'], true)) {
-            abort(403, $isEnglish
-                ? 'Reviews are available only after the trip has been completed.'
-                : 'Rating hanya tersedia setelah perjalanan selesai.');
-        }
-
         $totalPrice = (int) $booking->total_price;
+        $isPaid = ($totalPrice > 0 && $this->paidAmount($booking) >= $totalPrice)
+            || in_array(strtolower((string) $booking->payment_status), ['paid', 'lunas', 'settled', 'success'], true);
 
-        if (
-            $totalPrice <= 0
-            || $this->paidAmount($booking) < $totalPrice
-        ) {
+        if (! $isPaid) {
             abort(403, $isEnglish
                 ? 'Reviews are available only for fully paid bookings.'
                 : 'Rating hanya tersedia untuk booking yang sudah lunas.');

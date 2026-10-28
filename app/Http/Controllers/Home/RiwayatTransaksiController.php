@@ -173,10 +173,9 @@ class RiwayatTransaksiController extends Controller
         $dpPaid = $paidStages->contains('dp');
         $pelunasanPaid = $paidStages->contains('pelunasan');
 
-        // Status lunas dihitung dari transaksi yang benar-benar berhasil.
-        $isPaid = $remainingAmount === 0
-            && $paidAmount >= $totalPrice
-            && $totalPrice > 0;
+        // Status lunas dihitung dari transaksi yang benar-benar berhasil atau status payment lunas.
+        $isPaid = ($remainingAmount === 0 && $paidAmount >= $totalPrice && $totalPrice > 0)
+            || in_array(strtolower((string) $booking->payment_status), ['paid', 'lunas', 'settled', 'success'], true);
 
         $bookingStatus = strtolower((string) $booking->booking_status);
 

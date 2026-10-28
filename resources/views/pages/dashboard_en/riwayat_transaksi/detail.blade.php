@@ -487,7 +487,7 @@
                                 The amount and payment status are determined by the server.
                             </p>
                         </section>
-                    @elseif ($isPaid && $isCompleted && !$isCancelled && !$isRefundRequested)
+                    @elseif ($isPaid && !$isCancelled && !$isRefundRequested)
                         <section class="rounded-xl border border-teal-200 bg-teal-50 p-5 sm:p-6">
                             <h2 class="text-xl font-bold text-slate-900">
                                 Thank you for choosing D’Java Tour!
@@ -504,7 +504,7 @@
                                 </p>
                             @else
                                 <a
-                                    href="{{ localized_route('customer.bookings.rating', [
+                                    href="{{ localized_route('customer.bookings.rating.create', [
                                         'bookingCode' => $booking->booking_code,
                                     ]) }}"
                                     class="mt-5 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-base font-bold text-white transition hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
@@ -590,23 +590,10 @@
                             @endif
                         @endif
                     </section>
-
-                    <a href="{{ localized_route('customer.bookings.index') }}"
-                       class="inline-flex h-12 w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 hover:bg-slate-100">
-                        Back to Transaction History
-                    </a>
                 </aside>
             </div>
-
-            <footer class="border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-7">
-                <p class="text-sm text-slate-500">
-                    This invoice is a summary of the booking and payment information stored in the system.
-                </p>
-            </footer>
         </article>
     </div>
 </div>
-{{-- Footer --}}
-@include('components.footer.footer')
 </body>
 </html>
