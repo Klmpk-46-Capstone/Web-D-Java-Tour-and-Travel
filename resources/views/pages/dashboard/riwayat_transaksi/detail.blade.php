@@ -163,19 +163,19 @@
             <div class="flex flex-wrap gap-2">
                 <button type="button"
                         onclick="window.print()"
-                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-100">
+                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-slate-100">
                     Cetak
                 </button>
 
                 <button type="button"
                         onclick="window.print()"
-                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-100">
+                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-slate-100">
                     Unduh / Simpan PDF
                 </button>
 
                 <button type="button"
                         onclick="navigator.clipboard.writeText(window.location.href)"
-                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-100">
+                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-slate-100">
                     Salin Tautan
                 </button>
             </div>
@@ -487,7 +487,7 @@
                                 Nominal dan status pembayaran ditentukan oleh server.
                             </p>
                         </section>
-                    @elseif ($isPaid && $isCompleted && !$isCancelled && !$isRefundRequested)
+                    @elseif ($isPaid && !$isCancelled && !$isRefundRequested)
                         <section class="rounded-xl border border-teal-200 bg-teal-50 p-5 sm:p-6">
                             <h2 class="text-xl font-bold text-slate-900">
                                 Terima kasih telah memilih D’Java Tour!
@@ -504,7 +504,7 @@
                                 </p>
                             @else
                                 <a
-                                    href="{{ route('customer.bookings.rating', [
+                                    href="{{ localized_route('customer.bookings.rating.create', [
                                         'bookingCode' => $booking->booking_code,
                                     ]) }}"
                                     class="mt-5 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-base font-bold text-white transition hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2"
@@ -590,23 +590,11 @@
                             @endif
                         @endif
                     </section>
-
-                    <a href="{{ route('customer.bookings.index') }}"
-                       class="inline-flex h-12 w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 hover:bg-slate-100">
-                        Kembali ke Riwayat Transaksi
-                    </a>
                 </aside>
-            </div>
 
-            <footer class="border-t border-slate-200 bg-slate-50 px-5 py-4 sm:px-7">
-                <p class="text-sm text-slate-500">
-                    Invoice ini merupakan ringkasan informasi pemesanan dan pembayaran yang tersimpan di sistem.
-                </p>
-            </footer>
+            </div>
         </article>
     </div>
 </div>
-{{-- Footer --}}
-@include('components.footer.footer')
 </body>
 </html>

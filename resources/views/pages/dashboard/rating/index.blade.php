@@ -201,19 +201,6 @@
                                     </span>
                                 </span>
                             </label>
-
-                            <div class="flex items-start gap-3">
-                                <span class="mt-1 text-teal-700">✓</span>
-
-                                <span>
-                                    <span class="block font-semibold text-slate-900">
-                                        Identitas Terverifikasi
-                                    </span>
-                                    <span class="mt-1 block text-sm text-slate-600">
-                                        Ulasan terhubung dengan akun dan booking yang telah lunas.
-                                    </span>
-                                </span>
-                            </div>
                         </div>
 
                         <div class="mt-8 flex flex-wrap justify-end gap-3">
