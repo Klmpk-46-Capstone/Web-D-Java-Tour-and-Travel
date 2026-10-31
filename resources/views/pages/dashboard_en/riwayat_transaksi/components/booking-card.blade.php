@@ -3,6 +3,15 @@
     $trip = $booking->trip;
     $vehicle = $booking->vehicle;
     $latestTransaction = $booking->transactions->first();
+    $refund = $booking->refund;
+
+    $refundStatus = strtolower((string) ($refund?->status ?? ''));
+
+    $isRefundFinalized = in_array(
+        $refundStatus,
+        ['approved', 'rejected', 'refunded'],
+        true
+    );
 
     $paymentStatus = strtolower((string) $booking->payment_status);
     $bookingStatus = strtolower((string) $booking->booking_status);
@@ -37,16 +46,19 @@
             ['pending', 'unpaid', 'waiting_dp'],
             true
         )
-        && !$isCancelled
-        && !$isRefundRequested;
+        && ! $isCancelled
+        && ! $isRefundRequested
+        && ! $isRefundFinalized;
 
     $isWaitingPelunasan = ! $isPaid
         && $paymentStatus === 'partial'
-        && !$isCancelled
-        && !$isRefundRequested
-        && !$isCompleted;
+        && ! $isCancelled
+        && ! $isRefundRequested
+        && ! $isCompleted
+        && ! $isRefundFinalized;
 
     $statusLabel = match (true) {
+        $isRefundFinalized => 'Cancelled',
         $isCancelled => 'Cancelled',
         $isRefundRequested => 'Awaiting Refund',
         $isCompleted => 'Completed',
@@ -57,7 +69,7 @@
     };
 
     $statusClass = match (true) {
-        $isCancelled, $isRefundRequested => 'bg-rose-100 text-rose-800',
+        $isRefundFinalized, $isCancelled, $isRefundRequested => 'bg-rose-100 text-rose-800',
         $isCompleted, $isPaid => 'bg-blue-100 text-blue-800',
         $paymentStatus === 'partial' || $isConfirmed => 'bg-teal-100 text-teal-800',
         default => 'bg-orange-100 text-orange-900',
@@ -101,7 +113,7 @@
 
     $bookingTitle = $package?->name
         ?? $booking->selected_armada
-         ?? 'D’Java Tour Reservation';
+          ?? 'D’Java Tour Reservation';
 
     $imageUrl = $package?->image_url ?? $vehicle?->image_url;
     $imageUrlIsSafe = $imageUrl && in_array(
@@ -189,7 +201,12 @@
             </div>
 
             <div class="flex flex-wrap items-center gap-2 xl:justify-end">
-                @if ($isWaitingDp)
+                @if ($isRefundFinalized)
+                    <span class="inline-flex h-10 items-center justify-center rounded-lg bg-rose-100 px-3.5 py-2 text-sm font-semibold text-rose-800">
+                        Cancelled
+                    </span>
+
+                @elseif ($isWaitingDp)
                     <a
                         href="{{ localized_route('pembayaran.mulai', [
                             'bookingCode' => $booking->booking_code,
@@ -199,6 +216,7 @@
                     >
                         Pay DP
                     </a>
+
                 @elseif ($isWaitingPelunasan)
                     <a
                         href="{{ localized_route('pembayaran.mulai', [
@@ -209,6 +227,7 @@
                     >
                         Pay Balance
                     </a>
+
                 @elseif ($isConfirmed && !$isCompleted)
                     @if ($booking->customer_phone)
                         <a
@@ -225,7 +244,7 @@
                     @endif
                 @endif
 
-                @if ($isPaid && !$isCancelled && !$isRefundRequested)
+                @if ($isPaid && !$isCancelled && !$isRefundRequested && !$isRefundFinalized)
                     @if ($hasReviewed)
                         <span class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-emerald-50 px-3.5 py-2 text-sm font-semibold text-emerald-700">
                             Review Submitted
@@ -242,7 +261,7 @@
                     @endif
                 @endif
 
-                @if ($isCompleted && !$isCancelled && !$isRefundRequested)
+                @if ($isCompleted && !$isCancelled && !$isRefundRequested && !$isRefundFinalized)
                     <a
                         href="{{ localized_route('customer.bookings.index') }}"
                         class="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-teal-700 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"

@@ -1,71 +1,46 @@
-
 @extends('layouts.auth')
 
 @section('title', 'Masuk')
 
-@section('hero-title')
-    Jelajahi<br class="hidden sm:block">
-    dengan Lebih Leluasa
-@endsection
-
-@section('hero-description')
-    Layanan rental mobil berkelas dan tur privat terpercaya di Bromo, Ijen, Malang, dan Surabaya.
-@endsection
-
 @section('content')
-    {{-- Tombol Kembali ke Beranda --}}
-    <a
-        href="{{ route('home') }}"
-        class="mb-5 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 no-underline shadow-sm transition duration-200 hover:border-teal-200 hover:bg-teal-50 hover:text-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-200"
-        aria-label="Kembali ke Beranda"
-    >
-        <svg
-            class="h-5 w-5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-        >
-            <path d="M19 12H5"/>
-            <path d="m12 19-7-7 7-7"/>
-        </svg>
 
-        <span>Kembali ke Beranda</span>
-    </a>
+    {{-- Judul --}}
+    <div class="text-center">
+        <h1 class="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">
+            Masuk ke Akun
+        </h1>
 
-    {{-- Judul Login --}}
-    <div>
-        <h2 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-            Selamat Datang Kembali
-        </h2>
-
-        <p class="mt-2 text-sm leading-relaxed text-slate-600 sm:text-base">
-            Masuk ke akun Anda untuk mengelola pemesanan armada dan paket wisata.
+        <p class="mt-2 text-base leading-relaxed text-slate-600">
+            Akses pesanan rental dan reservasi paket wisata Anda.
         </p>
     </div>
 
-    {{-- Login dengan Google --}}
+    {{-- Login Google --}}
     <button
         type="button"
         disabled
         title="Login Google perlu dikonfigurasi terlebih dahulu"
-        class="mt-5 flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm opacity-80 sm:text-base"
+        class="mt-6 flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-700 opacity-80 shadow-sm"
     >
-        <span class="text-lg font-extrabold text-blue-600" aria-hidden="true">
-            G
-        </span>
+        <svg
+            class="h-5 w-5"
+            viewBox="0 0 48 48"
+            aria-hidden="true"
+        >
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5Z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.73 7.18l7.64 5.93c4.46-4.13 7.13-10.22 7.13-17.58Z"/>
+            <path fill="#FBBC05" d="M10.53 28.59a14.4 14.4 0 0 1 0-9.18l-7.98-6.19a24 24 0 0 0 0 21.56l7.98-6.19Z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.87l-7.65-5.93c-2.12 1.42-4.84 2.26-8.25 2.26-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"/>
+        </svg>
 
         Masuk dengan Google
     </button>
 
     {{-- Pemisah --}}
-    <div class="my-5 flex items-center gap-3">
+    <div class="my-6 flex items-center gap-3">
         <span class="h-px flex-1 bg-slate-200"></span>
 
-        <span class="text-xs font-semibold text-slate-500 sm:text-sm">
+        <span class="whitespace-nowrap text-sm font-medium text-slate-600">
             atau masuk dengan email
         </span>
 
@@ -76,22 +51,23 @@
     <form
         action="{{ route('login.store') }}"
         method="POST"
-        class="space-y-4"
+        class="space-y-5"
     >
         @csrf
 
-        {{-- Email atau Nomor WhatsApp --}}
+        {{-- Email atau WhatsApp --}}
         <div>
             <label
                 for="login"
-                class="mb-1.5 block text-sm font-semibold text-slate-800 sm:text-base"
+                class="mb-2 block text-sm font-semibold text-slate-900 sm:text-base"
             >
                 Email atau No. WhatsApp
             </label>
 
-            <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-indigo-50 px-3 transition focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-100 sm:px-4">
+            <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-100">
+
                 <svg
-                    class="h-5 w-5 shrink-0 text-slate-600 sm:h-6 sm:w-6"
+                    class="h-5 w-5 shrink-0 text-slate-700"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -111,12 +87,13 @@
                     autocomplete="username"
                     required
                     maxlength="255"
-                    class="min-w-0 w-full border-0 bg-transparent py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0 sm:text-base"
+                    class="min-w-0 w-full border-0 bg-transparent py-3.5 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
                 >
+
             </div>
 
             @error('login')
-                <p class="mt-1 text-sm text-red-600">
+                <p class="mt-2 text-sm text-red-600">
                     {{ $message }}
                 </p>
             @enderror
@@ -126,14 +103,15 @@
         <div>
             <label
                 for="password"
-                class="mb-1.5 block text-sm font-semibold text-slate-800 sm:text-base"
+                class="mb-2 block text-sm font-semibold text-slate-900 sm:text-base"
             >
                 Kata Sandi
             </label>
 
-            <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-indigo-50 px-3 transition focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-100 sm:px-4">
+            <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-100">
+
                 <svg
-                    class="h-5 w-5 shrink-0 text-slate-600 sm:h-6 sm:w-6"
+                    class="h-5 w-5 shrink-0 text-slate-700"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"
@@ -152,17 +130,18 @@
                     placeholder="Masukkan kata sandi akun"
                     autocomplete="current-password"
                     required
-                    class="min-w-0 w-full border-0 bg-transparent py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0 sm:text-base"
+                    class="min-w-0 w-full border-0 bg-transparent py-3.5 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
                 >
 
                 <button
                     type="button"
                     data-toggle-password="password"
                     aria-label="Tampilkan kata sandi"
-                    class="shrink-0 rounded-lg p-1 text-slate-600 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-600"
+                    aria-pressed="false"
+                    class="shrink-0 rounded-lg p-1 text-slate-700 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-600"
                 >
                     <svg
-                        class="h-5 w-5 sm:h-6 sm:w-6"
+                        class="h-5 w-5"
                         viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
@@ -173,18 +152,20 @@
                         <circle cx="12" cy="12" r="3"/>
                     </svg>
                 </button>
+
             </div>
 
             @error('password')
-                <p class="mt-1 text-sm text-red-600">
+                <p class="mt-2 text-sm text-red-600">
                     {{ $message }}
                 </p>
             @enderror
         </div>
 
-        {{-- Ingat Saya dan Lupa Kata Sandi --}}
-        <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
-            <label class="flex cursor-pointer items-center gap-2 text-slate-600">
+        {{-- Ingat Saya dan Lupa Password --}}
+        <div class="flex flex-wrap items-center justify-between gap-3 text-sm sm:text-base">
+
+            <label class="flex cursor-pointer items-center gap-2 text-slate-700">
                 <input
                     type="checkbox"
                     name="remember"
@@ -201,6 +182,7 @@
             >
                 Lupa kata sandi?
             </a>
+
         </div>
 
         {{-- Tombol Masuk --}}
@@ -208,13 +190,17 @@
             type="submit"
             class="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-800 px-5 py-3.5 text-base font-bold text-white shadow-md transition hover:bg-teal-900 focus:outline-none focus:ring-4 focus:ring-teal-200"
         >
-            Masuk ke Akun
-            <span aria-hidden="true">→</span>
+            Masuk Sekarang
+
+            <span aria-hidden="true">
+                →
+            </span>
         </button>
+
     </form>
 
-    {{-- Navigasi ke Register --}}
-    <p class="mt-5 text-center text-sm text-slate-600 sm:text-base">
+    {{-- Navigasi Register --}}
+    <p class="mt-6 text-center text-base text-slate-600">
         Belum punya akun?
 
         <a
@@ -224,6 +210,7 @@
             Daftar Sekarang
         </a>
     </p>
+
 @endsection
 
 @push('scripts')
@@ -247,6 +234,11 @@
                     isPassword
                         ? 'Sembunyikan kata sandi'
                         : 'Tampilkan kata sandi'
+                );
+
+                button.setAttribute(
+                    'aria-pressed',
+                    String(isPassword)
                 );
             });
         });

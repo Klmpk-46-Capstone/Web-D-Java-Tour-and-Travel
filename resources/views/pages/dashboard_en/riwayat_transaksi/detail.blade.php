@@ -19,6 +19,17 @@
     $vehicle = $booking->vehicle;
     $refund = $booking->refund;
 
+    $refundStatus = strtolower(trim((string) ($refund?->status ?? '')));
+
+    $isRefundFinalized = in_array(
+        $refundStatus,
+        ['approved', 'rejected', 'refunded'],
+        true
+    );
+
+    // Payment is disabled after the refund decision is finalized.
+    $canPay = (bool) ($canPay ?? false) && ! $isRefundFinalized;
+
     $bookingTitle = $package?->name
         ?? $booking->selected_armada
         ?? 'D’Java Tour Reservation';
@@ -150,7 +161,7 @@
 <div class="min-h-screen bg-slate-50 text-slate-800">
     <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
 
-        {{-- Breadcrumb dan Aksi --}}
+        {{-- Breadcrumb and Actions --}}
         <div class="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
             <nav class="flex flex-wrap items-center gap-2 text-sm text-slate-600" aria-label="Breadcrumb">
                 <a href="{{ localized_route('customer.bookings.index') }}" class="hover:text-teal-700">
@@ -160,18 +171,21 @@
                 <span class="font-medium text-slate-900">Invoice Details</span>
             </nav>
 
-            <div class="flex flex-wrap gap-2">
+            <div class="flex flex-wrap gap-2 print:hidden">
                 <button type="button"
                         onclick="window.print()"
                         class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-100">
                     Print
                 </button>
 
-                <button type="button"
-                        onclick="window.print()"
-                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-100">
-                    Download / Save PDF
-                </button>
+                <a
+                    href="{{ localized_route('customer.bookings.invoice', [
+                        'bookingCode' => $booking->booking_code,
+                    ]) }}"
+                    class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                    Print Invoice
+                </a>
 
                 <button type="button"
                         onclick="navigator.clipboard.writeText(window.location.href)"
@@ -231,10 +245,10 @@
 
             <div class="grid grid-cols-1 gap-6 p-5 sm:p-7 lg:grid-cols-3">
 
-                {{-- Kolom Utama --}}
+                {{-- Main Column --}}
                 <div class="space-y-5 lg:col-span-2">
 
-                    {{-- Informasi Paket --}}
+                    {{-- Package Information --}}
                     <section class="rounded-xl border border-slate-200 p-4 sm:p-5">
                         <div class="flex flex-col gap-4 sm:flex-row">
                             <div class="h-40 w-full shrink-0 overflow-hidden rounded-xl bg-slate-100 sm:h-32 sm:w-44">
@@ -331,7 +345,7 @@
                         </div>
                     </section>
 
-                    {{-- Ringkasan Pembayaran --}}
+                    {{-- Billing Summary --}}
                     <section class="rounded-xl border border-slate-200 p-4 sm:p-5">
                         <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
                             <h2 class="text-xl font-bold text-slate-900">
@@ -372,7 +386,7 @@
                             </div>
                         </div>
 
-                        {{-- Metode Pembayaran Card --}}
+                        {{-- Payment Method Card --}}
                         @if ($hasSuccessfulPayment)
                             <div class="mt-4 flex flex-col gap-2 rounded-xl border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:justify-between">
                                 <div>
@@ -431,7 +445,7 @@
                         </div>
                     </section>
 
-                    {{-- Tagihan dan Pembayaran / Rating --}}
+                    {{-- Payment Actions / Rating --}}
                     @if ($canPay)
                         <section class="rounded-xl border border-teal-700 bg-white p-4 sm:p-5">
                             <div class="flex items-start gap-3">
@@ -517,7 +531,7 @@
                     @endif
                 </div>
 
-                {{-- Kolom Samping --}}
+                {{-- Side Column --}}
                 <aside class="space-y-5">
                     <section class="rounded-xl border border-slate-200 bg-white p-5">
                         <h2 class="text-lg font-bold text-slate-900">
@@ -540,7 +554,7 @@
                         </ul>
                     </section>
 
-                    {{-- Pembatalan & Refund Section --}}
+                    {{-- Cancellation & Refund Section --}}
                     <section class="rounded-xl border border-slate-200 bg-white p-5 sm:p-6">
                         <h2 class="text-lg font-bold text-slate-900">
                             Cancellation & Refund
@@ -563,27 +577,54 @@
                         </p>
 
                         @if ($refund)
-                            <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                                <p class="text-sm font-semibold text-amber-900">
+                            @php
+                                $refundDetailStatus = strtolower((string) $refund->status);
+                                $isRefundRejected = $refundDetailStatus === 'rejected';
+                            @endphp
+
+                            <div class="mt-4 rounded-lg border p-4
+                                {{ $isRefundRejected
+                                    ? 'border-rose-200 bg-rose-50'
+                                    : 'border-amber-200 bg-amber-50' }}">
+
+                                <p class="text-sm font-semibold
+                                    {{ $isRefundRejected ? 'text-rose-900' : 'text-amber-900' }}">
                                     Refund Status
                                 </p>
 
-                                <p class="mt-1 text-sm text-amber-800">
-                                    {{ ucfirst(str_replace('_', ' ', (string) $refund->status)) }}
+                                <p class="mt-1 text-sm font-bold
+                                    {{ $isRefundRejected ? 'text-rose-800' : 'text-amber-800' }}">
+                                    {{ ucfirst(str_replace('_', ' ', $refundDetailStatus)) }}
                                 </p>
+
+                                @if ($isRefundRejected && filled($refund->admin_notes))
+                                    <div class="mt-3 border-t border-rose-200 pt-3">
+                                        <p class="text-sm font-semibold text-rose-900">
+                                            Reason for Rejection
+                                        </p>
+
+                                        <p class="mt-1 whitespace-pre-line text-sm leading-6 text-rose-800">
+                                            {{ $refund->admin_notes }}
+                                        </p>
+                                    </div>
+                                @endif
                             </div>
                         @elseif (!$isCancelled && !$isRefundRequested && !$isCompleted)
                             @if ($hasSuccessfulPayment)
                                 <a
-                                    href="{{ localized_route('customer.bookings.refund-page', ['bookingCode' => $booking->booking_code]) }}"
-                                    class="mt-4 inline-flex h-11 items-center justify-center rounded-lg border border-rose-200 bg-white px-5 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+                                    href="{{ localized_route('customer.bookings.refund-page', [
+                                        'bookingCode' => $booking->booking_code,
+                                    ]) }}"
+                                    class="mt-4 inline-flex h-12 items-center justify-center rounded-lg border border-rose-200 bg-white px-6 py-3 text-base font-semibold text-rose-700 transition hover:bg-rose-50"
                                 >
                                     Request Refund
                                 </a>
                             @else
                                 <a
-                                    href="{{ localized_route('customer.bookings.cancel-page', ['bookingCode' => $booking->booking_code]) }}"
-                                    class="mt-4 inline-flex h-11 items-center justify-center rounded-lg border border-rose-200 bg-white px-5 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+                                    href="{{ localized_route('customer.bookings.cancel-page', [
+                                        'bookingCode' => $booking->booking_code,
+                                    ]) }}"
+                                    class="mt-4 inline-flex h-12 items-center justify-center rounded-lg border border-rose-200 bg-white px-6 py-3 text-base font-semibold text-rose-700 transition hover:bg-rose-50"
                                 >
                                     Cancel Booking
                                 </a>
@@ -591,6 +632,7 @@
                         @endif
                     </section>
                 </aside>
+
             </div>
         </article>
     </div>
