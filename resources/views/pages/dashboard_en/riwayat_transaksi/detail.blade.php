@@ -21,13 +21,14 @@
 
     $refundStatus = strtolower(trim((string) ($refund?->status ?? '')));
 
+    // Payment is disabled only when the refund is approved
+    // or the refund transfer has been completed.
     $isRefundFinalized = in_array(
         $refundStatus,
-        ['approved', 'rejected', 'refunded'],
+        ['approved', 'refunded'],
         true
     );
 
-    // Payment is disabled after the refund decision is finalized.
     $canPay = (bool) ($canPay ?? false) && ! $isRefundFinalized;
 
     $bookingTitle = $package?->name
@@ -227,13 +228,13 @@
                     </p>
 
                     <p class="mt-1 text-3xl font-extrabold tracking-tight text-teal-800 sm:text-4xl">
-                        Rp {{ number_format($totalPrice, 0, '.', ',') }}
+                        Rp {{ number_format($totalPrice, 0, ',', '.') }}
                     </p>
 
                     @if ($canPay)
                         <p class="mt-1 text-sm font-semibold text-amber-800">
                             {{ $dpPaid ? 'Remaining balance' : '30% DP required' }}:
-                            Rp {{ number_format($billAmount, 0, '.', ',') }}
+                            Rp {{ number_format($billAmount, 0, ',', '.') }}
                         </p>
                     @else
                         <p class="mt-1 text-sm font-semibold text-teal-700">
@@ -358,7 +359,7 @@
                             <div class="rounded-xl border border-slate-200 bg-blue-50 p-4">
                                 <p class="text-sm font-medium text-slate-600">Total Package Value</p>
                                 <p class="mt-2 text-xl font-extrabold text-slate-900">
-                                    Rp {{ number_format($totalPrice, 0, '.', ',') }}
+                                    Rp {{ number_format($totalPrice, 0, ',', '.') }}
                                 </p>
                                 <p class="mt-2 text-sm text-slate-600">
                                     {{ e($booking->pax) }} participants
@@ -368,7 +369,7 @@
                             <div class="rounded-xl border border-amber-200 bg-amber-50 p-4">
                                 <p class="text-sm font-medium text-amber-900">Down Payment (30%)</p>
                                 <p class="mt-2 text-xl font-extrabold text-amber-900">
-                                    Rp {{ number_format($dpAmount, 0, '.', ',') }}
+                                    Rp {{ number_format($dpAmount, 0, ',', '.') }}
                                 </p>
                                 <p class="mt-2 text-sm font-medium text-amber-800">
                                     {{ $dpPaid ? 'Status: Paid' : 'Status: Unpaid' }}
@@ -378,7 +379,7 @@
                             <div class="rounded-xl border border-slate-200 bg-blue-50 p-4">
                                 <p class="text-sm font-medium text-slate-600">Remaining Balance</p>
                                 <p class="mt-2 text-xl font-extrabold text-slate-900">
-                                    Rp {{ number_format($remainingAmount, 0, '.', ',') }}
+                                    Rp {{ number_format($remainingAmount, 0, ',', '.') }}
                                 </p>
                                 <p class="mt-2 text-sm text-slate-600">
                                     {{ $isPaid ? 'Fully paid' : 'Awaiting payment' }}
@@ -430,7 +431,7 @@
 
                                     <div class="sm:text-right">
                                         <p class="font-bold text-slate-900">
-                                            Rp {{ number_format((int) $transaction->amount, 0, '.', ',') }}
+                                            Rp {{ number_format((int) $transaction->amount, 0, ',', '.') }}
                                         </p>
                                         <p class="mt-1 text-sm font-semibold text-teal-700">
                                             Paid
@@ -469,7 +470,7 @@
                                     <p class="mt-1 text-sm leading-6 text-slate-600">
                                         {{ $dpPaid ? 'Remaining payment' : 'Initial 30% payment' }}:
                                         <span class="font-bold text-teal-800">
-                                            Rp {{ number_format($billAmount, 0, '.', ',') }}
+                                            Rp {{ number_format($billAmount, 0, ',', '.') }}
                                         </span>
                                     </p>
                                 </div>
@@ -494,7 +495,7 @@
                             <a href="{{ localized_route('pembayaran.mulai', ['bookingCode' => $booking->booking_code]) }}"
                                class="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-teal-700 px-5 py-3 text-base font-bold text-white transition hover:bg-teal-800 focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2">
                                 Pay {{ $dpPaid ? 'Balance' : 'DP' }} Now
-                                (Rp {{ number_format($billAmount, 0, '.', ',') }})
+                                (Rp {{ number_format($billAmount, 0, ',', '.') }})
                             </a>
 
                             <p class="mt-3 text-center text-sm text-slate-500">
@@ -564,24 +565,22 @@
                             @if ($isCancelled)
                                 This booking has been cancelled.
                             @elseif ($isRefundRequested || $refund)
-                                The refund request has been recorded. The status and
-                                next steps can be checked on the refund page.
+                                Refund request has been recorded. Status and subsequent processes can be checked through the refund page.
                             @elseif ($hasSuccessfulPayment)
-                                Because payment has already been made, cancellation will
-                                be processed as a refund request. Approval and the refund
-                                amount follow the D’Java Tour policy.
+                                Since payment has been made, cancellation will be processed as a refund request. Approval and refund amounts follow D’Java Tour policy.
                             @else
-                                This booking has no successful payment yet.
-                                You can cancel the booking before making a payment.
+                                This booking does not have a successful payment yet. Cancellation can be made directly through the system.
                             @endif
                         </p>
 
+                        {{-- Refund Status & Rejection Info (Retained) --}}
                         @if ($refund)
                             @php
-                                $refundDetailStatus = strtolower((string) $refund->status);
+                                $refundDetailStatus = strtolower(trim((string) $refund->status));
                                 $isRefundRejected = $refundDetailStatus === 'rejected';
                             @endphp
 
+                            {{-- Refund Status --}}
                             <div class="mt-4 rounded-lg border p-4
                                 {{ $isRefundRejected
                                     ? 'border-rose-200 bg-rose-50'
@@ -600,35 +599,15 @@
                                 @if ($isRefundRejected && filled($refund->admin_notes))
                                     <div class="mt-3 border-t border-rose-200 pt-3">
                                         <p class="text-sm font-semibold text-rose-900">
-                                            Reason for Rejection
+                                            Rejection Reason
                                         </p>
 
-                                        <p class="mt-1 whitespace-pre-line text-sm leading-6 text-rose-800">
+                                        <p class="mt-3 whitespace-pre-line text-sm leading-6 text-rose-800">
                                             {{ $refund->admin_notes }}
                                         </p>
                                     </div>
                                 @endif
                             </div>
-                        @elseif (!$isCancelled && !$isRefundRequested && !$isCompleted)
-                            @if ($hasSuccessfulPayment)
-                                <a
-                                    href="{{ localized_route('customer.bookings.refund-page', [
-                                        'bookingCode' => $booking->booking_code,
-                                    ]) }}"
-                                    class="mt-4 inline-flex h-12 items-center justify-center rounded-lg border border-rose-200 bg-white px-6 py-3 text-base font-semibold text-rose-700 transition hover:bg-rose-50"
-                                >
-                                    Request Refund
-                                </a>
-                            @else
-                                <a
-                                    href="{{ localized_route('customer.bookings.cancel-page', [
-                                        'bookingCode' => $booking->booking_code,
-                                    ]) }}"
-                                    class="mt-4 inline-flex h-12 items-center justify-center rounded-lg border border-rose-200 bg-white px-6 py-3 text-base font-semibold text-rose-700 transition hover:bg-rose-50"
-                                >
-                                    Cancel Booking
-                                </a>
-                            @endif
                         @endif
                     </section>
                 </aside>
@@ -637,5 +616,8 @@
         </article>
     </div>
 </div>
+
+{{-- Footer --}}
+@include('components.footer.footer')
 </body>
 </html>

@@ -9,7 +9,7 @@
 
     $isRefundFinalized = in_array(
         $refundStatus,
-        ['approved', 'rejected', 'refunded'],
+        ['approved', 'refunded'],
         true
     );
 
@@ -113,7 +113,7 @@
 
     $bookingTitle = $package?->name
         ?? $booking->selected_armada
-          ?? 'D’Java Tour Reservation';
+        ?? 'D’Java Tour Reservation';
 
     $imageUrl = $package?->image_url ?? $vehicle?->image_url;
     $imageUrlIsSafe = $imageUrl && in_array(
