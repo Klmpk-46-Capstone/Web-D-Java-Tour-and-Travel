@@ -8,7 +8,7 @@
     $refundStatus = strtolower((string) ($refund?->status ?? ''));
     $isRefundFinalized = in_array(
         $refundStatus,
-        ['approved', 'rejected', 'refunded'],
+        ['approved', 'refunded'],
         true
     );
 

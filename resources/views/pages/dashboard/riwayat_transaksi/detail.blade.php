@@ -21,13 +21,14 @@
 
     $refundStatus = strtolower(trim((string) ($refund?->status ?? '')));
 
+    // Pembayaran hanya dihentikan jika refund sudah disetujui
+    // atau dana refund sudah berhasil ditransfer.
     $isRefundFinalized = in_array(
         $refundStatus,
-        ['approved', 'rejected', 'refunded'],
+        ['approved', 'refunded'],
         true
     );
 
-    // Pembayaran tidak boleh dilakukan jika refund sudah diputuskan admin.
     $canPay = (bool) ($canPay ?? false) && ! $isRefundFinalized;
 
     $bookingTitle = $package?->name
@@ -571,17 +572,18 @@
                                 diproses sebagai pengajuan refund. Persetujuan dan
                                 nominal pengembalian dana mengikuti kebijakan D’Java Tour.
                             @else
-                                Booking ini belum memiliki pembayaran yang berhasil.
-                                Kamu dapat membatalkan booking sebelum melakukan pembayaran.
+                                Booking ini belum memiliki pembayaran yang berhasil. Pembatalan dapat dilakukan langsung melalui sistem.
                             @endif
                         </p>
 
+                        {{-- Informasi Penolakan / Status Refund (Dipertahankan) --}}
                         @if ($refund)
                             @php
-                                $refundDetailStatus = strtolower((string) $refund->status);
+                                $refundDetailStatus = strtolower(trim((string) $refund->status));
                                 $isRefundRejected = $refundDetailStatus === 'rejected';
                             @endphp
 
+                            {{-- Status Refund --}}
                             <div class="mt-4 rounded-lg border p-4
                                 {{ $isRefundRejected
                                     ? 'border-rose-200 bg-rose-50'
@@ -603,32 +605,12 @@
                                             Alasan Penolakan
                                         </p>
 
-                                        <p class="mt-1 whitespace-pre-line text-sm leading-6 text-rose-800">
+                                        <p class="mt-3 whitespace-pre-line text-sm leading-6 text-rose-800">
                                             {{ $refund->admin_notes }}
                                         </p>
                                     </div>
                                 @endif
                             </div>
-                        @elseif (!$isCancelled && !$isRefundRequested && !$isCompleted)
-                            @if ($hasSuccessfulPayment)
-                                <a
-                                    href="{{ localized_route('customer.bookings.refund-page', [
-                                        'bookingCode' => $booking->booking_code,
-                                    ]) }}"
-                                    class="mt-4 inline-flex h-12 items-center justify-center rounded-lg border border-rose-200 bg-white px-6 py-3 text-base font-semibold text-rose-700 transition hover:bg-rose-50"
-                                >
-                                    Ajukan Refund
-                                </a>
-                            @else
-                                <a
-                                    href="{{ localized_route('customer.bookings.cancel-page', [
-                                        'bookingCode' => $booking->booking_code,
-                                    ]) }}"
-                                    class="mt-4 inline-flex h-12 items-center justify-center rounded-lg border border-rose-200 bg-white px-6 py-3 text-base font-semibold text-rose-700 transition hover:bg-rose-50"
-                                >
-                                    Batal Booking
-                                </a>
-                            @endif
                         @endif
                     </section>
                 </aside>
@@ -637,5 +619,8 @@
         </article>
     </div>
 </div>
+
+{{-- Footer --}}
+@include('components.footer.footer')
 </body>
 </html>
