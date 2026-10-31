@@ -19,6 +19,17 @@
     $vehicle = $booking->vehicle;
     $refund = $booking->refund;
 
+    $refundStatus = strtolower(trim((string) ($refund?->status ?? '')));
+
+    $isRefundFinalized = in_array(
+        $refundStatus,
+        ['approved', 'rejected', 'refunded'],
+        true
+    );
+
+    // Pembayaran tidak boleh dilakukan jika refund sudah diputuskan admin.
+    $canPay = (bool) ($canPay ?? false) && ! $isRefundFinalized;
+
     $bookingTitle = $package?->name
         ?? $booking->selected_armada
         ?? 'Reservasi D’Java Tour';
@@ -167,11 +178,14 @@
                     Cetak
                 </button>
 
-                <button type="button"
-                        onclick="window.print()"
-                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-slate-100">
-                    Unduh / Simpan PDF
-                </button>
+                <a
+                    href="{{ localized_route('customer.bookings.invoice', [
+                        'bookingCode' => $booking->booking_code,
+                    ]) }}"
+                    class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                    Cetak Invoice
+                </a>
 
                 <button type="button"
                         onclick="navigator.clipboard.writeText(window.location.href)"
@@ -563,27 +577,54 @@
                         </p>
 
                         @if ($refund)
-                            <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                                <p class="text-sm font-semibold text-amber-900">
+                            @php
+                                $refundDetailStatus = strtolower((string) $refund->status);
+                                $isRefundRejected = $refundDetailStatus === 'rejected';
+                            @endphp
+
+                            <div class="mt-4 rounded-lg border p-4
+                                {{ $isRefundRejected
+                                    ? 'border-rose-200 bg-rose-50'
+                                    : 'border-amber-200 bg-amber-50' }}">
+
+                                <p class="text-sm font-semibold
+                                    {{ $isRefundRejected ? 'text-rose-900' : 'text-amber-900' }}">
                                     Status Refund
                                 </p>
 
-                                <p class="mt-1 text-sm text-amber-800">
-                                    {{ ucfirst(str_replace('_', ' ', (string) $refund->status)) }}
+                                <p class="mt-1 text-sm font-bold
+                                    {{ $isRefundRejected ? 'text-rose-800' : 'text-amber-800' }}">
+                                    {{ ucfirst(str_replace('_', ' ', $refundDetailStatus)) }}
                                 </p>
+
+                                @if ($isRefundRejected && filled($refund->admin_notes))
+                                    <div class="mt-3 border-t border-rose-200 pt-3">
+                                        <p class="text-sm font-semibold text-rose-900">
+                                            Alasan Penolakan
+                                        </p>
+
+                                        <p class="mt-1 whitespace-pre-line text-sm leading-6 text-rose-800">
+                                            {{ $refund->admin_notes }}
+                                        </p>
+                                    </div>
+                                @endif
                             </div>
                         @elseif (!$isCancelled && !$isRefundRequested && !$isCompleted)
                             @if ($hasSuccessfulPayment)
                                 <a
-                                    href="{{ route('customer.bookings.refund-page', ['bookingCode' => $booking->booking_code]) }}"
-                                    class="mt-4 inline-flex h-11 items-center justify-center rounded-lg border border-rose-200 bg-white px-5 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+                                    href="{{ localized_route('customer.bookings.refund-page', [
+                                        'bookingCode' => $booking->booking_code,
+                                    ]) }}"
+                                    class="mt-4 inline-flex h-12 items-center justify-center rounded-lg border border-rose-200 bg-white px-6 py-3 text-base font-semibold text-rose-700 transition hover:bg-rose-50"
                                 >
                                     Ajukan Refund
                                 </a>
                             @else
                                 <a
-                                    href="{{ route('customer.bookings.cancel-page', ['bookingCode' => $booking->booking_code]) }}"
-                                    class="mt-4 inline-flex h-11 items-center justify-center rounded-lg border border-rose-200 bg-white px-5 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50"
+                                    href="{{ localized_route('customer.bookings.cancel-page', [
+                                        'bookingCode' => $booking->booking_code,
+                                    ]) }}"
+                                    class="mt-4 inline-flex h-12 items-center justify-center rounded-lg border border-rose-200 bg-white px-6 py-3 text-base font-semibold text-rose-700 transition hover:bg-rose-50"
                                 >
                                     Batal Booking
                                 </a>

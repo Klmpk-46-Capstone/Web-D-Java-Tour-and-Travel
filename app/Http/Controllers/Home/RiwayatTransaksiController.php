@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Refund;
 use App\Models\Review;
+use App\Services\InvoiceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -233,6 +234,43 @@ class RiwayatTransaksiController extends Controller
                 'latestTransaction',
                 'hasReviewed'
             )
+        );
+    }
+
+    /**
+     * Menampilkan invoice booking milik pengguna yang sedang login.
+     */
+    public function invoice(
+        Request $request,
+        string $bookingCode,
+        InvoiceService $invoiceService
+    ): View {
+        $user = $request->user();
+
+        $booking = Booking::query()
+            ->with([
+                'package',
+                'trip',
+                'vehicle',
+                'transactions' => fn ($query) => $query->latest('id'),
+                'refund',
+            ])
+            ->where('booking_code', $bookingCode)
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere(function ($legacyQuery) use ($user) {
+                        $legacyQuery
+                            ->whereNull('user_id')
+                            ->where('customer_email', $user->email);
+                    });
+            })
+            ->firstOrFail();
+
+        $invoiceData = $invoiceService->generate($booking);
+
+        return view(
+            $this->dashboardView('riwayat_transaksi.invoice'),
+            $invoiceData
         );
     }
 
