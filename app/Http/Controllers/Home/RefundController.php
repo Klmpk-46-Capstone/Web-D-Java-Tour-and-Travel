@@ -137,6 +137,31 @@ class RefundController extends Controller
                 abort(422, 'Belum terdapat pembayaran berhasil untuk booking ini.');
             }
 
+            $dpPaid = $refundData['dpPaid'] ?? false;
+            $balancePaidAt = $refundData['balancePaidAt'] ?? null;
+
+            // Refund dapat diajukan setelah DP berhasil.
+            if (!$dpPaid) {
+                abort(
+                    422,
+                    'Refund hanya dapat diajukan setelah pembayaran DP berhasil.'
+                );
+            }
+
+            // H+7 hanya berlaku apabila pelunasan sudah berhasil.
+            if ($balancePaidAt) {
+                $refundDeadline = \Illuminate\Support\Carbon::parse($balancePaidAt)
+                    ->addDays(7)
+                    ->endOfDay();
+
+                if (now()->gt($refundDeadline)) {
+                    abort(
+                        422,
+                        'Masa pengajuan refund telah berakhir karena sudah melewati H+7 setelah pelunasan.'
+                    );
+                }
+            }
+
             $reasonLabels = [
                 'schedule_change' => 'Perubahan Jadwal',
                 'weather' => 'Cuaca Buruk / Bencana',

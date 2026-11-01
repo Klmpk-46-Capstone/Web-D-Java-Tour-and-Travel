@@ -154,7 +154,7 @@
                         'border-slate-200 bg-white' => $refundData['tier'] !== 'tier_1',
                     ])>
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="font-bold text-slate-800">● Tier 1: ≥ H-7 Jadwal</p>
+                            <p class="font-bold text-slate-800">Tier 1: ≥ H-7 Jadwal</p>
                             <span class="rounded-full bg-teal-100 px-3 py-1 text-sm font-bold text-teal-800">
                                 100% Refund
                             </span>
@@ -175,7 +175,7 @@
                         'border-slate-200 bg-white' => $refundData['tier'] !== 'tier_2',
                     ])>
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="font-bold text-slate-800">● Tier 2: H-6 s/d H-3 Jadwal</p>
+                            <p class="font-bold text-slate-800">Tier 2: H-6 s/d H-3 Jadwal</p>
                             <span class="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-800">
                                 50% Refund
                             </span>
@@ -196,7 +196,7 @@
                         'border-slate-200 bg-white' => $refundData['tier'] !== 'tier_3',
                     ])>
                         <div class="flex flex-wrap items-center justify-between gap-2">
-                            <p class="font-bold text-slate-800">● Tier 3: < H-3 / Hari H</p>
+                            <p class="font-bold text-slate-800">Tier 3: < H-3 / Hari H</p>
                             <span class="rounded-full bg-rose-100 px-3 py-1 text-sm font-bold text-rose-800">
                                 0% Refund
                             </span>

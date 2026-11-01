@@ -552,7 +552,6 @@
                         class="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-green-500 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
                     >
                         Continue to Payment
-                        <span aria-hidden="true">&rarr;</span>
                     </button>
 
                     <div class="mt-5 grid grid-cols-3 gap-3 text-center text-xs font-semibold text-slate-600">

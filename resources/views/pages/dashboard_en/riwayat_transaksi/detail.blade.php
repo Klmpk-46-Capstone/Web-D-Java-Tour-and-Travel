@@ -175,7 +175,7 @@
             <div class="flex flex-wrap gap-2 print:hidden">
                 <button type="button"
                         onclick="window.print()"
-                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-100">
+                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-slate-100">
                     Print
                 </button>
 
@@ -190,7 +190,7 @@
 
                 <button type="button"
                         onclick="navigator.clipboard.writeText(window.location.href)"
-                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold hover:bg-slate-100">
+                        class="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold transition hover:bg-slate-100">
                     Copy Link
                 </button>
             </div>
@@ -396,7 +396,7 @@
                                     </p>
 
                                     <p class="mt-1 text-base font-bold text-slate-900">
-                                        {{ $paymentMethod }}
+                                        {{ e($paymentMethod) }}
                                     </p>
                                 </div>
 
@@ -573,7 +573,74 @@
                             @endif
                         </p>
 
-                        {{-- Refund Status & Rejection Info (Retained) --}}
+                        {{-- Direct cancellation for unpaid bookings --}}
+                        @if (
+                            !$hasSuccessfulPayment
+                            && !$isCancelled
+                            && !$isRefundRequested
+                            && !$isCompleted
+                            && !$refund
+                        )
+                            <form
+                                action="{{ localized_route('customer.bookings.cancel', [
+                                    'bookingCode' => $booking->booking_code,
+                                ]) }}"
+                                method="POST"
+                                class="mt-4"
+                                onsubmit="return confirm('Are you sure you want to cancel this booking? The reserved availability will be released.');"
+                            >
+                                @csrf
+
+                                <button
+                                    type="submit"
+                                    class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                                >
+                                    Cancel Booking
+                                </button>
+                            </form>
+                        @endif
+
+                        {{-- Refund Request Button --}}
+                        @if ($canRequestRefund)
+                            <a
+                                href="{{ localized_route('customer.bookings.refund-page', [
+                                    'bookingCode' => $booking->booking_code,
+                                ]) }}"
+                                class="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-rose-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                            >
+                                Request Refund
+                            </a>
+
+                            @if ($refundDeadline)
+                                <p class="mt-2 text-center text-xs text-slate-500">
+                                    Refund requests are available until
+                                    {{ $refundDeadline->translatedFormat('d F Y') }}.
+                                </p>
+                            @endif
+
+                        @elseif (
+                            $dpPaid
+                            && $refundDeadline
+                            && now()->gt($refundDeadline)
+                            && !$isCancelled
+                            && !in_array($refundStatus, ['pending', 'processing', 'approved', 'refunded'], true)
+                        )
+                            <div class="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4">
+                                <p class="text-sm font-semibold text-rose-900">
+                                    Refund Requests Closed
+                                </p>
+
+                                <p class="mt-2 text-sm leading-6 text-rose-800">
+                                    Refund requests are no longer available because the maximum
+                                    submission period has passed. Refund requests were available until
+                                    <strong>
+                                        {{ $refundDeadline->translatedFormat('d F Y') }}.
+                                    </strong>
+                                </p>
+                            </div>
+                        @endif
+
+                        {{-- Refund Status & Rejection Info --}}
                         @if ($refund)
                             @php
                                 $refundDetailStatus = strtolower(trim((string) $refund->status));
@@ -603,7 +670,7 @@
                                         </p>
 
                                         <p class="mt-3 whitespace-pre-line text-sm leading-6 text-rose-800">
-                                            {{ $refund->admin_notes }}
+                                            {{ e($refund->admin_notes) }}
                                         </p>
                                     </div>
                                 @endif

@@ -84,7 +84,10 @@ class Vehicle extends Model
                 return $path;
             }
 
-            return Storage::disk('public')->url(ltrim($path, '/'));
+            /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+            $disk = Storage::disk('public');
+
+            return $disk->url(ltrim($path, '/'));
         });
     }
 

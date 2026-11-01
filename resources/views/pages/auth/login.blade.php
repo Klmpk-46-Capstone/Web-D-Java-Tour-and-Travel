@@ -1,26 +1,29 @@
 @extends('layouts.auth')
 
-@section('title', 'Masuk')
+@section('title', app()->getLocale() === 'en' ? 'Login' : 'Masuk')
 
 @section('content')
+    @php
+        $isEnglish = app()->getLocale() === 'en';
+    @endphp
 
     {{-- Judul --}}
     <div class="text-center">
         <h1 class="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">
-            Masuk ke Akun
+            {{ $isEnglish ? 'Sign In to Your Account' : 'Masuk ke Akun' }}
         </h1>
 
         <p class="mt-2 text-base leading-relaxed text-slate-600">
-            Akses pesanan rental dan reservasi paket wisata Anda.
+            {{ $isEnglish
+                ? 'Access your rental bookings and tour package reservations.'
+                : 'Akses pesanan rental dan reservasi paket wisata Anda.' }}
         </p>
     </div>
 
     {{-- Login Google --}}
-    <button
-        type="button"
-        disabled
-        title="Login Google perlu dikonfigurasi terlebih dahulu"
-        class="mt-6 flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-semibold text-slate-700 opacity-80 shadow-sm"
+    <a
+        href="{{ localized_route('google.redirect') }}"
+        class="mt-6 flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
     >
         <svg
             class="h-5 w-5"
@@ -33,15 +36,21 @@
             <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.87l-7.65-5.93c-2.12 1.42-4.84 2.26-8.25 2.26-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"/>
         </svg>
 
-        Masuk dengan Google
-    </button>
+        {{ $isEnglish ? 'Continue with Google' : 'Masuk dengan Google' }}
+    </a>
+
+    @error('google')
+        <p class="mt-3 text-sm text-red-600">
+            {{ $message }}
+        </p>
+    @enderror
 
     {{-- Pemisah --}}
     <div class="my-6 flex items-center gap-3">
         <span class="h-px flex-1 bg-slate-200"></span>
 
         <span class="whitespace-nowrap text-sm font-medium text-slate-600">
-            atau masuk dengan email
+            {{ $isEnglish ? 'or sign in with email' : 'atau masuk dengan email' }}
         </span>
 
         <span class="h-px flex-1 bg-slate-200"></span>
@@ -61,11 +70,10 @@
                 for="login"
                 class="mb-2 block text-sm font-semibold text-slate-900 sm:text-base"
             >
-                Email atau No. WhatsApp
+                {{ $isEnglish ? 'Email or WhatsApp Number' : 'Email atau No. WhatsApp' }}
             </label>
 
             <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-100">
-
                 <svg
                     class="h-5 w-5 shrink-0 text-slate-700"
                     viewBox="0 0 24 24"
@@ -83,13 +91,14 @@
                     name="login"
                     type="text"
                     value="{{ old('login') }}"
-                    placeholder="nama@email.com atau 081234567890"
+                    placeholder="{{ $isEnglish
+                        ? 'name@email.com or 081234567890'
+                        : 'nama@email.com atau 081234567890' }}"
                     autocomplete="username"
                     required
                     maxlength="255"
                     class="min-w-0 w-full border-0 bg-transparent py-3.5 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
                 >
-
             </div>
 
             @error('login')
@@ -105,11 +114,10 @@
                 for="password"
                 class="mb-2 block text-sm font-semibold text-slate-900 sm:text-base"
             >
-                Kata Sandi
+                {{ $isEnglish ? 'Password' : 'Kata Sandi' }}
             </label>
 
             <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 transition focus-within:border-teal-600 focus-within:ring-2 focus-within:ring-teal-100">
-
                 <svg
                     class="h-5 w-5 shrink-0 text-slate-700"
                     viewBox="0 0 24 24"
@@ -127,7 +135,9 @@
                     id="password"
                     name="password"
                     type="password"
-                    placeholder="Masukkan kata sandi akun"
+                    placeholder="{{ $isEnglish
+                        ? 'Enter your account password'
+                        : 'Masukkan kata sandi akun' }}"
                     autocomplete="current-password"
                     required
                     class="min-w-0 w-full border-0 bg-transparent py-3.5 text-base text-slate-900 outline-none placeholder:text-slate-400 focus:ring-0"
@@ -136,7 +146,9 @@
                 <button
                     type="button"
                     data-toggle-password="password"
-                    aria-label="Tampilkan kata sandi"
+                    data-show-password="{{ $isEnglish ? 'Show password' : 'Tampilkan kata sandi' }}"
+                    data-hide-password="{{ $isEnglish ? 'Hide password' : 'Sembunyikan kata sandi' }}"
+                    aria-label="{{ $isEnglish ? 'Show password' : 'Tampilkan kata sandi' }}"
                     aria-pressed="false"
                     class="shrink-0 rounded-lg p-1 text-slate-700 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-teal-600"
                 >
@@ -152,7 +164,6 @@
                         <circle cx="12" cy="12" r="3"/>
                     </svg>
                 </button>
-
             </div>
 
             @error('password')
@@ -164,7 +175,6 @@
 
         {{-- Ingat Saya dan Lupa Password --}}
         <div class="flex flex-wrap items-center justify-between gap-3 text-sm sm:text-base">
-
             <label class="flex cursor-pointer items-center gap-2 text-slate-700">
                 <input
                     type="checkbox"
@@ -173,16 +183,15 @@
                     class="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
                 >
 
-                Ingat saya
+                {{ $isEnglish ? 'Remember me' : 'Ingat saya' }}
             </label>
 
             <a
-                href="mailto:admin@djavatravel.com"
+                href="{{ localized_route('password.request') }}"
                 class="font-semibold text-teal-700 transition hover:text-teal-900"
             >
-                Lupa kata sandi?
+                {{ $isEnglish ? 'Forgot password?' : 'Lupa kata sandi?' }}
             </a>
-
         </div>
 
         {{-- Tombol Masuk --}}
@@ -190,27 +199,21 @@
             type="submit"
             class="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-800 px-5 py-3.5 text-base font-bold text-white shadow-md transition hover:bg-teal-900 focus:outline-none focus:ring-4 focus:ring-teal-200"
         >
-            Masuk Sekarang
-
-            <span aria-hidden="true">
-                →
-            </span>
+            {{ $isEnglish ? 'Sign In Now' : 'Masuk Sekarang' }}
         </button>
-
     </form>
 
     {{-- Navigasi Register --}}
     <p class="mt-6 text-center text-base text-slate-600">
-        Belum punya akun?
+        {{ $isEnglish ? 'Don’t have an account?' : 'Belum punya akun?' }}
 
         <a
             href="{{ route('register') }}"
             class="font-bold text-teal-700 transition hover:text-teal-900"
         >
-            Daftar Sekarang
+            {{ $isEnglish ? 'Create an Account' : 'Daftar Sekarang' }}
         </a>
     </p>
-
 @endsection
 
 @push('scripts')
@@ -232,8 +235,8 @@
                 button.setAttribute(
                     'aria-label',
                     isPassword
-                        ? 'Sembunyikan kata sandi'
-                        : 'Tampilkan kata sandi'
+                        ? button.dataset.hidePassword
+                        : button.dataset.showPassword
                 );
 
                 button.setAttribute(

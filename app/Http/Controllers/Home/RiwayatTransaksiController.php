@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Refund;
 use App\Models\Review;
+use App\Models\Trip;
 use App\Services\InvoiceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -214,6 +215,62 @@ class RiwayatTransaksiController extends Controller
             ->where('user_id', $user->id)
             ->exists();
 
+        // =====================================================
+        // REFUND ELIGIBILITY
+        // =====================================================
+
+        $refundStatus = strtolower(trim(
+            (string) ($booking->refund?->status ?? '')
+        ));
+
+        // Ambil transaksi pelunasan yang berhasil.
+        $latestBalanceTransaction = $paidTransactions
+            ->filter(fn ($transaction) =>
+                strtolower((string) $transaction->payment_stage) === 'pelunasan'
+            )
+            ->sortByDesc(fn ($transaction) =>
+                $transaction->paid_at?->timestamp
+                ?? $transaction->created_at?->timestamp
+                ?? 0
+            )
+            ->first();
+
+        // Tanggal pelunasan berhasil.
+        $balancePaidAt = $latestBalanceTransaction?->paid_at
+            ?? $latestBalanceTransaction?->created_at;
+
+        // H+7 dihitung hanya jika pelunasan sudah dilakukan.
+        $refundDeadline = $balancePaidAt
+            ? \Illuminate\Support\Carbon::parse($balancePaidAt)
+                ->addDays(7)
+                ->endOfDay()
+            : null;
+
+        // Status yang mengunci pengajuan refund.
+        $refundLockedStatuses = [
+            'pending',
+            'processing',
+            'approved',
+            'refunded',
+        ];
+
+        $hasActiveOrApprovedRefund = in_array(
+            $refundStatus,
+            $refundLockedStatuses,
+            true
+        );
+
+        // Refund dapat diajukan setelah DP berhasil.
+        // Jika pelunasan sudah dilakukan, batas H+7 berlaku.
+        $canRequestRefund = $dpPaid
+            && !$isCancelled
+            && !$isRefundRequested
+            && !$hasActiveOrApprovedRefund
+            && (
+                $refundDeadline === null
+                || now()->lte($refundDeadline)
+            );
+
         return view(
             $this->dashboardView('riwayat_transaksi.detail'),
             compact(
@@ -232,7 +289,10 @@ class RiwayatTransaksiController extends Controller
                 'paymentStage',
                 'billAmount',
                 'latestTransaction',
-                'hasReviewed'
+                'hasReviewed',
+                'canRequestRefund',
+                'refundDeadline',
+                'balancePaidAt'
             )
         );
     }
@@ -272,6 +332,145 @@ class RiwayatTransaksiController extends Controller
             $this->dashboardView('riwayat_transaksi.invoice'),
             $invoiceData
         );
+    }
+
+    /**
+     * Membatalkan booking yang belum memiliki pembayaran berhasil.
+     *
+     * Booking paket wisata akan mengembalikan kuota peserta.
+     * Booking armada akan melepaskan jadwal kendaraan melalui
+     * perubahan status booking menjadi cancelled.
+     */
+    public function cancelBooking(
+        Request $request,
+        string $bookingCode
+    ): RedirectResponse {
+        $user = $request->user();
+        $isEnglish = app()->getLocale() === 'en';
+
+        DB::transaction(function () use ($user, $bookingCode, $isEnglish) {
+            $booking = Booking::query()
+                ->where('booking_code', $bookingCode)
+                ->where(function ($query) use ($user) {
+                    $query->where('user_id', $user->id)
+                        ->orWhere(function ($legacyQuery) use ($user) {
+                            $legacyQuery
+                                ->whereNull('user_id')
+                                ->where('customer_email', $user->email);
+                        });
+                })
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $bookingStatus = strtolower(
+                (string) $booking->booking_status
+            );
+
+            if (in_array($bookingStatus, [
+                'cancelled',
+                'canceled',
+            ], true)) {
+                abort(422, $isEnglish
+                    ? 'This booking has already been cancelled.'
+                    : 'Booking ini sudah dibatalkan.');
+            }
+
+            if (in_array($bookingStatus, [
+                'completed',
+                'finished',
+                'refund_requested',
+            ], true)) {
+                abort(422, $isEnglish
+                    ? 'This booking cannot be cancelled directly.'
+                    : 'Booking ini tidak dapat dibatalkan secara langsung.');
+            }
+
+            $hasSuccessfulPayment = $booking->transactions()
+                ->whereIn('status', [
+                    'success',
+                    'paid',
+                    'succeeded',
+                    'settled',
+                    'settlement',
+                    'completed',
+                    'capture',
+                ])
+                ->exists();
+
+            if ($hasSuccessfulPayment) {
+                abort(422, $isEnglish
+                    ? 'This booking already has a successful payment. Please submit a refund request instead.'
+                    : 'Booking ini sudah memiliki pembayaran berhasil. Silakan ajukan refund.');
+            }
+
+            $hasRefund = Refund::query()
+                ->where('booking_id', $booking->id)
+                ->whereIn('status', [
+                    'pending',
+                    'processing',
+                    'approved',
+                    'refunded',
+                ])
+                ->exists();
+
+            if ($hasRefund) {
+                abort(422, $isEnglish
+                    ? 'This booking has an active refund process.'
+                    : 'Booking ini sedang memiliki proses refund aktif.');
+            }
+
+            /*
+             * Kembalikan kuota paket wisata.
+             * Pengurangan dilakukan hanya setelah booking dipastikan
+             * belum dibatalkan dan belum memiliki pembayaran berhasil.
+             */
+            if ($booking->trip_id) {
+                $trip = Trip::query()
+                    ->whereKey($booking->trip_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if ($trip) {
+                    $trip->booked_seats = max(
+                        0,
+                        (int) $trip->booked_seats - (int) $booking->pax
+                    );
+
+                    $trip->status = $trip->resolveStatus();
+                    $trip->save();
+                }
+            }
+
+            /*
+             * Tandai transaksi yang belum berhasil sebagai cancelled.
+             * Transaksi yang sudah berhasil tidak boleh dibatalkan di sini.
+             */
+            $booking->transactions()
+                ->whereIn('status', [
+                    'pending',
+                    'unpaid',
+                    'waiting',
+                    'created',
+                ])
+                ->update([
+                    'status' => 'cancelled',
+                ]);
+
+            $booking->update([
+                'booking_status' => 'cancelled',
+            ]);
+        });
+
+        return redirect()
+            ->to(localized_route('customer.bookings.detail', [
+                'bookingCode' => $bookingCode,
+            ]))
+            ->with(
+                'success',
+                $isEnglish
+                    ? 'Your booking has been cancelled successfully. The reserved availability has been released.'
+                    : 'Booking berhasil dibatalkan. Kuota atau ketersediaan pemesanan telah dilepaskan.'
+            );
     }
 
     /**

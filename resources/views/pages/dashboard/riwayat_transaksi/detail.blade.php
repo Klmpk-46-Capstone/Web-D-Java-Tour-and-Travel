@@ -396,7 +396,7 @@
                                     </p>
 
                                     <p class="mt-1 text-base font-bold text-slate-900">
-                                        {{ $paymentMethod }}
+                                        {{ e($paymentMethod) }}
                                     </p>
                                 </div>
 
@@ -576,7 +576,74 @@
                             @endif
                         </p>
 
-                        {{-- Informasi Penolakan / Status Refund (Dipertahankan) --}}
+                        {{-- Pembatalan langsung untuk booking yang belum dibayar --}}
+                        @if (
+                            !$hasSuccessfulPayment
+                            && !$isCancelled
+                            && !$isRefundRequested
+                            && !$isCompleted
+                            && !$refund
+                        )
+                            <form
+                                action="{{ localized_route('customer.bookings.cancel', [
+                                    'bookingCode' => $booking->booking_code,
+                                ]) }}"
+                                method="POST"
+                                class="mt-4"
+                                onsubmit="return confirm('Apakah Anda yakin ingin membatalkan booking ini? Kuota atau jadwal yang telah dipesan akan dilepaskan.');"
+                            >
+                                @csrf
+
+                                <button
+                                    type="submit"
+                                    class="inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg border border-rose-200 bg-rose-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                                >
+                                    Batalkan Booking
+                                </button>
+                            </form>
+                        @endif
+
+                        {{-- Tombol Pengajuan Refund --}}
+                        @if ($canRequestRefund)
+                            <a
+                                href="{{ localized_route('customer.bookings.refund-page', [
+                                    'bookingCode' => $booking->booking_code,
+                                ]) }}"
+                                class="mt-4 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-rose-600 px-5 py-3 text-sm font-bold text-white transition hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                            >
+                                Ajukan Refund
+                            </a>
+
+                            @if ($refundDeadline)
+                                <p class="mt-2 text-center text-xs text-slate-500">
+                                    Pengajuan refund tersedia sampai
+                                    {{ $refundDeadline->translatedFormat('d F Y') }}.
+                                </p>
+                            @endif
+
+                        @elseif (
+                            $dpPaid
+                            && $refundDeadline
+                            && now()->gt($refundDeadline)
+                            && !$isCancelled
+                            && !in_array($refundStatus, ['pending', 'processing', 'approved', 'refunded'], true)
+                        )
+                            <div class="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4">
+                                <p class="text-sm font-semibold text-rose-900">
+                                    Pengajuan Refund Ditutup
+                                </p>
+
+                                <p class="mt-2 text-sm leading-6 text-rose-800">
+                                    Tidak bisa melakukan refund karena sudah melewati batas maksimum
+                                    pengajuan refund. Pengajuan refund tersedia sampai
+                                    <strong>
+                                        {{ $refundDeadline->translatedFormat('d F Y') }}.
+                                    </strong>
+                                </p>
+                            </div>
+                        @endif
+
+                        {{-- Informasi Penolakan / Status Refund --}}
                         @if ($refund)
                             @php
                                 $refundDetailStatus = strtolower(trim((string) $refund->status));
@@ -606,7 +673,7 @@
                                         </p>
 
                                         <p class="mt-3 whitespace-pre-line text-sm leading-6 text-rose-800">
-                                            {{ $refund->admin_notes }}
+                                            {{ e($refund->admin_notes) }}
                                         </p>
                                     </div>
                                 @endif
