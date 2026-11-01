@@ -10,10 +10,6 @@
     Profile
 </a>
 
-<a href="{{ url('/settings') }}" class="{{ $itemClass }}">
-    {{ $isEnglish ? 'Settings' : 'Pengaturan' }}
-</a>
-
 <div class="my-1 border-t border-slate-100"></div>
 
 <form action="{{ localized_route('logout') }}" method="POST">

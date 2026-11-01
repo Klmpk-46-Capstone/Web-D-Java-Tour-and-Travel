@@ -13,7 +13,12 @@ return [
     | a conventional file to locate the various service credentials.
     |
     */
-
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI'),
+    ],
+    
     'xendit' => [
         'secret_key' => env('XENDIT_SECRET_KEY'),
         'callback_token' => env('XENDIT_CALLBACK_TOKEN'),

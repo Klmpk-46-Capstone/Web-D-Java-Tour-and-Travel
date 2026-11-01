@@ -11,17 +11,19 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        html { scroll-behavior: smooth; scroll-padding-top: 100px; }
+        html { scroll-behavior: smooth; }
         body { font-family: 'DM Sans', Arial, sans-serif; }
         button, a { -webkit-tap-highlight-color: transparent; }
         img { display: block; max-width: 100%; }
     </style>
 </head>
-<body class="m-0 bg-indigo-50 text-base leading-relaxed text-slate-900 antialiased">
+<body class="m-0 bg-indigo-50 text-base leading-relaxed text-slate-900 antialiased scroll-pt-24">
     @php
-        $whatsappNumber = preg_replace('/\D+/', '', (string) config('services.djava.whatsapp', ''));
+        $rawWhatsapp = (string) config('services.djava.whatsapp', '');
+        $whatsappNumber = preg_replace('/\D+/', '', $rawWhatsapp);
         $whatsappMessage = rawurlencode("Halo D'Java Tour And Travel, saya ingin bertanya mengenai layanan perjalanan.");
-        $whatsappUrl = $whatsappNumber !== '' ? "https://wa.me/{$whatsappNumber}?text={$whatsappMessage}" : null;
+        $whatsappUrl = !empty($whatsappNumber) ? "https://wa.me/{$whatsappNumber}?text={$whatsappMessage}" : null;
+
         $formatRupiah = static function ($amount) {
             return 'Rp ' . number_format((float) $amount, 0, ',', '.');
         };
@@ -47,42 +49,104 @@
         @endif
 
         {{-- KEUNGGULAN LAYANAN --}}
-        <section class="py-6 pb-10 md:py-8 md:pb-12">
+        <section class="bg-indigo-50 py-12 md:py-16">
             <div class="container mx-auto px-4">
-                <div class="mb-5 flex flex-col items-start gap-2 md:mb-7 md:flex-row md:items-end md:justify-between md:gap-7">
+
+                {{-- Heading --}}
+                <div class="mb-10 flex flex-col justify-between gap-4 md:mb-14 md:flex-row md:items-end">
                     <div>
-                        <span class="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-teal-700">KENAPA MEMILIH KAMI</span>
-                        <h2 class="m-0 text-3xl leading-tight tracking-tight md:text-4xl">Keunggulan Layanan</h2>
+                        <span class="mb-3 block text-xs font-bold uppercase tracking-widest text-teal-700">
+                            Kenapa Memilih Kami
+                        </span>
+
+                        <h2 class="m-0 text-3xl font-semibold tracking-tight text-slate-900 md:text-4xl">
+                            Keunggulan Layanan
+                        </h2>
                     </div>
-                    <p class="mb-0 mt-0 max-w-md text-sm leading-relaxed text-slate-500 md:mb-0.5">
+
+                    <p class="m-0 max-w-md text-sm leading-relaxed text-slate-500 md:text-base">
                         Komitmen kami untuk memberikan pengalaman perjalanan terbaik,
                         aman, dan nyaman di setiap rute Jawa Timur.
                     </p>
                 </div>
 
-                <div class="grid grid-cols-1 gap-8 py-12 md:grid-cols-3 md:gap-10 md:py-16">
-                    <div>
-                        <div class="mb-4 grid h-14 w-14 place-items-center rounded-xl bg-teal-50 text-teal-700">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                {{-- Service Information --}}
+                <div class="grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-10">
+
+                    {{-- Driver --}}
+                    <article class="border-t border-slate-300 pt-5">
+                        <div class="mb-8 flex items-center justify-between">
+                            <span class="text-xs font-bold tracking-widest text-teal-700">
+                                01 / DRIVER
+                            </span>
+
+                            <span class="text-xs text-slate-400">
+                                D'JAVA SERVICE
+                            </span>
                         </div>
-                        <h3 class="mb-2 mt-0 text-lg tracking-tight">Driver Berpengalaman</h3>
-                        <p class="m-0 text-sm leading-relaxed text-slate-500">Driver profesional yang menguasai medan dan rute wisata di seluruh wilayah Jawa Timur secara mendalam.</p>
-                    </div>
-                    <div>
-                        <div class="mb-4 grid h-14 w-14 place-items-center rounded-xl bg-indigo-100 text-indigo-700">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+
+                        <div class="mb-4 h-1 w-10 bg-teal-700"></div>
+
+                        <h3 class="mb-3 text-xl font-semibold tracking-tight text-slate-900">
+                            Driver Berpengalaman
+                        </h3>
+
+                        <p class="m-0 max-w-sm text-sm leading-relaxed text-slate-500">
+                            Driver profesional yang menguasai medan dan rute wisata
+                            di seluruh wilayah Jawa Timur secara mendalam.
+                        </p>
+                    </article>
+
+                    {{-- Armada --}}
+                    <article class="border-t border-slate-300 pt-5">
+                        <div class="mb-8 flex items-center justify-between">
+                            <span class="text-xs font-bold tracking-widest text-teal-700">
+                                02 / ARMADA
+                            </span>
+
+                            <span class="text-xs text-slate-400">
+                                D'JAVA SERVICE
+                            </span>
                         </div>
-                        <h3 class="mb-2 mt-0 text-lg tracking-tight">Armada Terawat</h3>
-                        <p class="m-0 text-sm leading-relaxed text-slate-500">Kendaraan selalu melalui pengecekan rutin dan perawatan berkala demi keselamatan dan kenyamanan optimal.</p>
-                    </div>
-                    <div>
-                        <div class="mb-4 grid h-14 w-14 place-items-center rounded-xl bg-blue-100 text-blue-700">
-                            <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+
+                        <div class="mb-4 h-1 w-10 bg-teal-700"></div>
+
+                        <h3 class="mb-3 text-xl font-semibold tracking-tight text-slate-900">
+                            Armada Terawat
+                        </h3>
+
+                        <p class="m-0 max-w-sm text-sm leading-relaxed text-slate-500">
+                            Kendaraan selalu melalui pengecekan rutin dan perawatan
+                            berkala demi keselamatan dan kenyamanan optimal.
+                        </p>
+                    </article>
+
+                    {{-- Customer Service --}}
+                    <article class="border-t border-slate-300 pt-5">
+                        <div class="mb-8 flex items-center justify-between">
+                            <span class="text-xs font-bold tracking-widest text-teal-700">
+                                03 / SUPPORT
+                            </span>
+
+                            <span class="text-xs text-slate-400">
+                                D'JAVA SERVICE
+                            </span>
                         </div>
-                        <h3 class="mb-2 mt-0 text-lg tracking-tight">Layanan 24 Jam</h3>
-                        <p class="m-0 text-sm leading-relaxed text-slate-500">Tim dukungan pelanggan yang siap membantu kebutuhan konsultasi dan reservasi perjalanan Anda kapan saja.</p>
-                    </div>
+
+                        <div class="mb-4 h-1 w-10 bg-teal-700"></div>
+
+                        <h3 class="mb-3 text-xl font-semibold tracking-tight text-slate-900">
+                            Layanan 24 Jam
+                        </h3>
+
+                        <p class="m-0 max-w-sm text-sm leading-relaxed text-slate-500">
+                            Tim dukungan pelanggan yang siap membantu kebutuhan
+                            konsultasi dan reservasi perjalanan Anda kapan saja.
+                        </p>
+                    </article>
+
                 </div>
+
             </div>
         </section>
 
@@ -91,13 +155,13 @@
             <div class="container mx-auto px-4">
                 <div class="flex flex-col items-start gap-6 rounded-2xl border border-slate-200 bg-gradient-to-r from-white via-white to-teal-50 p-6 shadow-md md:flex-row md:items-center md:justify-between md:gap-9 md:p-10">
                     <div class="max-w-3xl">
-                        <span class="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-teal-700">BUTUH BANTUAN KHUSUS?</span>
-                        <h2 class="mb-3 mt-0 text-3xl leading-tight tracking-tight">Rencanakan Perjalanan Custom Bersama Kami</h2>
+                        <span class="mb-2 block text-xs font-extrabold uppercase tracking-wider text-teal-700">BUTUH BANTUAN KHUSUS?</span>
+                        <h2 class="mb-3 mt-0 text-3xl leading-tight tracking-tight text-slate-900">Rencanakan Perjalanan Custom Bersama Kami</h2>
                         <p class="m-0 max-w-2xl text-sm leading-relaxed text-slate-500">Punya itinerary sendiri atau butuh rekomendasi khusus untuk rombongan? Konsultasikan rencana perjalanan Anda langsung dengan tim ahli kami melalui WhatsApp.</p>
                     </div>
                     <div class="flex w-full flex-col flex-wrap items-stretch justify-end gap-3 md:w-auto md:flex-row">
                         @if ($whatsappUrl)
-                            <a class="inline-flex items-center justify-center rounded-xl bg-teal-700 px-6 py-3 text-center text-sm font-bold text-white no-underline transition hover:bg-teal-800" href="{{ $whatsappUrl }}" target="_blank" rel="noopener noreferrer">Konsultasi via WhatsApp</a>
+                            <a class="inline-flex items-center justify-center rounded-xl bg-teal-700 px-6 py-3 text-center text-sm font-bold text-white no-underline transition hover:bg-teal-800" href="{{ e($whatsappUrl) }}" target="_blank" rel="noopener noreferrer">Konsultasi via WhatsApp</a>
                         @else
                             <a class="inline-flex items-center justify-center rounded-xl bg-teal-700 px-6 py-3 text-center text-sm font-bold text-white no-underline transition hover:bg-teal-800" href="#kontak">Hubungi Kami</a>
                         @endif

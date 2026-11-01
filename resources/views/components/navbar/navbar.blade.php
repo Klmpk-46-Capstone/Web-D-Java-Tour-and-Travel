@@ -4,6 +4,7 @@
 
 <header
     id="mainNavbar"
+    data-is-english="{{ $isEnglish ? 'true' : 'false' }}"
     class="sticky top-0 z-50 bg-indigo-50 py-2 transition-all duration-300 md:py-3"
 >
     <div class="container mx-auto px-4">
@@ -210,11 +211,11 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const isEnglish = @json($isEnglish);
+    const mainNavbar = document.getElementById('mainNavbar');
+    const isEnglish = mainNavbar?.dataset.isEnglish === 'true' || document.documentElement.lang === 'en';
     const mobileBreakpoint = 1024;
     const menuToggle = document.getElementById('menuToggle');
     const navLinks = document.getElementById('navLinks');
-    const mainNavbar = document.getElementById('mainNavbar');
     const navbarNav = mainNavbar?.querySelector('nav');
 
     // 1. Efek Kaca Blur saat Scroll

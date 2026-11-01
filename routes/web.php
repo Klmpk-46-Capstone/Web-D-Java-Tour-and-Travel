@@ -2,16 +2,19 @@
 
 use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\AdminBookingController;
-use App\Http\Controllers\Admin\AdminManifestController;
 use App\Http\Controllers\Admin\AdminCustomerController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminManifestController;
 use App\Http\Controllers\Admin\AdminPackageController;
 use App\Http\Controllers\Admin\AdminRefundController;
 use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\AdminTripController;
 use App\Http\Controllers\Admin\AdminVehicleController;
+use App\Http\Controllers\Auth\GoogleAuthController;
+use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Customer\ProfileController;
 use App\Http\Controllers\DesignSystemController;
 use App\Http\Controllers\Home\ArmadaController;
 use App\Http\Controllers\Home\HomeController;
@@ -84,13 +87,14 @@ $customerRoutes = function () {
             ->where('bookingCode', '[A-Za-z0-9_-]+')
             ->name('refund-page');
 
-        // Halaman pembatalan booking
-        Route::get('/{bookingCode}/batal', [
+        // Membatalkan booking yang belum memiliki pembayaran berhasil.
+        Route::post('/{bookingCode}/batal', [
             RiwayatTransaksiController::class,
-            'showCancelPage',
+            'cancelBooking',
         ])
             ->where('bookingCode', '[A-Za-z0-9_-]+')
-            ->name('cancel-page');
+            ->middleware('throttle:5,10')
+            ->name('cancel');
 
         // Halaman formulir rating
         Route::get('/{bookingCode}/rating', [
@@ -131,6 +135,84 @@ $customerRoutes = function () {
         Route::post('/register', [AuthController::class, 'register'])
             ->middleware('throttle:5,1')
             ->name('register.store');
+
+        // Google Authentication - Login
+        Route::get('/login/google', [
+            GoogleAuthController::class,
+            'redirect',
+        ])
+            ->middleware('throttle:10,1')
+            ->name('google.redirect');
+
+        Route::get('/login/google/callback', [
+            GoogleAuthController::class,
+            'callback',
+        ])
+            ->middleware('throttle:10,1')
+            ->name('google.callback');
+
+        // Google Authentication - Register
+        Route::get('/register/google', [
+            GoogleAuthController::class,
+            'registerRedirect',
+        ])
+            ->middleware('throttle:10,1')
+            ->name('google.register.redirect');
+
+        Route::get('/register/google/callback', [
+            GoogleAuthController::class,
+            'registerCallback',
+        ])
+            ->middleware('throttle:10,1')
+            ->name('google.register.callback');
+
+        // Password Reset
+        Route::get('/lupa-password', [
+            PasswordResetController::class,
+            'create',
+        ])->name('password.request');
+
+        Route::post('/lupa-password', [
+            PasswordResetController::class,
+            'sendResetLink',
+        ])->middleware('throttle:3,1')->name('password.email');
+
+        Route::get('/reset-password/{token}', [
+            PasswordResetController::class,
+            'edit',
+        ])->name('password.reset');
+
+        Route::post('/reset-password', [
+            PasswordResetController::class,
+            'update',
+        ])->middleware('throttle:5,1')->name('password.update');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customer Profile Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware('auth')->prefix('profile')->name('profile.')->group(function () {
+        Route::get('/', [
+            ProfileController::class,
+            'index',
+        ])->name('index');
+
+        Route::put('/', [
+            ProfileController::class,
+            'update',
+        ])->middleware('throttle:10,1')->name('update');
+
+        Route::put('/password', [
+            ProfileController::class,
+            'updatePassword',
+        ])->middleware('throttle:5,1')->name('password.update');
+
+        Route::patch('/notifications', [
+            ProfileController::class,
+            'updateNotifications',
+        ])->middleware('throttle:10,1')->name('notifications.update');
     });
 
     Route::post('/logout', [AuthController::class, 'logout'])

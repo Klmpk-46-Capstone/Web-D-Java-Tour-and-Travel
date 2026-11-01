@@ -126,12 +126,10 @@
             <div class="flex flex-wrap gap-2 text-sm">
                 <span
                     class="inline-flex items-center gap-2 rounded-lg bg-blue-100 px-3 py-2 font-semibold text-blue-900">
-                    <span aria-hidden="true">◷</span>
                     {{ $package->duration ?: 'Duration follows the package' }}
                 </span>
                 <span
                     class="inline-flex items-center gap-2 rounded-lg bg-blue-100 px-3 py-2 font-semibold text-blue-900">
-                    <span aria-hidden="true">⌖</span>
                     {{ $package->category }}
                 </span>
                 <span

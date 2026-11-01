@@ -4,9 +4,6 @@
     <div class="container mx-auto px-4">
         <div class="mb-5 flex flex-col items-start gap-2 md:mb-7 md:flex-row md:items-end md:justify-between md:gap-7">
             <div>
-                <span class="mb-1.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-teal-100 text-teal-800">
-                    <span>✦</span> REKOMENDASI UTAMA PILIHAN TRAVEL
-                </span>
                 <h2 class="m-0 text-3xl leading-tight tracking-tight md:text-4xl">Paket Unggulan Terpopuler</h2>
             </div>
             <p class="mb-0 mt-0 max-w-md text-sm leading-relaxed text-slate-500 md:mb-0.5">
@@ -19,9 +16,9 @@
                 <article class="group bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
                     <div>
                         <div class="relative h-60 overflow-hidden bg-slate-100">
-                            <img 
-                                src="{{ $pkg->image_url ?? 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80' }}" 
-                                alt="{{ $pkg->name }}" 
+                            <img
+                                src="{{ $pkg->image_url ?? 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80' }}"
+                                alt="{{ $pkg->name }}"
                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 loading="lazy"
                             >
@@ -84,8 +81,8 @@
                             <span class="text-xs text-slate-500">/pax</span>
                         </div>
 
-                        <a 
-                            href="{{ route('packages.show', $pkg->slug) }}" 
+                        <a
+                            href="{{ route('packages.show', $pkg->slug) }}"
                             class="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-teal-700 hover:bg-teal-800 text-white text-xs font-bold transition shadow-xs no-underline"
                         >
                             <span>Detail &amp; Booking</span>

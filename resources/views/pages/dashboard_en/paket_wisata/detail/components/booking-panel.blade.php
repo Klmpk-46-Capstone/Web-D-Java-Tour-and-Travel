@@ -301,7 +301,6 @@
                 class="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-800 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2"
             >
                 Continue to Booking Form
-                <span aria-hidden="true">&rarr;</span>
             </a>
             <script>
                 document.addEventListener('DOMContentLoaded', function () {
@@ -339,7 +338,6 @@
                 rel="noopener noreferrer"
                 class="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-blue-100"
             >
-                <span class="text-teal-700" aria-hidden="true">▣</span>
                 Ask About Schedules via WhatsApp CS
             </a>
 

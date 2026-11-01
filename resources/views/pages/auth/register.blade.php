@@ -1,25 +1,30 @@
 @extends('layouts.auth')
 
-@section('title', 'Daftar')
+@section('title', app()->getLocale() === 'en' ? 'Register' : 'Daftar')
 
 @section('content')
+    @php
+        $isEnglish = app()->getLocale() === 'en';
+    @endphp
+
     {{-- Judul --}}
     <div class="text-center">
         <h1 class="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">
-            Buat Akun Baru
+            {{ $isEnglish ? 'Create a New Account' : 'Buat Akun Baru' }}
         </h1>
 
         <p class="mt-2 text-base leading-relaxed text-slate-600">
-            Mulai eksplorasi terbaik Anda bersama kami hari ini.
+            {{ $isEnglish
+                ? 'Start your journey and explore the best experiences with us today.'
+                : 'Mulai eksplorasi terbaik Anda bersama kami hari ini.' }}
         </p>
     </div>
 
     {{-- Register Google --}}
-    <button
-        type="button"
-        disabled
-        title="Pendaftaran Google perlu dikonfigurasi terlebih dahulu"
-        class="mt-6 flex w-full cursor-not-allowed items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-700 opacity-80"
+    <a
+        href="{{ localized_route('google.register.redirect') }}"
+        class="mt-6 flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 text-base font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-teal-600 focus:ring-offset-2"
+        aria-label="{{ $isEnglish ? 'Sign up with Google' : 'Daftar dengan Google' }}"
     >
         <svg
             class="h-5 w-5"
@@ -32,15 +37,15 @@
             <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.9-5.87l-7.65-5.93c-2.12 1.42-4.84 2.26-8.25 2.26-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48Z"/>
         </svg>
 
-        Daftar dengan Google
-    </button>
+        {{ $isEnglish ? 'Sign Up with Google' : 'Daftar dengan Google' }}
+    </a>
 
     {{-- Pemisah --}}
     <div class="my-6 flex items-center gap-3">
         <span class="h-px flex-1 bg-slate-200"></span>
 
         <span class="whitespace-nowrap text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Atau daftar dengan email
+            {{ $isEnglish ? 'Or sign up with email' : 'Atau daftar dengan email' }}
         </span>
 
         <span class="h-px flex-1 bg-slate-200"></span>
@@ -60,7 +65,7 @@
                 for="name"
                 class="mb-2 block text-sm font-semibold text-slate-900 sm:text-base"
             >
-                Nama Lengkap
+                {{ $isEnglish ? 'Full Name' : 'Nama Lengkap' }}
             </label>
 
             <input
@@ -68,7 +73,7 @@
                 name="name"
                 type="text"
                 value="{{ old('name') }}"
-                placeholder="Nama lengkap Anda"
+                placeholder="{{ $isEnglish ? 'Your full name' : 'Nama lengkap Anda' }}"
                 autocomplete="name"
                 required
                 maxlength="100"
@@ -88,7 +93,7 @@
                 for="whatsapp"
                 class="mb-2 block text-sm font-semibold text-slate-900 sm:text-base"
             >
-                Nomor WhatsApp
+                {{ $isEnglish ? 'WhatsApp Number' : 'Nomor WhatsApp' }}
             </label>
 
             <input
@@ -145,14 +150,14 @@
                 for="password"
                 class="mb-2 block text-sm font-semibold text-slate-900 sm:text-base"
             >
-                Kata Sandi
+                {{ $isEnglish ? 'Password' : 'Kata Sandi' }}
             </label>
 
             <input
                 id="password"
                 name="password"
                 type="password"
-                placeholder="Minimal 8 karakter"
+                placeholder="{{ $isEnglish ? 'At least 8 characters' : 'Minimal 8 karakter' }}"
                 autocomplete="new-password"
                 required
                 minlength="8"
@@ -160,7 +165,9 @@
             >
 
             <p class="mt-2 text-xs text-slate-500">
-                Minimal 8 karakter, dengan huruf dan angka.
+                {{ $isEnglish
+                    ? 'At least 8 characters, including letters and numbers.'
+                    : 'Minimal 8 karakter, dengan huruf dan angka.' }}
             </p>
 
             @error('password')
@@ -176,14 +183,14 @@
                 for="password_confirmation"
                 class="mb-2 block text-sm font-semibold text-slate-900 sm:text-base"
             >
-                Konfirmasi Kata Sandi
+                {{ $isEnglish ? 'Confirm Password' : 'Konfirmasi Kata Sandi' }}
             </label>
 
             <input
                 id="password_confirmation"
                 name="password_confirmation"
                 type="password"
-                placeholder="Ulangi kata sandi"
+                placeholder="{{ $isEnglish ? 'Re-enter your password' : 'Ulangi kata sandi' }}"
                 autocomplete="new-password"
                 required
                 minlength="8"
@@ -193,7 +200,6 @@
 
         {{-- Persetujuan --}}
         <label class="flex cursor-pointer items-start gap-2 pt-1 text-sm leading-relaxed text-slate-600">
-
             <input
                 id="terms"
                 name="terms"
@@ -204,16 +210,15 @@
             >
 
             <span>
-                Saya menyetujui
+                {{ $isEnglish ? 'I agree to the' : 'Saya menyetujui' }}
 
                 <a
                     href="{{ route('home') }}"
                     class="font-semibold text-teal-700 transition hover:text-teal-900"
                 >
-                    Syarat &amp; Ketentuan
+                    {{ $isEnglish ? 'Terms & Conditions' : 'Syarat & Ketentuan' }}
                 </a>
             </span>
-
         </label>
 
         {{-- Tombol Daftar --}}
@@ -221,25 +226,19 @@
             type="submit"
             class="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-700 px-5 py-3.5 text-base font-bold text-white shadow-md transition hover:bg-teal-800 focus:outline-none focus:ring-4 focus:ring-teal-200"
         >
-            Daftar Sekarang
-
-            <span aria-hidden="true">
-                →
-            </span>
+            {{ $isEnglish ? 'Create Account' : 'Daftar Sekarang' }}
         </button>
-
     </form>
 
     {{-- Navigasi Login --}}
     <p class="mt-6 text-center text-base text-slate-600">
-        Sudah punya akun?
+        {{ $isEnglish ? 'Already have an account?' : 'Sudah punya akun?' }}
 
         <a
             href="{{ route('login') }}"
             class="font-bold text-teal-700 transition hover:text-teal-900"
         >
-            Masuk di sini
+            {{ $isEnglish ? 'Sign In Here' : 'Masuk di sini' }}
         </a>
     </p>
-
 @endsection

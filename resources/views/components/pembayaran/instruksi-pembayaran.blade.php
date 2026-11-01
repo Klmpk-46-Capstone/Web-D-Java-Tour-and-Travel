@@ -423,7 +423,6 @@
                            id="continue-payment-button"
                            class="flex w-full items-center justify-center rounded-xl bg-green-600 px-5 py-4 text-center font-bold text-white shadow-sm transition hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-600 focus:ring-offset-2">
                             {{ $isEnglish ? 'Continue Payment' : 'Lanjutkan Pembayaran' }}
-                            <span class="ml-2">→</span>
                         </a>
                     @else
                         <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
@@ -456,7 +455,6 @@
                 @if (!$isPaid)
                     <a href="{{ localized_route('pembayaran.mulai', ['bookingCode' => $bookingCode, 'ganti_metode' => 1]) }}"
                        class="flex w-full items-center justify-center rounded-xl border border-slate-200 px-5 py-3.5 text-center font-semibold text-slate-700 transition hover:border-teal-500 hover:bg-teal-50 hover:text-teal-700">
-                        <span class="mr-2">←</span>
                         {{ $isEnglish ? 'Change Payment Method' : 'Ganti Metode Pembayaran' }}
                     </a>
                 @endif

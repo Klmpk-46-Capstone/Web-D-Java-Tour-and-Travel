@@ -133,12 +133,10 @@
 
                 <div class="flex flex-wrap gap-2 text-sm">
                     <x-ui.badge variant="info">
-                        <span aria-hidden="true">◷</span>
                         {{ $vehicle->seats }} seats
                     </x-ui.badge>
 
                     <x-ui.badge variant="info">
-                        <span aria-hidden="true">⌖</span>
                         {{ $vehicle->category_label }}
                     </x-ui.badge>
 
@@ -552,7 +550,6 @@
                             class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-teal-800 px-5 py-4 text-sm font-bold text-white shadow-sm transition hover:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2 sm:text-base"
                         >
                             <span class="min-w-0 text-center leading-snug">Continue to Booking Form</span>
-                            <span class="shrink-0" aria-hidden="true">&rarr;</span>
                         </a>
 
                         <div id="bookingFormError" class="mt-2 hidden rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs leading-relaxed text-rose-700" role="alert"></div>
@@ -564,12 +561,10 @@
                             rel="noopener noreferrer"
                             class="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-blue-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:bg-blue-100"
                         >
-                            <span class="shrink-0 text-teal-700" aria-hidden="true">▣</span>
                             <span class="min-w-0 text-center leading-snug">Ask About Schedules via WhatsApp CS</span>
                         </a>
 
                         <div class="mt-3 flex items-start justify-center gap-2 text-center text-xs leading-relaxed text-slate-500">
-                            <span class="mt-0.5 shrink-0 text-teal-700" aria-hidden="true">✓</span>
                             <p class="m-0">
                                 Unit availability confirmation &bull; Transparent pricing &bull; No hidden fees
                             </p>

@@ -373,7 +373,6 @@
                 {{ $stage === 'dp'
                     ? ($isEnglish ? 'Pay 30% DP' : 'Bayar DP 30%')
                     : ($isEnglish ? 'Pay 70% Balance' : 'Bayar Pelunasan 70%') }}
-                <span class="ml-2" aria-hidden="true">→</span>
             </button>
         </form>
 
