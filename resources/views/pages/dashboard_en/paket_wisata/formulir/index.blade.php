@@ -101,7 +101,9 @@
             <input type="hidden" name="package_id" value="{{ $package->id }}">
             <input type="hidden" name="trip_id" value="{{ $selectedTrip->id }}">
             <input type="hidden" name="pax" value="{{ $pax }}">
-            <input type="hidden" name="selected_armada" value="{{ $vehicleName }}">
+            @if(!empty($vehicleName))
+                <input type="hidden" name="selected_armada" value="{{ $vehicleName }}">
+            @endif
 
             <div class="space-y-6 lg:col-span-7">
                 <section class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7 lg:p-8">
@@ -139,26 +141,33 @@
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label class="mb-2 block text-sm font-semibold text-slate-700">
-                                Vehicle Options
+                            <label for="pickup_location" class="mb-2 block text-sm font-semibold text-slate-700 flex items-center justify-between">
+                                <span>Pickup Starting Point (Meeting Point)</span>
+                                <span class="text-xs font-semibold text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+                                    Official Admin Choice
+                                </span>
                             </label>
 
-                            <div class="flex min-h-12 items-center rounded-xl bg-blue-50 px-4 py-3 text-base text-slate-800">
-                                {{ $vehicleName }}
-                            </div>
-                        </div>
-
-                        <div class="sm:col-span-2">
-                            <label for="pickup_location" class="mb-2 block text-sm font-semibold text-slate-700">
-                                Pickup Starting Point
-                            </label>
-
-                            <input id="pickup_location" name="pickup_location" type="text" value="{{ old('pickup_location') }}" maxlength="200" autocomplete="street-address" placeholder="Example: Juanda International Airport (SUB)" required class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">
+                            <select id="pickup_location" name="pickup_location" required class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base font-medium outline-none transition text-slate-800 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100 cursor-pointer">
+                                @if (count($pickupOptions) > 1)
+                                    <option value="" disabled {{ !old('pickup_location') && empty($selectedTrip->meeting_point) ? 'selected' : '' }}>
+                                        -- Select Pickup Meeting Point --
+                                    </option>
+                                @endif
+                                @foreach ($pickupOptions as $point)
+                                    <option value="{{ $point }}" {{ old('pickup_location', $selectedTrip->meeting_point) === $point ? 'selected' : '' }}>
+                                        {{ $point }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1.5 text-xs text-slate-500">
+                                Official pickup location specified by the tour operator for this departure schedule.
+                            </p>
                         </div>
 
                         <div class="sm:col-span-2">
                             <label for="pickup_details" class="mb-2 block text-sm font-semibold text-slate-700">
-                                Time &amp; Specific Address Details
+                                Time &amp; Specific Address Details (Optional)
                             </label>
 
                             <textarea id="pickup_details" name="pickup_details" rows="2" maxlength="500" placeholder="Example: Flight GA-312 arrives at 08:30 WIB or the main hotel lobby" class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">{{ old('pickup_details') }}</textarea>
@@ -166,21 +175,29 @@
                     </div>
                 </section>
 
+                {{-- LEAD BOOKER DETAILS (PARTICIPANT 1) --}}
                 <section class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7 lg:p-8">
-                    <h2 class="mb-6 flex items-center gap-3 text-xl font-bold text-slate-900 sm:text-2xl">
-                        <svg class="h-5 w-5 shrink-0 text-teal-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <path d="M14 2v6h6"/>
-                            <circle cx="10" cy="13" r="2"/>
-                            <path d="M7 18c.8-1.8 5.2-1.8 6 0"/>
-                        </svg>
-                        Official Booker Details
-                    </h2>
+                    <div class="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="grid h-8 w-8 place-items-center rounded-full bg-teal-700 text-xs font-bold text-white">
+                                1
+                            </span>
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-900">
+                                    Official Booker Details (Participant 1 - Group Leader)
+                                </h2>
+                                <p class="text-xs text-slate-500">The person in charge of this group booking.</p>
+                            </div>
+                        </div>
+                        <span class="rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-800 border border-teal-200">
+                            Group Representative (ID Required)
+                        </span>
+                    </div>
 
                     <div class="space-y-5">
                         <div>
                             <label for="customer_name" class="mb-2 block text-sm font-semibold text-slate-700">
-                                Full Name (As on ID / Passport)
+                                Full Name (As on ID / Passport) <span class="text-rose-500">*</span>
                             </label>
 
                             <input id="customer_name" name="customer_name" type="text" value="{{ old('customer_name', auth()->user()->name ?? '') }}" maxlength="150" autocomplete="name" required placeholder="Enter the group leader's name" class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">
@@ -189,7 +206,7 @@
                         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             <div>
                                 <label for="customer_phone" class="mb-2 block text-sm font-semibold text-slate-700">
-                                    Active WhatsApp Number
+                                    Active WhatsApp Number <span class="text-rose-500">*</span>
                                 </label>
 
                                 <input id="customer_phone" name="customer_phone" type="tel" value="{{ old('customer_phone', auth()->user()->whatsapp ?? '') }}" maxlength="50" autocomplete="tel" inputmode="tel" required placeholder="+62 812-XXXX-XXXX" class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">
@@ -197,7 +214,7 @@
 
                             <div>
                                 <label for="customer_email" class="mb-2 block text-sm font-semibold text-slate-700">
-                                    Email Address (E-Ticket &amp; Invoice)
+                                    Email Address (E-Ticket &amp; Invoice) <span class="text-rose-500">*</span>
                                 </label>
 
                                 <input id="customer_email" name="customer_email" type="email" value="{{ old('customer_email', auth()->user()->email ?? '') }}" maxlength="150" autocomplete="email" required placeholder="name@domain.com" class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">
@@ -205,12 +222,17 @@
                         </div>
 
                         <div>
-                            <label for="identity_file" class="mb-2 block text-sm font-semibold text-slate-700">
-                                Upload ID of the Person in Charge (Optional)
-                            </label>
+                            <div class="mb-2 flex items-center justify-between">
+                                <label for="identity_file" class="block text-sm font-semibold text-slate-700">
+                                    Upload ID of the Group Leader (ID / Passport) <span class="text-rose-500">*</span>
+                                </label>
+                                <span class="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 border border-amber-200">
+                                    Required for Group Leader
+                                </span>
+                            </div>
 
-                            <div class="rounded-xl border border-dashed border-blue-200 bg-blue-50 p-6 text-center sm:p-8">
-                                <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-teal-700">
+                            <div class="rounded-xl border border-dashed border-teal-300 bg-teal-50/40 p-6 text-center sm:p-8">
+                                <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-teal-700 shadow-xs">
                                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M12 16V8"/>
                                         <path d="m8 12 4-4 4 4"/>
@@ -223,22 +245,103 @@
                                 </label>
 
                                 <div class="mt-4 flex justify-center">
-                                    <input id="identity_file" name="identity_file" type="file" accept="image/jpeg,image/png,application/pdf" class="block w-fit max-w-full cursor-pointer text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-100 file:px-4 file:py-2 file:font-semibold file:text-teal-800 hover:file:bg-blue-200">
+                                    <input id="identity_file" name="identity_file" type="file" accept="image/jpeg,image/png,application/pdf" required class="block w-fit max-w-full cursor-pointer text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-teal-800">
                                 </div>
 
                                 <p class="mt-3 text-xs leading-5 text-slate-600">
-                                    JPG, PNG, or PDF, maximum 2 MB. The file is stored in private storage.
+                                    JPG, PNG, or PDF, maximum 2 MB. Required only for the group leader (at least 1 person).
                                 </p>
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        <div>
-                            <label for="notes" class="mb-2 block text-sm font-semibold text-slate-700">
-                                Special Notes / Additional Requests
-                            </label>
+                {{-- ADDITIONAL GROUP MEMBERS (PARTICIPANTS 2 TO X) --}}
+                <div id="additionalParticipantsContainer" class="space-y-6">
+                    @for ($i = 2; $i <= $pax; $i++)
+                        <section class="participant-card rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7 lg:p-8" data-participant-index="{{ $i }}">
+                            <div class="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">
+                                        {{ $i }}
+                                    </span>
+                                    <div>
+                                        <h3 class="text-base font-bold text-slate-900">
+                                            Participant {{ $i }} Details
+                                        </h3>
+                                        <p class="text-xs text-slate-500">Group tour member</p>
+                                    </div>
+                                </div>
+                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                                    Personal Data Only (No File Required)
+                                </span>
+                            </div>
 
-                            <textarea id="notes" name="notes" rows="3" maxlength="500" placeholder="Example: Bring a baby seat, prefer an English-speaking driver, or add a Malang Batu route." class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">{{ old('notes') }}</textarea>
-                        </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+                                        Full Name Participant {{ $i }} (As on ID / Passport) <span class="text-rose-500">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        name="participants[{{ $i }}][name]" 
+                                        value="{{ old("participants.{$i}.name") }}" 
+                                        required 
+                                        maxlength="150" 
+                                        placeholder="Enter participant {{ $i }} full name" 
+                                        class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
+                                    >
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+                                            WhatsApp / Phone Number (Optional)
+                                        </label>
+                                        <input 
+                                            type="tel" 
+                                            name="participants[{{ $i }}][phone]" 
+                                            value="{{ old("participants.{$i}.phone") }}" 
+                                            maxlength="50" 
+                                            placeholder="+62 812-XXXX-XXXX" 
+                                            class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
+                                        >
+                                    </div>
+
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+                                            Special Notes / Dietary (Optional)
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            name="participants[{{ $i }}][email]" 
+                                            value="{{ old("participants.{$i}.email") }}" 
+                                            maxlength="150" 
+                                            placeholder="E.g.: Vegetarian / wheelchair" 
+                                            class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
+                                        >
+                                    </div>
+                                </div>
+
+                                <div class="rounded-lg bg-slate-50 p-3 text-xs text-slate-500 flex items-center gap-2">
+                                    <svg class="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>Personal details only. Group members are not required to upload identification files.</span>
+                                </div>
+                            </div>
+                        </section>
+                    @endfor
+                </div>
+
+                {{-- SPECIAL NOTES --}}
+                <section class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7 lg:p-8">
+                    <div>
+                        <label for="notes" class="mb-2 block text-sm font-semibold text-slate-700">
+                            Special Notes / Additional Requests (Optional)
+                        </label>
+
+                        <textarea id="notes" name="notes" rows="3" maxlength="500" placeholder="Example: Bring a baby seat, prefer an English-speaking driver, or add a Malang Batu route." class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">{{ old('notes') }}</textarea>
                     </div>
                 </section>
             </div>

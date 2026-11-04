@@ -101,7 +101,6 @@
             @csrf
 
             <input type="hidden" name="package_id" value="{{ $package->id }}">
-            <input type="hidden" name="selected_armada" id="inputArmada" value="Innova Reborn">
 
             {{-- TANGGAL KEBERANGKATAN --}}
             <div>
@@ -229,40 +228,6 @@
                 </div>
             </div>
 
-            {{-- PILIHAN ARMADA --}}
-            <div>
-                <p class="mb-2 text-sm font-semibold text-slate-800">
-                    Vehicle Options
-                </p>
-
-                <div class="rounded-xl bg-blue-50 p-1">
-                    <div class="grid grid-cols-2 gap-1">
-                        <button
-                            type="button"
-                            id="btnArmadaInnova"
-                            class="armada-btn rounded-lg bg-white px-2 py-3 text-xs font-semibold text-slate-700 shadow-sm"
-                            onclick="selectArmada('Innova Reborn')"
-                        >
-                            Innova Reborn
-                        </button>
-
-                        <button
-                            type="button"
-                            id="btnArmadaHiAce"
-                            class="armada-btn rounded-lg px-2 py-3 text-xs font-semibold text-slate-600"
-                            onclick="selectArmada('HiAce Commuter')"
-                        >
-                            HiAce Commuter
-                        </button>
-                    </div>
-                </div>
-
-                <p class="mt-2 text-xs leading-relaxed text-slate-500">
-                    Vehicle choice and capacity must be confirmed based on
-                    vehicle availability for the selected schedule.
-                </p>
-            </div>
-
             {{-- RINGKASAN PEMBAYARAN --}}
             <div class="rounded-xl border border-slate-100 p-4">
                 <div class="flex items-center justify-between gap-3 text-sm">
@@ -294,10 +259,10 @@
                 </div>
             </div>
 
-            {{-- TOMBOL LANJUT KE FORMULIR BOOKING (DIUBAH MENJADI ANCHOR TAG) --}}
+            {{-- TOMBOL LANJUT KE FORMULIR BOOKING --}}
             <a
                 id="continueToBookingForm"
-                href="{{ localized_route('booking.form', ['slug' => $package->slug, 'trip_id' => $firstTrip?->id, 'pax' => $initialPax, 'selected_armada' => 'Innova Reborn']) }}"
+                href="{{ localized_route('booking.form', ['slug' => $package->slug, 'trip_id' => $firstTrip?->id, 'pax' => $initialPax]) }}"
                 class="flex w-full items-center justify-center gap-2 rounded-xl bg-teal-800 px-5 py-4 text-base font-bold text-white shadow-sm transition hover:bg-teal-900 focus:outline-none focus:ring-2 focus:ring-teal-700 focus:ring-offset-2"
             >
                 Continue to Booking Form
@@ -307,14 +272,12 @@
                     const link = document.getElementById('continueToBookingForm');
                     const tripSelect = document.getElementById('trip_id');
                     const paxInput = document.getElementById('inputPax');
-                    const armadaInput = document.getElementById('inputArmada');
 
-                    if (!link || !tripSelect || !paxInput || !armadaInput) return;
+                    if (!link || !tripSelect || !paxInput) return;
 
                     link.addEventListener('click', function (event) {
                         const tripId = tripSelect.value;
                         const pax = Number.parseInt(paxInput.value, 10);
-                        const selectedArmada = armadaInput.value;
 
                         if (!tripId || !Number.isInteger(pax) || pax < 1) {
                             event.preventDefault();
@@ -325,7 +288,6 @@
                         const target = new URL(link.href, window.location.origin);
                         target.searchParams.set('trip_id', tripId);
                         target.searchParams.set('pax', String(pax));
-                        target.searchParams.set('selected_armada', selectedArmada);
                         link.href = target.toString();
                     });
                 });

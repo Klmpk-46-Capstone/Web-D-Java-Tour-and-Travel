@@ -97,11 +97,11 @@
                 Rp {{ number_format($totalRevenue, 0, ',', '.') }}
             </div>
             <div class="flex items-center gap-1.5 mt-2.5">
-                <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700">
-                    <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
-                    +14.2% YoY
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    Real-time
                 </span>
-                <span class="text-[11px] text-slate-400 font-medium">vs April 2025</span>
+                <span class="text-[11px] text-slate-400 font-medium">Periode {{ now()->translatedFormat('F Y') }}</span>
             </div>
         </div>
 
@@ -182,7 +182,7 @@
             {{-- Dropdown Range / Tanggal --}}
             <div class="w-full sm:w-auto">
                 <select name="range" onchange="this.form.submit()" class="w-full sm:w-auto px-3 py-2.5 text-xs font-semibold bg-slate-50 hover:bg-slate-50/80 border border-slate-200 rounded-xl text-slate-700 focus:outline-none focus:border-teal-600">
-                    <option value="30" {{ $dateRange == '30' ? 'selected' : '' }}>01 Mei 2025 - 31 Mei 2025 (Bulan Ini)</option>
+                    <option value="30" {{ $dateRange == '30' ? 'selected' : '' }}>30 Hari Terakhir</option>
                     <option value="7" {{ $dateRange == '7' ? 'selected' : '' }}>7 Hari Terakhir</option>
                     <option value="this_month" {{ $dateRange == 'this_month' ? 'selected' : '' }}>Bulan Berjalan</option>
                     <option value="all" {{ $dateRange == 'all' ? 'selected' : '' }}>Semua Periode</option>

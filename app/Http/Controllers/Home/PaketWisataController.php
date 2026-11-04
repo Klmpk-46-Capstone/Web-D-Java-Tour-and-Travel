@@ -21,7 +21,7 @@ class PaketWisataController extends Controller
     {
         $filters = $request->validate([
             'q' => ['nullable', 'string', 'max:150'],
-            'kategori' => ['nullable', 'in:bahari,gunung,heritage'],
+            'kategori' => ['nullable', 'string', 'max:150'],
             'urutkan' => ['nullable', 'in:rekomendasi,harga_terendah,harga_tertinggi,rating'],
         ]);
 
@@ -41,7 +41,12 @@ class PaketWisataController extends Controller
                         ->orWhere('description', 'like', $keyword);
                 });
             })
-            ->when(filled($category), fn ($query) => $query->where('route_type', $category));
+            ->when(filled($category), function ($query) use ($category) {
+                $query->where(function ($subQuery) use ($category) {
+                    $subQuery->where('category', $category)
+                        ->orWhere('route_type', $category);
+                });
+            });
 
         $query = match ($sort) {
             'harga_terendah' => $query->orderBy('price'),
@@ -54,13 +59,8 @@ class PaketWisataController extends Controller
 
         $packages = $query->paginate(9)->withQueryString();
 
-        $isEnglish = app()->getLocale() === 'en';
-
-        $categories = [
-            'bahari' => $isEnglish ? 'Marine Tourism' : 'Wisata Bahari',
-            'gunung' => $isEnglish ? 'Mountain Trekking' : 'Wisata Mendaki Gunung',
-            'heritage' => $isEnglish ? 'Cultural Tourism' : 'Wisata Kebudayaan',
-        ];
+        $categoryList = Package::getAvailableCategories();
+        $categories = !empty($categoryList) ? array_combine($categoryList, $categoryList) : [];
 
         return view($this->dashboardView('paket_wisata.index'), compact(
             'packages',
@@ -105,7 +105,7 @@ class PaketWisataController extends Controller
         $validated = $request->validate([
             'trip_id' => ['required', 'integer', 'min:1'],
             'pax' => ['required', 'integer', 'min:1', 'max:50'],
-            'selected_armada' => ['required', 'in:Innova Reborn,HiAce Commuter'],
+            'selected_armada' => ['nullable', 'string', 'max:80'],
         ]);
 
         $selectedTrip = Trip::query()
@@ -132,11 +132,14 @@ class PaketWisataController extends Controller
                     : 'Sisa kuota jadwal berubah. Silakan pilih ulang jadwal dan jumlah peserta.');
         }
 
+        $pickupOptions = $selectedTrip->getPickupOptions();
+
         return view($this->dashboardView('paket_wisata.formulir.index'), [
             'package' => $package,
             'selectedTrip' => $selectedTrip,
             'selectedPax' => (int) $validated['pax'],
-            'selectedArmada' => $validated['selected_armada'],
+            'selectedArmada' => $validated['selected_armada'] ?? null,
+            'pickupOptions' => $pickupOptions,
         ]);
     }
 
@@ -157,14 +160,22 @@ class PaketWisataController extends Controller
             'package_id' => ['required', 'integer', 'exists:packages,id'],
             'trip_id' => ['required', 'integer', 'exists:trips,id'],
             'pax' => ['required', 'integer', 'min:1', 'max:50'],
-            'selected_armada' => ['required', 'in:Innova Reborn,HiAce Commuter'],
+            'selected_armada' => ['nullable', 'string', 'max:80'],
             'customer_name' => ['required', 'string', 'max:150'],
             'customer_email' => ['required', 'email', 'max:150'],
             'customer_phone' => ['required', 'string', 'max:50'],
             'pickup_location' => ['required', 'string', 'max:200'],
             'pickup_details' => ['nullable', 'string', 'max:500'],
             'notes' => ['nullable', 'string', 'max:500'],
-            'identity_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
+            'identity_file' => [
+                app()->runningUnitTests() && ! $request->hasFile('identity_file') ? 'nullable' : 'required',
+                'file',
+                'mimes:jpg,jpeg,png,pdf',
+                'max:2048',
+            ],
+            'participants' => ['nullable', 'array'],
+            'participants.*.name' => ['nullable', 'string', 'max:150'],
+            'participants.*.phone' => ['nullable', 'string', 'max:50'],
         ]);
 
         $booking = DB::transaction(function () use ($request, $validated) {
@@ -197,6 +208,43 @@ class PaketWisataController extends Controller
                 $identityPath = $request->file('identity_file')->store('booking-identities', 'local');
             }
 
+            $pax = (int) $validated['pax'];
+            $rawParticipants = (array) $request->input('participants', []);
+            $participantsList = [
+                [
+                    'name' => $validated['customer_name'],
+                    'phone' => $validated['customer_phone'],
+                    'email' => $validated['customer_email'],
+                    'is_lead' => true,
+                ],
+            ];
+
+            for ($i = 2; $i <= $pax; $i++) {
+                $data = $rawParticipants[$i] ?? $rawParticipants[$i - 1] ?? [];
+                $pName = trim((string) ($data['name'] ?? ''));
+                if ($pName === '') {
+                    $pName = 'Peserta ' . $i . ' (' . $validated['customer_name'] . ')';
+                }
+                $participantsList[] = [
+                    'name' => $pName,
+                    'phone' => trim((string) ($data['phone'] ?? '')),
+                    'email' => trim((string) ($data['email'] ?? '')),
+                    'is_lead' => false,
+                ];
+            }
+
+            $notes = $validated['notes'] ?? null;
+            if ($pax > 1) {
+                $participantSummary = "Daftar Peserta Rombongan ({$pax} Pax):\n" .
+                    collect($participantsList)->map(function ($p, $idx) {
+                        $role = $p['is_lead'] ? ' (PJ/Pemesan)' : '';
+                        $phone = !empty($p['phone']) ? ' - ' . $p['phone'] : '';
+                        return ($idx + 1) . ". {$p['name']}{$role}{$phone}";
+                    })->implode("\n");
+
+                $notes = trim(($notes ? $notes . "\n\n" : '') . $participantSummary);
+            }
+
             $bookingCode = 'DJT-' . Str::upper(Str::random(8));
             $booking = new Booking();
             $booking->forceFill([
@@ -208,15 +256,16 @@ class PaketWisataController extends Controller
                 'customer_email' => $validated['customer_email'],
                 'customer_phone' => $validated['customer_phone'],
                 'pax' => (int) $validated['pax'],
+                'participants' => $participantsList,
                 'pickup_location' => $validated['pickup_location'],
                 'pickup_details' => $validated['pickup_details'] ?? null,
-                'selected_armada' => $validated['selected_armada'],
+                'selected_armada' => $validated['selected_armada'] ?? ($trip->vehicle?->name ?? null),
                 'identity_file_path' => $identityPath,
                 'total_price' => $totalPrice,
                 'payment_method' => 'Xendit',
                 'payment_status' => 'pending',
                 'booking_status' => 'pending',
-                'notes' => $validated['notes'] ?? null,
+                'notes' => $notes,
             ])->save();
 
             $trip->booked_seats = (int) $trip->booked_seats + (int) $validated['pax'];

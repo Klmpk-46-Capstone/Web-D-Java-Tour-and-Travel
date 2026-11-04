@@ -37,19 +37,57 @@ class AdminManifestController extends Controller
             $all = $this->manifestQuery($selectedTrip)->get();
         }
 
-        $passengers = $all
+        $individualPassengers = collect();
+        foreach ($all as $booking) {
+            $participants = $booking->participants_list;
+            $pax = max(1, (int) $booking->pax);
+            for ($idx = 0; $idx < $pax; $idx++) {
+                $pt = $participants[$idx] ?? [];
+                $isLead = ($idx === 0);
+                $pName = !empty($pt['name']) ? $pt['name'] : ($isLead ? $booking->customer_name : "{$booking->customer_name} (Peserta " . ($idx + 1) . ")");
+                $pPhone = !empty($pt['phone']) ? $pt['phone'] : ($isLead ? $booking->customer_phone : null);
+                $pEmail = !empty($pt['email']) ? $pt['email'] : ($isLead ? $booking->customer_email : null);
+                $pIdType = $pt['identity_type'] ?? 'KTP';
+                $pIdNumber = $pt['identity_number'] ?? null;
+                $pIdFile = !empty($pt['identity_file_path']) ? $pt['identity_file_path'] : ($isLead ? $booking->identity_file_path : null);
+                $pNotes = $pt['notes'] ?? $booking->notes;
+
+                $individualPassengers->push((object) [
+                    'booking_id' => $booking->id,
+                    'booking' => $booking,
+                    'passenger_index' => $idx,
+                    'is_lead' => $isLead,
+                    'name' => $pName,
+                    'phone' => $pPhone,
+                    'email' => $pEmail,
+                    'identity_type' => $pIdType,
+                    'identity_number' => $pIdNumber,
+                    'identity_file_path' => $pIdFile,
+                    'booking_code' => $booking->booking_code,
+                    'pickup_location' => $booking->pickup_location,
+                    'pickup_details' => $booking->pickup_details,
+                    'payment_status' => $booking->payment_status,
+                    'booking_status' => $booking->booking_status,
+                    'is_checked_in' => (bool) $booking->is_checked_in,
+                    'checked_in_at' => $booking->checked_in_at,
+                    'notes' => $pNotes,
+                ]);
+            }
+        }
+
+        $passengers = $individualPassengers
             ->when($search !== '', function ($c) use ($search) {
                 $needle = Str::lower($search);
 
-                return $c->filter(fn (Booking $b) => Str::contains(Str::lower(
-                    $b->customer_name . ' ' . $b->booking_code . ' ' . $b->customer_phone . ' ' . $b->customer_email
+                return $c->filter(fn ($p) => Str::contains(Str::lower(
+                    $p->name . ' ' . $p->booking_code . ' ' . $p->phone . ' ' . $p->email . ' ' . ($p->booking?->customer_name ?? '')
                 ), $needle));
             })
-            ->when($filter === 'checked_in', fn ($c) => $c->filter(fn (Booking $b) => $b->is_checked_in))
-            ->when($filter === 'not_checked_in', fn ($c) => $c->filter(fn (Booking $b) => ! $b->is_checked_in))
+            ->when($filter === 'checked_in', fn ($c) => $c->filter(fn ($p) => $p->is_checked_in))
+            ->when($filter === 'not_checked_in', fn ($c) => $c->filter(fn ($p) => ! $p->is_checked_in))
             ->when($filter === 'dp', fn ($c) => $c->where('payment_status', 'partial'))
             ->when($filter === 'unpaid', fn ($c) => $c->filter(
-                fn (Booking $b) => ! in_array($b->payment_status, ['paid', 'partial'], true)
+                fn ($p) => ! in_array($p->payment_status, ['paid', 'partial'], true)
             ))
             ->values();
 
@@ -127,6 +165,9 @@ class AdminManifestController extends Controller
             'customer_name' => ['required', 'string', 'max:150'],
             'customer_phone' => ['required', 'string', 'max:50'],
             'customer_email' => ['nullable', 'email', 'max:150'],
+            'identity_type' => ['nullable', 'string', 'max:50'],
+            'identity_number' => ['nullable', 'string', 'max:50'],
+            'identity_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
             'pax' => ['required', 'integer', 'min:1', 'max:50'],
             'pickup_location' => ['nullable', 'string', 'max:200'],
             'payment_status' => ['required', 'in:paid,partial'],
@@ -150,6 +191,34 @@ class AdminManifestController extends Controller
                 ]);
             }
 
+            $identityPath = null;
+            if ($request->hasFile('identity_file')) {
+                $identityPath = $request->file('identity_file')->store('booking-identities', 'local');
+            }
+
+            $participants = [];
+            $participants[] = [
+                'name' => $validated['customer_name'],
+                'phone' => $validated['customer_phone'],
+                'email' => $validated['customer_email'] ?? null,
+                'identity_type' => $validated['identity_type'] ?? 'KTP',
+                'identity_number' => $validated['identity_number'] ?? null,
+                'identity_file_path' => $identityPath,
+                'is_lead' => true,
+            ];
+
+            for ($i = 2; $i <= $pax; $i++) {
+                $participants[] = [
+                    'name' => $validated['customer_name'] . ' (Peserta ' . $i . ')',
+                    'phone' => null,
+                    'email' => null,
+                    'identity_type' => 'KTP',
+                    'identity_number' => null,
+                    'identity_file_path' => null,
+                    'is_lead' => false,
+                ];
+            }
+
             $total = (int) ($trip->package->price ?? 0) * $pax;
             $paidNow = $validated['payment_status'] === 'paid' ? $total : (int) round($total * 0.30);
             $checkInNow = $request->boolean('check_in_now');
@@ -164,7 +233,9 @@ class AdminManifestController extends Controller
                 'customer_email' => $validated['customer_email'] ?? '-',
                 'customer_phone' => $validated['customer_phone'],
                 'pax' => $pax,
+                'participants' => $participants,
                 'pickup_location' => $validated['pickup_location'] ?? null,
+                'identity_file_path' => $identityPath,
                 'total_price' => $total,
                 'down_payment' => $paidNow,
                 'payment_method' => 'Tunai (Loket Offline)',
@@ -195,6 +266,113 @@ class AdminManifestController extends Controller
         return redirect()
             ->route('admin.manifest.index', ['trip_id' => $booking->trip_id])
             ->with('success', "Penumpang {$booking->customer_name} ({$booking->pax} pax) berhasil ditambahkan ke manifes.");
+    }
+
+    public function showPassenger(Booking $booking, int $index = 0): View
+    {
+        $booking->load(['trip.package', 'trip.vehicle', 'user', 'transactions']);
+        $pax = max(1, (int) $booking->pax);
+        $index = max(0, min($pax - 1, $index));
+
+        $participants = $booking->participants_list;
+        $participant = $participants[$index] ?? [
+            'name' => $index === 0 ? $booking->customer_name : "{$booking->customer_name} (Peserta " . ($index + 1) . ")",
+            'phone' => $index === 0 ? $booking->customer_phone : null,
+            'email' => $index === 0 ? $booking->customer_email : null,
+            'is_lead' => $index === 0,
+        ];
+
+        $passenger = (object) [
+            'booking_id' => $booking->id,
+            'passenger_index' => $index,
+            'is_lead' => ($index === 0),
+            'name' => $participant['name'] ?? ($index === 0 ? $booking->customer_name : "Peserta " . ($index + 1)),
+            'phone' => $participant['phone'] ?? ($index === 0 ? $booking->customer_phone : null),
+            'email' => $participant['email'] ?? ($index === 0 ? $booking->customer_email : null),
+            'identity_type' => $participant['identity_type'] ?? 'KTP',
+            'identity_number' => $participant['identity_number'] ?? null,
+            'identity_file_path' => $participant['identity_file_path'] ?? ($index === 0 ? $booking->identity_file_path : null),
+            'notes' => $participant['notes'] ?? $booking->notes,
+            'booking' => $booking,
+        ];
+
+        return view('admin.manifest.show', compact('booking', 'passenger', 'index', 'pax'));
+    }
+
+    public function updatePassenger(Request $request, Booking $booking, int $index = 0): RedirectResponse
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:150'],
+            'phone' => ['nullable', 'string', 'max:50'],
+            'email' => ['nullable', 'email', 'max:150'],
+            'identity_type' => ['nullable', 'string', 'max:50'],
+            'identity_number' => ['nullable', 'string', 'max:50'],
+            'identity_file' => ['nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:2048'],
+            'notes' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $pax = max(1, (int) $booking->pax);
+        $index = max(0, min($pax - 1, $index));
+
+        $participants = $booking->participants_list;
+
+        for ($i = 0; $i < $pax; $i++) {
+            if (!isset($participants[$i])) {
+                $participants[$i] = [
+                    'name' => $i === 0 ? $booking->customer_name : "{$booking->customer_name} (Peserta " . ($i + 1) . ")",
+                    'phone' => $i === 0 ? $booking->customer_phone : null,
+                    'email' => $i === 0 ? $booking->customer_email : null,
+                    'is_lead' => ($i === 0),
+                ];
+            }
+        }
+
+        $existingPath = $participants[$index]['identity_file_path'] ?? ($index === 0 ? $booking->identity_file_path : null);
+        if ($request->hasFile('identity_file')) {
+            $newPath = $request->file('identity_file')->store('booking-identities', 'local');
+            $existingPath = $newPath;
+        }
+
+        $participants[$index]['name'] = $validated['name'];
+        $participants[$index]['phone'] = $validated['phone'] ?? null;
+        $participants[$index]['email'] = $validated['email'] ?? null;
+        $participants[$index]['identity_type'] = $validated['identity_type'] ?? 'KTP';
+        $participants[$index]['identity_number'] = $validated['identity_number'] ?? null;
+        $participants[$index]['identity_file_path'] = $existingPath;
+        $participants[$index]['notes'] = $validated['notes'] ?? null;
+        $participants[$index]['is_lead'] = ($index === 0);
+
+        $booking->participants = $participants;
+
+        if ($index === 0) {
+            $booking->customer_name = $validated['name'];
+            if (!empty($validated['phone'])) {
+                $booking->customer_phone = $validated['phone'];
+            }
+            if (!empty($validated['email'])) {
+                $booking->customer_email = $validated['email'];
+            }
+            if ($existingPath) {
+                $booking->identity_file_path = $existingPath;
+            }
+        }
+
+        $booking->save();
+
+        return redirect()->route('admin.manifest.passengers.show', ['booking' => $booking->id, 'index' => $index])
+            ->with('success', "Data dan berkas identitas penumpang '{$validated['name']}' berhasil disimpan.");
+    }
+
+    public function downloadIdentityFile(Booking $booking, int $index = 0)
+    {
+        $participants = $booking->participants_list;
+        $path = $participants[$index]['identity_file_path'] ?? ($index === 0 ? $booking->identity_file_path : null);
+
+        if (!$path || !Storage::disk('local')->exists($path)) {
+            abort(404, 'Berkas identitas tidak ditemukan.');
+        }
+
+        return response()->file(Storage::disk('local')->path($path));
     }
 
     public function export(Request $request): StreamedResponse|RedirectResponse

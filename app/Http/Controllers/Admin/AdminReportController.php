@@ -98,7 +98,7 @@ class AdminReportController extends Controller
         // 1. Metric: Omzet Bulan Ini (Semua transaksi berstatus success)
         $totalRevenue = (int) Transaction::where('status', 'success')->sum('amount');
         if ($totalRevenue === 0) {
-            $totalRevenue = 142800000; // Fallback display untuk baseline mockup
+            $totalRevenue = (int) Booking::whereIn('payment_status', ['paid', 'partial'])->sum('total_price');
         }
 
         // 2. Metric: Total DP Diterima
@@ -109,49 +109,56 @@ class AdminReportController extends Controller
             })
             ->sum('amount');
         if ($totalDp === 0) {
-            $totalDp = 42840000;
+            $totalDp = (int) Booking::whereNotNull('down_payment')->sum('down_payment');
         }
-        $dpCount = Transaction::where('status', 'success')->count();
-        if ($dpCount < 5) {
-            $dpCount = 42; // Sesuai mockup
+        $dpCount = Transaction::where('status', 'success')
+            ->where(function ($q) {
+                $q->where('payment_stage', 'dp')
+                    ->orWhere('payment_method', 'like', '%DP%');
+            })
+            ->count();
+        if ($dpCount === 0) {
+            $dpCount = Booking::whereNotNull('down_payment')->where('down_payment', '>', 0)->count();
         }
 
         // 3. Metric: Pelunasan Gateway
         $totalPelunasan = max(0, $totalRevenue - $totalDp);
-        if ($totalPelunasan === 0) {
-            $totalPelunasan = 95760000;
-        }
 
         // 4. Metric: Refund / Batal
         $refundAmount = (int) Refund::where('status', 'approved')->sum('amount');
         if ($refundAmount === 0) {
             $refundAmount = (int) Transaction::where('status', 'refunded')->sum('amount');
         }
-        if ($refundAmount === 0) {
-            $refundAmount = 4200000;
-        }
-        $refundCount = Refund::count() ?: Transaction::where('status', 'refunded')->count();
-        if ($refundCount === 0) {
-            $refundCount = 3;
-        }
+        $refundCount = Refund::where('status', 'approved')->count() ?: Transaction::where('status', 'refunded')->count();
 
         // Ringkasan Arus Kas Masuk: Komposisi Paket vs Rental Armada
         $tourRevenue = (int) Transaction::where('status', 'success')
             ->whereHas('booking', fn ($q) => $q->whereNotNull('package_id'))
             ->sum('amount');
+        if ($tourRevenue === 0) {
+            $tourRevenue = (int) Booking::whereNotNull('package_id')
+                ->whereIn('payment_status', ['paid', 'partial'])
+                ->sum('total_price');
+        }
+
         $rentalRevenue = (int) Transaction::where('status', 'success')
             ->whereHas('booking', fn ($q) => $q->whereNotNull('vehicle_id')->orWhereNotNull('selected_armada'))
             ->sum('amount');
+        if ($rentalRevenue === 0) {
+            $rentalRevenue = (int) Booking::where(function ($q) {
+                    $q->whereNotNull('vehicle_id')->orWhereNotNull('selected_armada');
+                })
+                ->whereIn('payment_status', ['paid', 'partial'])
+                ->sum('total_price');
+        }
 
         $calcTotal = $tourRevenue + $rentalRevenue;
         if ($calcTotal > 0) {
             $tourPercent = (int) round(($tourRevenue / $calcTotal) * 100);
             $rentalPercent = 100 - $tourPercent;
         } else {
-            $tourRevenue = 82824000;
-            $rentalRevenue = 59976000;
-            $tourPercent = 58;
-            $rentalPercent = 42;
+            $tourPercent = 0;
+            $rentalPercent = 0;
         }
 
         // Status Rekonsiliasi Bank Harian

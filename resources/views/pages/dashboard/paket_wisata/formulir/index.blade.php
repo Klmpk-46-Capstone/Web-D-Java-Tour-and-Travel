@@ -101,7 +101,9 @@
             <input type="hidden" name="package_id" value="{{ $package->id }}">
             <input type="hidden" name="trip_id" value="{{ $selectedTrip->id }}">
             <input type="hidden" name="pax" value="{{ $pax }}">
-            <input type="hidden" name="selected_armada" value="{{ $vehicleName }}">
+            @if(!empty($vehicleName))
+                <input type="hidden" name="selected_armada" value="{{ $vehicleName }}">
+            @endif
 
             <div class="space-y-6 lg:col-span-7">
                 <section class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7 lg:p-8">
@@ -139,26 +141,33 @@
                         </div>
 
                         <div class="sm:col-span-2">
-                            <label class="mb-2 block text-sm font-semibold text-slate-700">
-                                Pilihan Armada
+                            <label for="pickup_location" class="mb-2 block text-sm font-semibold text-slate-700 flex items-center justify-between">
+                                <span>Titik Awal Penjemputan (Meeting Point)</span>
+                                <span class="text-xs font-semibold text-teal-700 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+                                    Pilihan Resmi Admin
+                                </span>
                             </label>
 
-                            <div class="flex min-h-12 items-center rounded-xl bg-blue-50 px-4 py-3 text-base text-slate-800">
-                                {{ $vehicleName }}
-                            </div>
-                        </div>
-
-                        <div class="sm:col-span-2">
-                            <label for="pickup_location" class="mb-2 block text-sm font-semibold text-slate-700">
-                                Titik Awal Penjemputan
-                            </label>
-
-                            <input id="pickup_location" name="pickup_location" type="text" value="{{ old('pickup_location') }}" maxlength="200" autocomplete="street-address" placeholder="Contoh: Bandara Internasional Juanda (SUB)" required class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">
+                            <select id="pickup_location" name="pickup_location" required class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base font-medium outline-none transition text-slate-800 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100 cursor-pointer">
+                                @if (count($pickupOptions) > 1)
+                                    <option value="" disabled {{ !old('pickup_location') && empty($selectedTrip->meeting_point) ? 'selected' : '' }}>
+                                        -- Pilih Titik Kumpul Penjemputan --
+                                    </option>
+                                @endif
+                                @foreach ($pickupOptions as $point)
+                                    <option value="{{ $point }}" {{ old('pickup_location', $selectedTrip->meeting_point) === $point ? 'selected' : '' }}>
+                                        {{ $point }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1.5 text-xs text-slate-500">
+                                Lokasi penjemputan resmi yang telah ditentukan oleh pengelola untuk jadwal keberangkatan ini.
+                            </p>
                         </div>
 
                         <div class="sm:col-span-2">
                             <label for="pickup_details" class="mb-2 block text-sm font-semibold text-slate-700">
-                                Detail Jam &amp; Alamat Spesifik
+                                Detail Jam &amp; Alamat Spesifik (Opsional)
                             </label>
 
                             <textarea id="pickup_details" name="pickup_details" rows="2" maxlength="500" placeholder="Contoh: Flight GA-312 tiba jam 08:30 WIB atau lobi hotel utama" class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">{{ old('pickup_details') }}</textarea>
@@ -166,21 +175,29 @@
                     </div>
                 </section>
 
+                {{-- DATA PEMESAN UTAMA / PERWAKILAN PEMESAN --}}
                 <section class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7 lg:p-8">
-                    <h2 class="mb-6 flex items-center gap-3 text-xl font-bold text-slate-900 sm:text-2xl">
-                        <svg class="h-5 w-5 shrink-0 text-teal-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                            <path d="M14 2v6h6"/>
-                            <circle cx="10" cy="13" r="2"/>
-                            <path d="M7 18c.8-1.8 5.2-1.8 6 0"/>
-                        </svg>
-                        Data Pemesan Resmi
-                    </h2>
+                    <div class="mb-6 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="grid h-8 w-8 place-items-center rounded-full bg-teal-700 text-xs font-bold text-white">
+                                1
+                            </span>
+                            <div>
+                                <h2 class="text-xl font-bold text-slate-900">
+                                    Data Pemesan Resmi (Peserta 1 - Penanggung Jawab)
+                                </h2>
+                                <p class="text-xs text-slate-500">Perwakilan pemesan yang bertanggung jawab atas data pemesanan.</p>
+                            </div>
+                        </div>
+                        <span class="rounded-full bg-teal-50 px-3 py-1 text-xs font-bold text-teal-800 border border-teal-200">
+                            Perwakilan Pemesan (Wajib Identitas)
+                        </span>
+                    </div>
 
                     <div class="space-y-5">
                         <div>
                             <label for="customer_name" class="mb-2 block text-sm font-semibold text-slate-700">
-                                Nama Lengkap (Sesuai KTP / Paspor)
+                                Nama Lengkap (Sesuai KTP / Paspor) <span class="text-rose-500">*</span>
                             </label>
 
                             <input id="customer_name" name="customer_name" type="text" value="{{ old('customer_name', auth()->user()->name ?? '') }}" maxlength="150" autocomplete="name" required placeholder="Masukkan nama penanggung jawab rombongan" class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">
@@ -189,7 +206,7 @@
                         <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                             <div>
                                 <label for="customer_phone" class="mb-2 block text-sm font-semibold text-slate-700">
-                                    Nomor WhatsApp Aktif
+                                    Nomor WhatsApp Aktif <span class="text-rose-500">*</span>
                                 </label>
 
                                 <input id="customer_phone" name="customer_phone" type="tel" value="{{ old('customer_phone', auth()->user()->whatsapp ?? '') }}" maxlength="50" autocomplete="tel" inputmode="tel" required placeholder="+62 812-XXXX-XXXX" class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">
@@ -197,7 +214,7 @@
 
                             <div>
                                 <label for="customer_email" class="mb-2 block text-sm font-semibold text-slate-700">
-                                    Alamat Email (E-Tiket &amp; Invoice)
+                                    Alamat Email (E-Tiket &amp; Invoice) <span class="text-rose-500">*</span>
                                 </label>
 
                                 <input id="customer_email" name="customer_email" type="email" value="{{ old('customer_email', auth()->user()->email ?? '') }}" maxlength="150" autocomplete="email" required placeholder="nama@domain.com" class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">
@@ -205,12 +222,17 @@
                         </div>
 
                         <div>
-                            <label for="identity_file" class="mb-2 block text-sm font-semibold text-slate-700">
-                                Unggah Identitas Penanggung Jawab (Opsional)
-                            </label>
+                            <div class="mb-2 flex items-center justify-between">
+                                <label for="identity_file" class="block text-sm font-semibold text-slate-700">
+                                    Unggah Identitas Penanggung Jawab (KTP / Paspor) <span class="text-rose-500">*</span>
+                                </label>
+                                <span class="rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-bold text-amber-700 border border-amber-200">
+                                    Wajib untuk Perwakilan Pemesan
+                                </span>
+                            </div>
 
-                            <div class="rounded-xl border border-dashed border-blue-200 bg-blue-50 p-6 text-center sm:p-8">
-                                <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-teal-700">
+                            <div class="rounded-xl border border-dashed border-teal-300 bg-teal-50/40 p-6 text-center sm:p-8">
+                                <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-white text-teal-700 shadow-xs">
                                     <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                         <path d="M12 16V8"/>
                                         <path d="m8 12 4-4 4 4"/>
@@ -223,22 +245,103 @@
                                 </label>
 
                                 <div class="mt-4 flex justify-center">
-                                    <input id="identity_file" name="identity_file" type="file" accept="image/jpeg,image/png,application/pdf" class="block w-fit max-w-full cursor-pointer text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-blue-100 file:px-4 file:py-2 file:font-semibold file:text-teal-800 hover:file:bg-blue-200">
+                                    <input id="identity_file" name="identity_file" type="file" accept="image/jpeg,image/png,application/pdf" required class="block w-fit max-w-full cursor-pointer text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-teal-700 file:px-4 file:py-2 file:font-semibold file:text-white hover:file:bg-teal-800">
                                 </div>
 
                                 <p class="mt-3 text-xs leading-5 text-slate-600">
-                                    JPG, PNG, atau PDF, maksimal 2 MB. File disimpan di penyimpanan privat.
+                                    JPG, PNG, atau PDF, maksimal 2 MB. Wajib diunggah minimal 1 orang untuk perwakilan rombongan.
                                 </p>
                             </div>
                         </div>
+                    </div>
+                </section>
 
-                        <div>
-                            <label for="notes" class="mb-2 block text-sm font-semibold text-slate-700">
-                                Catatan Khusus / Permintaan Tambahan
-                            </label>
+                {{-- DATA ANGGOTA ROMBONGAN (PESERTA 2 S/D X) --}}
+                <div id="additionalParticipantsContainer" class="space-y-6">
+                    @for ($i = 2; $i <= $pax; $i++)
+                        <section class="participant-card rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7 lg:p-8" data-participant-index="{{ $i }}">
+                            <div class="mb-5 flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                                <div class="flex items-center gap-2.5">
+                                    <span class="grid h-8 w-8 place-items-center rounded-full bg-teal-100 text-xs font-bold text-teal-800">
+                                        {{ $i }}
+                                    </span>
+                                    <div>
+                                        <h3 class="text-base font-bold text-slate-900">
+                                            Data Peserta {{ $i }}
+                                        </h3>
+                                        <p class="text-xs text-slate-500">Anggota rombongan perjalanan</p>
+                                    </div>
+                                </div>
+                                <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+                                    Data Diri Saja (Tanpa Berkas Identitas)
+                                </span>
+                            </div>
 
-                            <textarea id="notes" name="notes" rows="3" maxlength="500" placeholder="Contoh: Bawa kursi bayi, preferensi driver berbahasa Inggris, atau rute tambahan Malang Batu." class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">{{ old('notes') }}</textarea>
-                        </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+                                        Nama Lengkap Peserta {{ $i }} (Sesuai KTP / Paspor) <span class="text-rose-500">*</span>
+                                    </label>
+                                    <input 
+                                        type="text" 
+                                        name="participants[{{ $i }}][name]" 
+                                        value="{{ old("participants.{$i}.name") }}" 
+                                        required 
+                                        maxlength="150" 
+                                        placeholder="Masukkan nama lengkap peserta ke-{{ $i }}" 
+                                        class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
+                                    >
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+                                            Nomor WhatsApp / Telepon (Opsional)
+                                        </label>
+                                        <input 
+                                            type="tel" 
+                                            name="participants[{{ $i }}][phone]" 
+                                            value="{{ old("participants.{$i}.phone") }}" 
+                                            maxlength="50" 
+                                            placeholder="+62 812-XXXX-XXXX" 
+                                            class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
+                                        >
+                                    </div>
+
+                                    <div>
+                                        <label class="mb-1.5 block text-sm font-semibold text-slate-700">
+                                            Catatan / Kebutuhan Khusus (Opsional)
+                                        </label>
+                                        <input 
+                                            type="text" 
+                                            name="participants[{{ $i }}][email]" 
+                                            value="{{ old("participants.{$i}.email") }}" 
+                                            maxlength="150" 
+                                            placeholder="Cth: Vegetarian / kursi roda" 
+                                            class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100"
+                                        >
+                                    </div>
+                                </div>
+
+                                <div class="rounded-lg bg-slate-50 p-3 text-xs text-slate-500 flex items-center gap-2">
+                                    <svg class="h-4 w-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    <span>Hanya data diri. Peserta rombongan tidak diwajibkan mengunggah berkas/foto identitas.</span>
+                                </div>
+                            </div>
+                        </section>
+                    @endfor
+                </div>
+
+                {{-- CATATAN UMUM --}}
+                <section class="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm sm:p-7 lg:p-8">
+                    <div>
+                        <label for="notes" class="mb-2 block text-sm font-semibold text-slate-700">
+                            Catatan Khusus / Permintaan Tambahan (Opsional)
+                        </label>
+
+                        <textarea id="notes" name="notes" rows="3" maxlength="500" placeholder="Contoh: Bawa kursi bayi, preferensi driver berbahasa Inggris, atau rute tambahan Malang Batu." class="w-full rounded-xl border border-slate-200 bg-blue-50 px-4 py-3 text-base outline-none transition placeholder:text-slate-400 focus:border-teal-600 focus:bg-white focus:ring-2 focus:ring-teal-100">{{ old('notes') }}</textarea>
                     </div>
                 </section>
             </div>

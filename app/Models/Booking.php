@@ -38,6 +38,7 @@ class Booking extends Model
         'customer_email',
         'customer_phone',
         'pax',
+        'participants',
         'selected_armada',
         'pickup_location',
         'pickup_details',
@@ -52,6 +53,7 @@ class Booking extends Model
 
     protected $casts = [
         'pax' => 'integer',
+        'participants' => 'array',
         'total_price' => 'integer',
         'down_payment' => 'integer',
         'rate' => 'integer',
@@ -59,6 +61,27 @@ class Booking extends Model
         'rental_date' => 'date',
         'checked_in_at' => 'datetime',
     ];
+
+    /**
+     * Mengambil daftar seluruh peserta rombongan.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getParticipantsListAttribute(): array
+    {
+        if (!empty($this->participants) && is_array($this->participants)) {
+            return $this->participants;
+        }
+
+        return [
+            [
+                'name' => $this->customer_name,
+                'phone' => $this->customer_phone,
+                'email' => $this->customer_email,
+                'is_lead' => true,
+            ],
+        ];
+    }
 
     public function package(): BelongsTo
     {

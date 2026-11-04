@@ -116,11 +116,11 @@ class AdminTripController extends Controller
             'departure_time' => ['nullable', 'date_format:H:i'],
         ]);
 
+        $this->validateAndBindTripDuration($validated);
         $this->assertVehicleRules($validated, null);
 
         $trip = Trip::create([
             ...$validated,
-            'return_date' => $validated['return_date'] ?? null,
             'booked_seats' => 0,
             'status' => 'available',
         ]);
@@ -147,6 +147,8 @@ class AdminTripController extends Controller
             'meeting_point' => ['nullable', 'string', 'max:200'],
             'departure_time' => ['nullable', 'date_format:H:i'],
         ]);
+
+        $this->validateAndBindTripDuration($validated);
 
         $activeSeats = max($trip->activeSeatCount(), (int) $trip->booked_seats);
 
@@ -177,7 +179,6 @@ class AdminTripController extends Controller
 
         $trip->fill([
             ...$validated,
-            'return_date' => $validated['return_date'] ?? null,
         ]);
         $trip->booked_seats = $activeSeats;
         $trip->status = $trip->resolveStatus($requested);
@@ -256,7 +257,8 @@ class AdminTripController extends Controller
         $daysAhead = $validated['days_ahead'] ?? 7;
 
         $newDepDate = Carbon::parse($sourceTrip->departure_date)->addDays($daysAhead);
-        $newRetDate = $sourceTrip->return_date ? Carbon::parse($sourceTrip->return_date)->addDays($daysAhead) : null;
+        $durationDays = $sourceTrip->package?->durationInDays() ?? 1;
+        $newRetDate = $newDepDate->copy()->addDays($durationDays - 1);
 
         $newTrip = Trip::create([
             'package_id' => $sourceTrip->package_id,
@@ -289,6 +291,31 @@ class AdminTripController extends Controller
     // ------------------------------------------------------------------
     // Helpers
     // ------------------------------------------------------------------
+
+    /**
+     * Memvalidasi dan mengikat rentang tanggal trip dengan durasi perjalanan paket wisata.
+     */
+    private function validateAndBindTripDuration(array &$validated): void
+    {
+        $package = Package::findOrFail($validated['package_id']);
+        $expectedDays = $package->durationInDays();
+
+        $depDate = Carbon::parse($validated['departure_date'])->startOfDay();
+        $expectedReturnDate = $depDate->copy()->addDays($expectedDays - 1)->format('Y-m-d');
+
+        if (empty($validated['return_date'])) {
+            $validated['return_date'] = $expectedReturnDate;
+        } else {
+            $retDate = Carbon::parse($validated['return_date'])->startOfDay();
+            $actualDays = (int) round($depDate->diffInDays($retDate)) + 1;
+
+            if ($actualDays !== $expectedDays) {
+                throw ValidationException::withMessages([
+                    'return_date' => "Rentang tanggal jadwal ({$actualDays} hari) harus sesuai dengan durasi perjalanan paket wisata '{$package->name}' ({$expectedDays} hari: {$package->duration}). Tanggal kepulangan yang sesuai adalah " . Carbon::parse($expectedReturnDate)->translatedFormat('d F Y') . " ({$expectedReturnDate}).",
+                ]);
+            }
+        }
+    }
 
     private function resolveMonth(?string $input, ?Trip $selectedTrip): CarbonImmutable
     {

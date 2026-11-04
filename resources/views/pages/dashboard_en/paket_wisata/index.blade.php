@@ -115,7 +115,7 @@
 
                         <div>
                             {{-- GAMBAR PAKET --}}
-                            <div class="relative h-64 overflow-hidden bg-slate-100">
+                            <a href="{{ localized_route('packages.show', $pkg->slug) }}" class="block relative h-64 overflow-hidden bg-slate-100 group/img">
                                 @php
                                     $imageUrl = $pkg->image_url
                                         ?: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=800&q=80';
@@ -150,11 +150,11 @@
                                         {{ $pkg->category }}
                                     </span>
 
-                                    <h2 class="text-xl font-extrabold leading-tight text-white">
+                                    <h2 class="text-xl font-extrabold leading-tight text-white group-hover/img:text-teal-200 transition">
                                         {{ $pkg->name }}
                                     </h2>
                                 </div>
-                            </div>
+                            </a>
 
                             {{-- DESKRIPSI DAN INFORMASI --}}
                             <div class="p-5">

@@ -113,7 +113,7 @@
             <div class="mt-6 pt-5 border-t border-slate-800 text-left">
                 <div class="flex items-center justify-between text-[11px] text-slate-400 mb-2">
                     <span class="font-bold text-teal-400">Kredensial Super Admin Bawaan:</span>
-                    <span class="font-mono text-slate-500">Mockup Bambang S.</span>
+                    <span class="font-mono text-slate-500">Akun Resmi (Bambang S.)</span>
                 </div>
                 <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 font-mono text-[11px] text-slate-300 space-y-1">
                     <div>User: <span class="text-teal-300 font-bold">bambang@djavatour.com</span></div>

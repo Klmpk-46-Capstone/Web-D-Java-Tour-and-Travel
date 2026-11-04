@@ -53,10 +53,10 @@
         <div class="no-print flex flex-wrap items-center gap-2">
             <form action="{{ route('admin.manifest.index') }}" method="GET" class="flex items-center">
                 <label for="trip_select" class="sr-only">Pilih trip</label>
-                <select id="trip_select" name="trip_id" onchange="this.form.submit()" class="max-w-[320px] rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-xs font-bold text-slate-700 shadow-2xs focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/15">
+                <select id="trip_select" name="trip_id" onchange="this.form.submit()" class="min-w-[280px] sm:min-w-[360px] max-w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-xs font-bold text-slate-800 shadow-2xs focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600/15">
                     @foreach ($trips as $tr)
                         <option value="{{ $tr->id }}" @selected($selectedTrip && $selectedTrip->id === $tr->id)>
-                            {{ $tr->departure_date->format('d M') }} · {{ \Illuminate\Support\Str::limit($tr->batch_name, 34) }} ({{ $tr->booked_seats }}/{{ $tr->quota }})
+                            {{ $tr->manifest_schedule_label }}
                         </option>
                     @endforeach
                 </select>
@@ -200,63 +200,79 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 text-xs">
-                        @forelse ($passengers as $i => $b)
+                        @forelse ($passengers as $i => $p)
                             @php
-                                [$payLabel, $payCls] = $payTone[$b->payment_status] ?? ['Menunggu Bayar', 'bg-slate-100 text-slate-600 ring-slate-500/20'];
-                                $initial = \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($b->customer_name, 0, 2));
-                                $wa = preg_replace('/\D+/', '', (string) $b->customer_phone);
+                                [$payLabel, $payCls] = $payTone[$p->payment_status] ?? ['Menunggu Bayar', 'bg-slate-100 text-slate-600 ring-slate-500/20'];
+                                $initial = \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($p->name, 0, 2));
+                                $rawPhone = $p->phone ?: ($p->booking?->customer_phone ?? '');
+                                $wa = preg_replace('/\D+/', '', (string) $rawPhone);
                                 if (\Illuminate\Support\Str::startsWith($wa, '0')) { $wa = '62' . substr($wa, 1); }
                             @endphp
-                            <tr class="transition hover:bg-slate-50/70 {{ $b->booking_status === 'refund_requested' ? 'bg-rose-50/40' : '' }}">
+                            <tr class="transition hover:bg-slate-50/70 {{ $p->booking_status === 'refund_requested' ? 'bg-rose-50/40' : '' }}">
                                 <td class="py-3.5 px-4 text-center font-extrabold text-slate-400">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</td>
                                 <td class="py-3.5 px-4">
                                     <div class="flex items-center gap-3">
                                         <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-teal-50 text-[11px] font-extrabold text-teal-700 ring-1 ring-teal-600/15">{{ $initial }}</span>
                                         <div class="min-w-0">
-                                            <p class="truncate font-extrabold text-slate-900">{{ $b->customer_name }}
-                                                <span class="ml-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-extrabold text-slate-600">{{ $b->pax }} pax</span>
+                                            <div class="flex items-center gap-2">
+                                                <p class="truncate font-extrabold text-slate-900">{{ $p->name }}</p>
+                                                @if ($p->is_lead)
+                                                    <span class="rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-extrabold text-teal-700 ring-1 ring-teal-600/20">PJ / Pemesan</span>
+                                                @else
+                                                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">Anggota</span>
+                                                @endif
+                                            </div>
+                                            <p class="font-mono text-[10px] font-bold text-teal-700">#{{ $p->booking_code }}</p>
+                                            <p class="text-[10px] {{ $p->identity_file_path ? 'text-emerald-600 font-semibold' : 'text-slate-400' }}">
+                                                @if ($p->identity_file_path)
+                                                    ✓ Berkas identitas terunggah
+                                                @elseif ($p->identity_number)
+                                                    ID: {{ $p->identity_number }} ({{ $p->identity_type }})
+                                                @else
+                                                    Dokumen identitas belum diunggah
+                                                @endif
                                             </p>
-                                            <p class="font-mono text-[10px] font-bold text-teal-700">#{{ $b->booking_code }}</p>
-                                            <p class="text-[10px] {{ $b->identity_file_path ? 'text-emerald-600' : 'text-slate-400' }}">
-                                                {{ $b->identity_file_path ? '✓ Dokumen identitas terunggah' : 'Dokumen identitas belum diunggah' }}
-                                            </p>
-                                            @if ($b->booking_status === 'refund_requested')
+                                            @if ($p->booking_status === 'refund_requested')
                                                 <p class="text-[10px] font-extrabold text-rose-600">Pengajuan refund diproses</p>
                                             @endif
                                         </div>
                                     </div>
                                 </td>
                                 <td class="py-3.5 px-4">
-                                    <p class="font-mono font-bold text-slate-800">{{ $b->customer_phone }}</p>
-                                    <p class="truncate text-[11px] text-slate-400 max-w-[180px]">{{ $b->customer_email !== '-' ? $b->customer_email : 'Tanpa email' }}</p>
+                                    <p class="font-mono font-bold text-slate-800">{{ $p->phone ?: '-' }}</p>
+                                    <p class="truncate text-[11px] text-slate-400 max-w-[180px]">{{ $p->email ?: ($p->is_lead ? '-' : 'Via Kontak PJ') }}</p>
                                 </td>
                                 <td class="py-3.5 px-4 max-w-[240px]">
-                                    <p class="font-extrabold text-slate-800">{{ $b->pickup_location ?: 'Dijemput di titik kumpul' }}</p>
-                                    @if ($b->pickup_details)<p class="line-clamp-2 text-[11px] text-slate-400">{{ $b->pickup_details }}</p>@endif
-                                    @if ($b->notes)<p class="line-clamp-1 text-[11px] italic text-slate-400">“{{ $b->notes }}”</p>@endif
+                                    <p class="font-extrabold text-slate-800">{{ $p->pickup_location ?: 'Titik kumpul resmi' }}</p>
+                                    @if ($p->pickup_details)<p class="line-clamp-2 text-[11px] text-slate-400">{{ $p->pickup_details }}</p>@endif
+                                    @if ($p->notes)<p class="line-clamp-1 text-[11px] italic text-slate-400">“{{ $p->notes }}”</p>@endif
                                 </td>
                                 <td class="py-3.5 px-4">
                                     <span class="inline-block rounded-full px-2.5 py-1 text-[10px] font-extrabold ring-1 {{ $payCls }}">{{ $payLabel }}</span>
-                                    <p class="mt-1 text-[10px] text-slate-400">{{ $b->formatted_total_price }}</p>
+                                    <p class="mt-1 text-[10px] text-slate-400">{{ $p->booking?->formatted_total_price ?? ('Rp ' . number_format($p->booking?->total_price ?? 0, 0, ',', '.')) }} (Total {{ $p->booking?->pax ?? 1 }} pax)</p>
                                 </td>
                                 <td class="py-3.5 px-4">
-                                    @if ($b->is_checked_in)
+                                    @if ($p->is_checked_in)
                                         <span class="inline-flex items-center gap-1 rounded-full bg-teal-700 px-2.5 py-1 text-[10px] font-extrabold text-white">✓ Hadir</span>
-                                        <p class="mt-1 text-[10px] text-slate-400">{{ $b->checked_in_at->format('d M, H:i') }} WIB</p>
+                                        <p class="mt-1 text-[10px] text-slate-400">{{ $p->checked_in_at->format('d M, H:i') }} WIB</p>
                                     @else
                                         <span class="inline-block rounded-full bg-amber-50 px-2.5 py-1 text-[10px] font-extrabold text-amber-700 ring-1 ring-amber-600/20">Belum Hadir</span>
                                     @endif
                                 </td>
                                 <td class="py-3.5 px-4 no-print">
                                     <div class="flex items-center justify-center gap-1.5">
-                                        <form action="{{ route('admin.manifest.check-in', $b) }}" method="POST">
+                                        <a href="{{ route('admin.manifest.passengers.show', ['booking' => $p->booking_id, 'index' => $p->passenger_index]) }}" title="Lihat detail penumpang & kelola identitas" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-bold text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:border-teal-500 hover:text-teal-700">
+                                            Detail
+                                        </a>
+
+                                        <form action="{{ route('admin.manifest.check-in', $p->booking) }}" method="POST">
                                             @csrf
-                                            <input type="hidden" name="action" value="{{ $b->is_checked_in ? 'out' : 'in' }}">
+                                            <input type="hidden" name="action" value="{{ $p->is_checked_in ? 'out' : 'in' }}">
                                             @if ($filter !== 'all')<input type="hidden" name="filter" value="{{ $filter }}">@endif
                                             @if ($search)<input type="hidden" name="q" value="{{ $search }}">@endif
-                                            @if ($b->is_checked_in)
+                                            @if ($p->is_checked_in)
                                                 <button type="submit" title="Batalkan check-in" class="rounded-lg border border-slate-200 px-2.5 py-1.5 text-[11px] font-bold text-slate-500 transition hover:border-rose-300 hover:text-rose-600 cursor-pointer">Batal</button>
-                                            @elseif ($b->can_check_in)
+                                            @elseif ($p->booking?->can_check_in)
                                                 <button type="submit" title="Check-in penumpang" class="rounded-lg bg-teal-700 px-3 py-1.5 text-[11px] font-bold text-white transition hover:bg-teal-800 cursor-pointer">Check-in</button>
                                             @else
                                                 <button type="button" disabled title="Penumpang belum membayar / booking belum terkonfirmasi" class="rounded-lg bg-slate-100 px-3 py-1.5 text-[11px] font-bold text-slate-400 cursor-not-allowed">Check-in</button>
@@ -286,7 +302,7 @@
             </div>
 
             <div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 text-[11px] font-semibold text-slate-500">
-                <span>Menampilkan {{ $passengers->count() }} dari {{ $summary['total_bookings'] }} pemesan ({{ $summary['total_pax'] }} pax)</span>
+                <span>Menampilkan {{ $passengers->count() }} penumpang mandiri dari {{ $summary['total_bookings'] }} pemesanan</span>
                 <span>Kapasitas kursi: {{ $summary['occupied'] }} / {{ $summary['quota'] }} · Sisa {{ $summary['remaining'] }}</span>
             </div>
         </section>

@@ -344,6 +344,7 @@ Route::middleware(['auth', 'admin', 'setlocale:id'])->prefix('admin')->name('adm
     Route::get('/packages', [AdminPackageController::class, 'index'])->name('packages.index');
     Route::get('/packages/create', [AdminPackageController::class, 'create'])->name('packages.create');
     Route::post('/packages', [AdminPackageController::class, 'store'])->name('packages.store');
+    Route::get('/packages/{package}', [AdminPackageController::class, 'show'])->name('packages.show');
     Route::get('/packages/{package}/edit', [AdminPackageController::class, 'edit'])->name('packages.edit');
     Route::put('/packages/{package}', [AdminPackageController::class, 'update'])->name('packages.update');
     Route::delete('/packages/{package}', [AdminPackageController::class, 'destroy'])->name('packages.destroy');
@@ -374,10 +375,17 @@ Route::middleware(['auth', 'admin', 'setlocale:id'])->prefix('admin')->name('adm
     Route::get('/manifest', [AdminManifestController::class, 'index'])->name('manifest.index');
     Route::get('/manifest/export', [AdminManifestController::class, 'export'])->name('manifest.export');
     Route::post('/manifest/passengers', [AdminManifestController::class, 'storePassenger'])->name('manifest.passengers.store');
+    Route::get('/manifest/passengers/{booking}/{index?}', [AdminManifestController::class, 'showPassenger'])->name('manifest.passengers.show');
+    Route::put('/manifest/passengers/{booking}/{index?}', [AdminManifestController::class, 'updatePassenger'])->name('manifest.passengers.update');
+    Route::get('/manifest/passengers/{booking}/{index}/file', [AdminManifestController::class, 'downloadIdentityFile'])->name('manifest.passengers.file');
     Route::post('/manifest/{booking}/check-in', [AdminManifestController::class, 'checkIn'])->name('manifest.check-in');
 
     // 7. Akun Customer
     Route::get('/customers', [AdminCustomerController::class, 'index'])->name('customers.index');
+    Route::get('/customers/{customer}', [AdminCustomerController::class, 'show'])->name('customers.show');
+    Route::put('/customers/{customer}', [AdminCustomerController::class, 'update'])->name('customers.update');
+    Route::post('/customers/{customer}/toggle-blacklist', [AdminCustomerController::class, 'toggleBlacklist'])->name('customers.toggle-blacklist');
+    Route::delete('/customers/{customer}', [AdminCustomerController::class, 'destroy'])->name('customers.destroy');
 
     // 8. Laporan Transaksi & Keuangan
     Route::get('/bookings', [AdminBookingController::class, 'index'])->name('bookings.index');

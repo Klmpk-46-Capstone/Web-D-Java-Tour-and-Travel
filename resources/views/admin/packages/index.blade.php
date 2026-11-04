@@ -87,9 +87,9 @@
                                         class="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0"
                                     >
                                     <div>
-                                        <div class="font-extrabold text-slate-900 text-sm hover:text-teal-700">
+                                        <a href="{{ route('admin.packages.show', $pkg->id) }}" class="font-extrabold text-slate-900 text-sm hover:text-teal-700 transition">
                                             {{ $pkg->name }}
-                                        </div>
+                                        </a>
                                         <div class="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
                                             <span class="text-amber-500 font-bold">★ {{ $pkg->rating }}</span>
                                             <span>•</span>
@@ -142,6 +142,13 @@
                             {{-- Actions --}}
                             <td class="py-3.5 px-4 text-right whitespace-nowrap">
                                 <div class="inline-flex items-center gap-2">
+                                    <a 
+                                        href="{{ route('admin.packages.show', $pkg->id) }}" 
+                                        class="p-1.5 text-slate-400 hover:text-teal-700 rounded-lg hover:bg-slate-100 transition" 
+                                        title="Lihat Detail & Itinerary (CMS)"
+                                    >
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+                                    </a>
                                     <a 
                                         href="{{ route('packages.show', $pkg->slug) }}" 
                                         target="_blank"

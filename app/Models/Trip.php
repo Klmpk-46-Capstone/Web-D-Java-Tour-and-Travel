@@ -122,4 +122,51 @@ class Trip extends Model
         }
         return (int) min(100, round(($this->booked_seats / $this->quota) * 100));
     }
+
+    /**
+     * Mengambil daftar pilihan titik kumpul/penjemputan otomatis berdasarkan data admin.
+     *
+     * @return array<int, string>
+     */
+    public function getPickupOptions(): array
+    {
+        $options = [];
+
+        // 1. Dari meeting_point trip ini
+        if (!empty($this->meeting_point)) {
+            $split = preg_split('/[,\r\n;|]+/', (string) $this->meeting_point, -1, PREG_SPLIT_NO_EMPTY);
+            foreach ($split as $item) {
+                $trimmed = trim($item);
+                if ($trimmed !== '') {
+                    $options[] = $trimmed;
+                }
+            }
+        }
+
+        // 2. Dari trip lain pada paket yang sama
+        if ($this->package_id) {
+            $otherPoints = static::where('package_id', $this->package_id)
+                ->whereNotNull('meeting_point')
+                ->where('meeting_point', '!=', '')
+                ->pluck('meeting_point');
+
+            foreach ($otherPoints as $raw) {
+                $split = preg_split('/[,\r\n;|]+/', (string) $raw, -1, PREG_SPLIT_NO_EMPTY);
+                foreach ($split as $item) {
+                    $trimmed = trim($item);
+                    if ($trimmed !== '') {
+                        $options[] = $trimmed;
+                    }
+                }
+            }
+        }
+
+        $options = array_values(array_unique($options));
+
+        if (empty($options)) {
+            $options = ['Titik Kumpul Utama Sesuai Konfirmasi Admin'];
+        }
+
+        return $options;
+    }
 }

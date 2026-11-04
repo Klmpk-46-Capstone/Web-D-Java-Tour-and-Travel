@@ -295,7 +295,7 @@
                             <label for="f_package" class="{{ $labelCls }}">Rute Ekspedisi (Paket)</label>
                             <select id="f_package" name="package_id" required class="{{ $inputCls }}">
                                 @foreach ($packages as $p)
-                                    <option value="{{ $p->id }}" @selected((int) old('package_id', $t->package_id) === $p->id)>{{ $p->name }}</option>
+                                    <option value="{{ $p->id }}" data-days="{{ $p->durationInDays() }}" data-duration="{{ $p->duration }}" @selected((int) old('package_id', $t->package_id) === $p->id)>{{ $p->name }} ({{ $p->duration }})</option>
                                 @endforeach
                             </select>
                         </div>
@@ -305,15 +305,18 @@
                             <input id="f_batch" type="text" name="batch_name" required maxlength="150" value="{{ old('batch_name', $t->batch_name) }}" class="{{ $inputCls }}">
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label for="f_dep" class="{{ $labelCls }}">Tanggal Berangkat</label>
-                                <input id="f_dep" type="date" name="departure_date" required value="{{ old('departure_date', $t->departure_date->format('Y-m-d')) }}" class="{{ $inputCls }}">
+                        <div class="space-y-1">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label for="f_dep" class="{{ $labelCls }}">Tanggal Berangkat</label>
+                                    <input id="f_dep" type="date" name="departure_date" required value="{{ old('departure_date', $t->departure_date->format('Y-m-d')) }}" class="{{ $inputCls }}">
+                                </div>
+                                <div>
+                                    <label for="f_ret" class="{{ $labelCls }}">Tanggal Kembali (Otomatis)</label>
+                                    <input id="f_ret" type="date" name="return_date" value="{{ old('return_date', $t->return_date?->format('Y-m-d')) }}" class="{{ $inputCls }}">
+                                </div>
                             </div>
-                            <div>
-                                <label for="f_ret" class="{{ $labelCls }}">Tanggal Kembali</label>
-                                <input id="f_ret" type="date" name="return_date" value="{{ old('return_date', $t->return_date?->format('Y-m-d')) }}" class="{{ $inputCls }}">
-                            </div>
+                            <p id="edit_duration_hint" class="text-[11px] font-semibold text-teal-700 pt-0.5"></p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-3">
@@ -471,6 +474,44 @@
 
         tabs.forEach((btn) => btn.addEventListener('click', () => show(btn.dataset.tab)));
         show(hasErrors ? 'detail' : initial);
+
+        // Auto-sync return_date to package duration
+        const fPkg = document.getElementById('f_package');
+        const fDep = document.getElementById('f_dep');
+        const fRet = document.getElementById('f_ret');
+        const editHint = document.getElementById('edit_duration_hint');
+
+        function syncEditTripDates() {
+            if (!fPkg || !fDep || !fRet) return;
+            const opt = fPkg.options[fPkg.selectedIndex];
+            if (!opt) return;
+
+            const days = parseInt(opt.dataset.days, 10) || 1;
+            const durationLabel = opt.dataset.duration || (days + ' Hari');
+
+            if (fDep.value) {
+                const depDate = new Date(fDep.value + 'T00:00:00');
+                if (!isNaN(depDate.getTime())) {
+                    const retDate = new Date(depDate);
+                    retDate.setDate(retDate.getDate() + (days - 1));
+                    const yyyy = retDate.getFullYear();
+                    const mm = String(retDate.getMonth() + 1).padStart(2, '0');
+                    const dd = String(retDate.getDate()).padStart(2, '0');
+                    fRet.value = `${yyyy}-${mm}-${dd}`;
+                    if (editHint) {
+                        editHint.textContent = `✓ Terikat Durasi Paket: ${durationLabel} (Rentang ${days} Hari: ${fDep.value} s/d ${fRet.value})`;
+                    }
+                }
+            } else if (editHint) {
+                editHint.textContent = `Durasi paket terpilih: ${durationLabel} (${days} Hari)`;
+            }
+        }
+
+        if (fPkg && fDep) {
+            fPkg.addEventListener('change', syncEditTripDates);
+            fDep.addEventListener('change', syncEditTripDates);
+            syncEditTripDates();
+        }
     })();
 </script>
 @endpush

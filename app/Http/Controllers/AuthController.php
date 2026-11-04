@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Booking;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
@@ -169,43 +171,52 @@ class AuthController extends Controller
         }
 
         /*
+         * Email diperiksa sebelum pembuatan akun.
+         * Jika akun sebelumnya pernah di-blacklist, lakukan RESET TOTAL data lama.
+         */
+        $existingUserByEmail = User::query()
+            ->whereRaw('LOWER(email) = ?', [$email])
+            ->first();
+
+        if ($existingUserByEmail) {
+            if ($existingUserByEmail->is_blacklisted) {
+                $this->purgeAndResetBlacklistedUser($existingUserByEmail, $email);
+            } else {
+                return back()
+                    ->withInput($request->except([
+                        'password',
+                        'password_confirmation',
+                    ]))
+                    ->withErrors([
+                        'email' => 'Email sudah terdaftar.',
+                    ]);
+            }
+        }
+
+        /*
          * Periksa nomor dalam beberapa format untuk menghindari
          * pendaftaran ulang nomor yang sudah terdaftar.
          */
-        $existingWhatsApp = User::query()
+        $existingUserByWhatsApp = User::query()
             ->whereIn(
                 'whatsapp',
                 $this->whatsappCandidates($whatsapp)
             )
-            ->exists();
+            ->first();
 
-        if ($existingWhatsApp) {
-            return back()
-                ->withInput($request->except([
-                    'password',
-                    'password_confirmation',
-                ]))
-                ->withErrors([
-                    'whatsapp' => 'Nomor WhatsApp sudah terdaftar.',
-                ]);
-        }
-
-        /*
-         * Email diperiksa sebelum pembuatan akun.
-         */
-        $existingEmail = User::query()
-            ->whereRaw('LOWER(email) = ?', [$email])
-            ->exists();
-
-        if ($existingEmail) {
-            return back()
-                ->withInput($request->except([
-                    'password',
-                    'password_confirmation',
-                ]))
-                ->withErrors([
-                    'email' => 'Email sudah terdaftar.',
-                ]);
+        if ($existingUserByWhatsApp) {
+            if ($existingUserByWhatsApp->is_blacklisted) {
+                $this->purgeAndResetBlacklistedUser($existingUserByWhatsApp, $existingUserByWhatsApp->email);
+            } else {
+                return back()
+                    ->withInput($request->except([
+                        'password',
+                        'password_confirmation',
+                    ]))
+                    ->withErrors([
+                        'whatsapp' => 'Nomor WhatsApp sudah terdaftar.',
+                    ]);
+            }
         }
 
         $user = User::create([
@@ -213,6 +224,8 @@ class AuthController extends Controller
             'whatsapp' => $whatsapp,
             'email' => $email,
             'password' => Hash::make($validated['password']),
+            'last_login_at' => now(),
+            'last_seen_at' => now(),
         ]);
 
         Auth::login($user);
@@ -304,6 +317,20 @@ class AuthController extends Controller
                 ->first();
         }
 
+        if ($user && $user->is_blacklisted) {
+            RateLimiter::hit($throttleKey, 60);
+
+            $reason = $user->blacklist_reason ? " Alasan: {$user->blacklist_reason}." : '';
+
+            return back()
+                ->withInput($request->only('login'))
+                ->withErrors([
+                    'login' => $this->prefersEnglish($request)
+                        ? "Your account has been blacklisted by administrator.{$reason} Please contact customer support."
+                        : "Akun Anda telah dinonaktifkan/masuk daftar hitam oleh administrator.{$reason} Silakan hubungi customer service kami.",
+                ]);
+        }
+
         /*
          * Gunakan nilai yang benar-benar tersimpan pada akun
          * untuk Auth::attempt. Ini membantu akun lama yang
@@ -338,6 +365,14 @@ class AuthController extends Controller
 
         RateLimiter::clear($throttleKey);
 
+        $authUser = Auth::user();
+        if ($authUser instanceof User) {
+            $authUser->forceFill([
+                'last_login_at' => now(),
+                'last_seen_at' => now(),
+            ])->saveQuietly();
+        }
+
         /*
          * Regenerasi session untuk mengurangi risiko
          * session fixation setelah autentikasi berhasil.
@@ -352,6 +387,28 @@ class AuthController extends Controller
                     ? 'You are now signed in.'
                     : 'Berhasil masuk ke akun kamu.'
             );
+    }
+
+    /**
+     * Reset total data lama pada akun yang pernah di-blacklist:
+     * - Putuskan relasi booking lama (set user_id = null)
+     * - Ubah customer_email pada booking lama menjadi archived agar akun baru tidak mewarisi riwayat lama
+     * - Hapus data ulasan / review
+     * - Hapus model user lama agar akun baru terdaftar benar-benar bersih.
+     */
+    protected function purgeAndResetBlacklistedUser(User $oldUser, string $email): void
+    {
+        DB::transaction(function () use ($oldUser, $email) {
+            Booking::where('user_id', $oldUser->id)
+                ->orWhereRaw('LOWER(customer_email) = ?', [Str::lower($email)])
+                ->update([
+                    'user_id' => null,
+                    'customer_email' => 'archived_' . time() . '_' . Str::lower($email),
+                ]);
+
+            $oldUser->reviews()->delete();
+            $oldUser->delete();
+        });
     }
 
     /**

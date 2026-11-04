@@ -149,8 +149,6 @@
 
                 @include('pages.dashboard_en.paket_wisata.detail.components.gallery')
 
-                @include('pages.dashboard_en.paket_wisata.detail.components.vehicles')
-
                 @include('pages.dashboard_en.paket_wisata.detail.components.itinerary')
 
                 @include('pages.dashboard_en.paket_wisata.detail.components.facilities')
@@ -166,30 +164,6 @@
     </main>
 
     <script>
-        // Pemilihan Armada
-        window.selectArmada = function(armadaName) {
-            const input = document.getElementById('inputArmada');
-            if (input) input.value = armadaName;
-
-            const btnInnova = document.getElementById('btnArmadaInnova');
-            const btnHiAce = document.getElementById('btnArmadaHiAce');
-
-            if (btnInnova && btnHiAce) {
-                if (armadaName === 'Innova Reborn') {
-                    btnInnova.className =
-                        'armada-btn rounded-lg bg-white px-2 py-3 text-xs font-semibold text-slate-700 shadow-sm';
-                    btnHiAce.className = 'armada-btn rounded-lg px-2 py-3 text-xs font-semibold text-slate-600';
-                } else {
-                    btnHiAce.className =
-                        'armada-btn rounded-lg bg-white px-2 py-3 text-xs font-semibold text-slate-700 shadow-sm';
-                    btnInnova.className = 'armada-btn rounded-lg px-2 py-3 text-xs font-semibold text-slate-600';
-                }
-            }
-
-            const modalArmada = document.getElementById('modalSummaryArmada');
-            if (modalArmada) modalArmada.textContent = armadaName;
-        };
-
         document.addEventListener('DOMContentLoaded', function() {
             const unitPrice = Number('{{ (float) ($package->price ?? 0) }}');
             const minimumPax = 1;

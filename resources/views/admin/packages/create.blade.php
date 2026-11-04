@@ -39,9 +39,9 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Kategori Wisata</label>
                     <select name="category" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
-                        <option value="Wisata Bahari & Island Hopping">Wisata Bahari &amp; Island Hopping</option>
-                        <option value="Mountain Trekking & Sunrise">Mountain Trekking &amp; Sunrise</option>
-                        <option value="Cultural, Heritage & City Tour">Cultural, Heritage &amp; City Tour</option>
+                        @foreach ($categories as $cat)
+                            <option value="{{ $cat }}" {{ old('category') === $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                        @endforeach
                     </select>
                 </div>
 
@@ -55,8 +55,14 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-slate-700 mb-1">Durasi Perjalanan</label>
-                    <input type="text" name="duration" value="{{ old('duration', '3 Hari 2 Malam') }}" required placeholder="Cth: 3 Hari 2 Malam" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-xs font-bold text-slate-700">Durasi Perjalanan</label>
+                        <span class="text-[10px] font-semibold text-teal-700 bg-teal-50 px-2 py-0.5 rounded-full border border-teal-200">
+                            Otomatis dari Itinerary
+                        </span>
+                    </div>
+                    <input type="text" id="duration_input" name="duration" value="{{ old('duration', '1 Hari') }}" readonly class="w-full bg-slate-100 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 cursor-not-allowed select-none focus:outline-none" title="Dihitung otomatis berdasarkan susunan hari itinerary">
+                    <p class="mt-1 text-[11px] text-slate-500">Durasi terkunci otomatis: bertambah &amp; berkurang mengikuti jumlah hari pada susunan itinerary di bawah.</p>
                 </div>
 
                 <div>
@@ -110,21 +116,27 @@
             </div>
 
             <div id="itineraryContainer" class="space-y-3">
-                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-extrabold text-teal-800">HARI 1</span>
-                    </div>
-                    <input type="text" name="itineraries[0][title]" required value="Kedatangan, Check-in & Sunset View" placeholder="Judul aktivitas hari ini" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-teal-600">
-                    <textarea name="itineraries[0][description]" rows="2" placeholder="Rincian jam, lokasi, dan kegiatan..." class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:outline-none focus:border-teal-600">Penjemputan di meeting point, perjalanan menuju destinasi, check-in akomodasi, dan menikmati pemandangan sore hari.</textarea>
-                </div>
+                @php
+                    $initialItineraries = old('itineraries', [
+                        [
+                            'title' => 'Kedatangan, Check-in & Eksplorasi Utama',
+                            'description' => 'Penjemputan di meeting point, perjalanan menuju destinasi, check-in akomodasi, dan eksplorasi spot wisata unggulan.',
+                        ],
+                    ]);
+                @endphp
 
-                <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-extrabold text-teal-800">HARI 2</span>
+                @foreach ($initialItineraries as $idx => $it)
+                    <div class="itinerary-row p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="day-label text-xs font-extrabold text-teal-800">HARI {{ $idx + 1 }}</span>
+                            @if ($idx > 0)
+                                <button type="button" onclick="removeItineraryDay(this)" class="text-xs text-rose-500 hover:underline cursor-pointer">Hapus Hari</button>
+                            @endif
+                        </div>
+                        <input type="text" name="itineraries[{{ $idx }}][title]" required value="{{ $it['title'] ?? '' }}" placeholder="Judul aktivitas hari ke-{{ $idx + 1 }}" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-teal-600">
+                        <textarea name="itineraries[{{ $idx }}][description]" rows="2" placeholder="Rincian jam, lokasi, dan kegiatan..." class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:outline-none focus:border-teal-600">{{ $it['description'] ?? '' }}</textarea>
                     </div>
-                    <input type="text" name="itineraries[1][title]" required value="Eksplorasi Spot Utama & Wisata Kuliner" placeholder="Judul aktivitas hari ini" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-teal-600">
-                    <textarea name="itineraries[1][description]" rows="2" placeholder="Rincian jam, lokasi, dan kegiatan..." class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:outline-none focus:border-teal-600">Sarapan pagi, petualangan ke spot wisata unggulan, sesi foto dokumentasi, dan santap kuliner khas daerah.</textarea>
-                </div>
+                @endforeach
             </div>
         </div>
 
@@ -141,22 +153,86 @@
 
 @push('scripts')
 <script>
-    let dayCount = 2;
-    function addItineraryDay() {
-        dayCount++;
+    function calculateDurationText(dayCount) {
+        if (dayCount <= 1) {
+            return '1 Hari';
+        }
+        const nights = dayCount - 1;
+        return `${dayCount} Hari ${nights} Malam`;
+    }
+
+    function updateDurationDisplay() {
+        const count = document.querySelectorAll('#itineraryContainer .itinerary-row').length;
+        const durationInput = document.getElementById('duration_input');
+        if (durationInput) {
+            durationInput.value = calculateDurationText(count);
+        }
+    }
+
+    function reindexItineraries() {
         const container = document.getElementById('itineraryContainer');
+        const rows = container.querySelectorAll('.itinerary-row');
+        rows.forEach((row, index) => {
+            const dayNumber = index + 1;
+            const label = row.querySelector('.day-label');
+            if (label) label.textContent = `HARI ${dayNumber}`;
+            const titleInput = row.querySelector('input[type="text"]');
+            if (titleInput) {
+                titleInput.name = `itineraries[${index}][title]`;
+                titleInput.placeholder = `Judul aktivitas hari ke-${dayNumber}`;
+            }
+            const descTextarea = row.querySelector('textarea');
+            if (descTextarea) {
+                descTextarea.name = `itineraries[${index}][description]`;
+            }
+
+            const headerDiv = row.querySelector('.flex.items-center.justify-between');
+            let deleteBtn = row.querySelector('button[onclick*="removeItineraryDay"]');
+            if (index === 0) {
+                if (deleteBtn) deleteBtn.remove();
+            } else if (!deleteBtn && headerDiv) {
+                deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'text-xs text-rose-500 hover:underline cursor-pointer';
+                deleteBtn.textContent = 'Hapus Hari';
+                deleteBtn.setAttribute('onclick', 'removeItineraryDay(this)');
+                headerDiv.appendChild(deleteBtn);
+            }
+        });
+
+        updateDurationDisplay();
+    }
+
+    function removeItineraryDay(button) {
+        const container = document.getElementById('itineraryContainer');
+        if (container.querySelectorAll('.itinerary-row').length <= 1) {
+            return;
+        }
+        button.closest('.itinerary-row').remove();
+        reindexItineraries();
+    }
+
+    function addItineraryDay() {
+        const container = document.getElementById('itineraryContainer');
+        const index = container.querySelectorAll('.itinerary-row').length;
+        const dayNumber = index + 1;
         const div = document.createElement('div');
-        div.className = 'p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2';
+        div.className = 'itinerary-row p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2';
         div.innerHTML = `
             <div class="flex items-center justify-between">
-                <span class="text-xs font-extrabold text-teal-800">HARI ${dayCount}</span>
-                <button type="button" onclick="this.closest('div.p-4').remove()" class="text-xs text-rose-500 hover:underline">Hapus Hari</button>
+                <span class="day-label text-xs font-extrabold text-teal-800">HARI ${dayNumber}</span>
+                <button type="button" onclick="removeItineraryDay(this)" class="text-xs text-rose-500 hover:underline cursor-pointer">Hapus Hari</button>
             </div>
-            <input type="text" name="itineraries[${dayCount-1}][title]" required placeholder="Judul aktivitas hari ke-${dayCount}" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-teal-600">
-            <textarea name="itineraries[${dayCount-1}][description]" rows="2" placeholder="Rincian jam, lokasi, dan kegiatan..." class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:outline-none focus:border-teal-600"></textarea>
+            <input type="text" name="itineraries[${index}][title]" required placeholder="Judul aktivitas hari ke-${dayNumber}" class="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-teal-600">
+            <textarea name="itineraries[${index}][description]" rows="2" placeholder="Rincian jam, lokasi, dan kegiatan..." class="w-full bg-white border border-slate-300 rounded-lg p-2.5 text-xs focus:outline-none focus:border-teal-600"></textarea>
         `;
         container.appendChild(div);
+        reindexItineraries();
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        updateDurationDisplay();
+    });
 </script>
 @endpush
 @endsection

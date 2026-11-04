@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
@@ -95,19 +97,41 @@ class GoogleAuthController extends Controller
                 );
             }
 
-            // Periksa apakah Google ID sudah terhubung.
+            // Periksa apakah Google ID atau Email sudah terdaftar.
             $user = User::query()
                 ->where('google_id', $googleId)
                 ->first();
 
-            if ($user) {
-                return $this->loginUser($user, $destination);
+            if (! $user) {
+                $user = User::query()
+                    ->whereRaw('LOWER(email) = ?', [$email])
+                    ->first();
             }
 
-            // Periksa apakah email sudah terdaftar.
-            $user = User::query()
-                ->whereRaw('LOWER(email) = ?', [$email])
-                ->first();
+            // Jika user ditemukan dan akunnya BERSTATUS BLACKLIST:
+            if ($user && $user->is_blacklisted) {
+                if ($isRegister) {
+                    // Pendaftaran ulang via Google OAuth: RESET TOTAL DATA LAMA!
+                    DB::transaction(function () use ($user, $email) {
+                        Booking::where('user_id', $user->id)
+                            ->orWhereRaw('LOWER(customer_email) = ?', [Str::lower($email)])
+                            ->update([
+                                'user_id' => null,
+                                'customer_email' => 'archived_' . time() . '_' . Str::lower($email),
+                            ]);
+
+                        $user->reviews()->delete();
+                        $user->delete();
+                    });
+                    $user = null; // Menuju proses registrasi akun baru di bawah
+                } else {
+                    return $this->redirectWithError(
+                        'login',
+                        'Akun Google ini telah dinonaktifkan/masuk daftar hitam oleh administrator. Silakan lakukan registrasi ulang untuk membuka akun baru yang bersih.',
+                        'This Google account has been blacklisted by administrator. Please register anew to create a fresh account.'
+                    );
+                }
+            }
 
             if ($user) {
                 // Tolak jika email sudah terhubung dengan Google lain.
@@ -178,6 +202,21 @@ class GoogleAuthController extends Controller
         User $user,
         string $destination
     ): RedirectResponse {
+        if ($user->is_blacklisted) {
+            $reason = $user->blacklist_reason ? " Alasan: {$user->blacklist_reason}." : '';
+
+            return $this->redirectWithError(
+                'login',
+                "Akun Anda telah dinonaktifkan/masuk daftar hitam oleh administrator.{$reason} Silakan hubungi customer service kami.",
+                "Your account has been blacklisted by administrator.{$reason} Please contact customer support."
+            );
+        }
+
+        $user->forceFill([
+            'last_login_at' => now(),
+            'last_seen_at' => now(),
+        ])->saveQuietly();
+
         Auth::login($user);
 
         request()->session()->regenerate();

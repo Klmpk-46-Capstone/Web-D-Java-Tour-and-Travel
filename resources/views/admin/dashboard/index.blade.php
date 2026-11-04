@@ -28,8 +28,8 @@
                 <select class="bg-white border border-slate-200 text-xs font-semibold text-slate-700 rounded-xl px-3.5 py-2.5 shadow-2xs hover:border-slate-300 focus:outline-none focus:border-teal-600 cursor-pointer">
                     <option>30 Hari Terakhir</option>
                     <option>7 Hari Terakhir</option>
-                    <option>Kuartal Ini (Q1)</option>
-                    <option>Tahun Berjalan 2025</option>
+                    <option>Kuartal Ini (Q{{ Carbon\Carbon::now()->quarter }})</option>
+                    <option>Tahun Berjalan {{ date('Y') }}</option>
                 </select>
             </div>
 
@@ -62,15 +62,15 @@
         <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition relative overflow-hidden">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-extrabold text-slate-400 tracking-wider uppercase">TOTAL GROSS REVENUE</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700">
-                    +14.8% bln lalu
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold {{ $revenueGrowth >= 0 ? 'bg-teal-50 text-teal-700' : 'bg-rose-50 text-rose-700' }}">
+                    {{ $revenueGrowth >= 0 ? '+' : '' }}{{ $revenueGrowth }}% bln lalu
                 </span>
             </div>
             <div class="text-2xl sm:text-[26px] font-black text-slate-900 tracking-tight my-2">
-                Rp 428.850.000
+                Rp {{ number_format($totalGrossRevenue, 0, ',', '.') }}
             </div>
             <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100 mt-2">
-                <div>Target Q1: <span class="font-bold text-teal-800">82% tercapai</span></div>
+                <div>Target Q{{ Carbon\Carbon::now()->quarter }}: <span class="font-bold text-teal-800">{{ $q1TargetPercentage }}% tercapai</span></div>
                 {{-- Mini Sparkline SVG --}}
                 <svg class="w-20 h-5 text-teal-600" viewBox="0 0 100 25" fill="none" stroke="currentColor">
                     <path d="M0,20 Q20,18 40,12 T80,8 T100,2" stroke-width="2.5" stroke-linecap="round"/>
@@ -82,19 +82,19 @@
         <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition relative overflow-hidden">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-extrabold text-slate-400 tracking-wider uppercase">TOTAL BOOKINGS &amp; PAX</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-700">
-                    +8.2%
+                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold {{ $paxGrowth >= 0 ? 'bg-teal-50 text-teal-700' : 'bg-rose-50 text-rose-700' }}">
+                    {{ $paxGrowth >= 0 ? '+' : '' }}{{ $paxGrowth }}%
                 </span>
             </div>
             <div class="text-2xl sm:text-[26px] font-black text-slate-900 tracking-tight my-2">
-                1.248 <span class="text-base font-semibold text-slate-500">Pax</span>
+                {{ number_format($totalBookingsPax, 0, ',', '.') }} <span class="text-base font-semibold text-slate-500">Pax</span>
             </div>
             <div class="flex items-center justify-between text-xs text-slate-500 pt-2 border-t border-slate-100 mt-2">
                 <div class="flex items-center gap-1.5">
                     <svg class="w-3.5 h-3.5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
-                    <span>96 Pax trip akhir pekan ini</span>
+                    <span>{{ number_format($weekendPax, 0, ',', '.') }} Pax trip akhir pekan ini</span>
                 </div>
-                <span class="font-bold text-slate-700">98.4% On-Schedule</span>
+                <span class="font-bold text-slate-700">{{ $onScheduleRate }}% On-Schedule</span>
             </div>
         </div>
 
@@ -107,20 +107,20 @@
                     TOP 1
                 </span>
             </div>
-            <div class="text-base font-extrabold text-slate-900 truncate my-1">
-                Karimunjawa Paradise 3D...
+            <div class="text-base font-extrabold text-slate-900 truncate my-1" title="{{ $topPackage?->name ?? 'Belum ada paket terjual' }}">
+                {{ $topPackage?->name ?? 'Belum ada paket terjual' }}
             </div>
             <div class="text-xs text-slate-600 mb-2">
-                <strong class="text-slate-900 font-bold">342 Pax</strong> (Rp 119.700.000)
+                <strong class="text-slate-900 font-bold">{{ number_format($topPackagePax, 0, ',', '.') }} Pax</strong> (Rp {{ number_format($topPackageRevenue, 0, ',', '.') }})
             </div>
             <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100 mt-2">
                 <div class="flex items-center gap-1 text-amber-500 font-bold">
                     <span>★</span>
-                    <span class="text-slate-800">4.9</span>
-                    <span class="text-slate-400 font-normal">(184 Ulasan)</span>
+                    <span class="text-slate-800">{{ number_format($topPackage?->rating ?? 5.0, 1) }}</span>
+                    <span class="text-slate-400 font-normal">({{ $topPackage?->reviews_count ?? 0 }} Ulasan)</span>
                 </div>
-                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-teal-50 text-teal-800">
-                    BAHARI OPEN TRIP
+                <span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-teal-50 text-teal-800 uppercase">
+                    {{ $topPackage?->category ?? 'Reguler' }}
                 </span>
             </div>
         </div>
@@ -129,12 +129,18 @@
         <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs hover:shadow-xs transition relative overflow-hidden">
             <div class="flex items-center justify-between mb-2">
                 <span class="text-xs font-extrabold text-slate-400 tracking-wider uppercase">TINJAUAN REFUND &amp; ISU</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700">
-                    Perlu Review Segera
-                </span>
+                @if ($pendingRefundsCount > 0)
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-50 text-rose-700">
+                        Perlu Review Segera
+                    </span>
+                @else
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700">
+                        Status Aman
+                    </span>
+                @endif
             </div>
-            <div class="text-2xl sm:text-[26px] font-black text-rose-600 tracking-tight my-2">
-                {{ $pendingRefundsCount }} <span class="text-base font-semibold text-rose-500">Tiket Ditahan</span>
+            <div class="text-2xl sm:text-[26px] font-black {{ $pendingRefundsCount > 0 ? 'text-rose-600' : 'text-slate-900' }} tracking-tight my-2">
+                {{ $pendingRefundsCount }} <span class="text-base font-semibold {{ $pendingRefundsCount > 0 ? 'text-rose-500' : 'text-slate-500' }}">Tiket Ditahan</span>
             </div>
             <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100 mt-2">
                 <div>
@@ -158,7 +164,7 @@
                         Tren Penjualan &amp; Reservasi Paket Bulanan
                     </h2>
                     <p class="text-xs text-slate-500 mt-0.5">
-                        Proyeksi pertumbuhan semester 1 (Jan - Jun 2025) berdasarkan 3 rute unggulan Jawa
+                        Data real-time 6 bulan terakhir berdasarkan reservasi aktual 3 rute Jawa
                     </p>
                 </div>
                 {{-- Legends --}}
@@ -178,81 +184,47 @@
                 </div>
             </div>
 
-            {{-- VISUAL CHART CANVAS / SVG SIMULATION MATCHING MOCKUP --}}
+            {{-- VISUAL CHART CANVAS / SVG SIMULATION DYNAMIC REAL-TIME --}}
             <div class="relative w-full h-64 bg-gradient-to-b from-teal-50/20 to-white rounded-xl border border-slate-100 p-4 flex flex-col justify-between overflow-hidden">
-                {{-- Tooltip / Highlight for Mei 2025 (High Season) --}}
-                <div class="absolute top-4 right-1/4 z-10 bg-slate-900/95 text-white p-3 rounded-xl shadow-xl text-xs max-w-xs border border-teal-500/30">
-                    <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-1 mb-1.5">
-                        <span class="font-extrabold text-teal-300 text-[11px] tracking-wider">MEI 2025 (HIGH SEASON)</span>
+                {{-- Tooltip / Highlight for Peak Month --}}
+                @if ($peakMonth && $peakMonth['pax'] > 0)
+                    <div class="absolute top-4 right-1/4 z-10 bg-slate-900/95 text-white p-3 rounded-xl shadow-xl text-xs max-w-xs border border-teal-500/30">
+                        <div class="flex items-center justify-between gap-2 border-b border-slate-800 pb-1 mb-1.5">
+                            <span class="font-extrabold text-teal-300 text-[11px] tracking-wider uppercase">{{ $peakMonth['label'] }} (PEAK)</span>
+                        </div>
+                        <div class="font-extrabold text-sm text-white">Rp {{ number_format($peakMonth['revenue'], 0, ',', '.') }} <span class="font-normal text-xs text-slate-300">({{ $peakMonth['pax'] }} Pax)</span></div>
+                        <div class="text-[11px] text-teal-400 mt-1">Data penjualan tertinggi semester ini</div>
                     </div>
-                    <div class="font-extrabold text-sm text-white">Rp 98.400.000 <span class="font-normal text-xs text-slate-300">(310 Pax)</span></div>
-                    <div class="text-[11px] text-teal-400 mt-1">Karimunjawa + Bromo Dominasi 74%</div>
-                </div>
+                @endif
 
                 {{-- Chart SVG Visual representation --}}
                 <div class="flex-1 flex items-end justify-between gap-4 pt-10 px-4">
-                    {{-- Jan 2025 --}}
-                    <div class="flex-1 flex flex-col items-center gap-2">
-                        <div class="w-full max-w-[40px] flex items-end gap-1 h-32">
-                            <div class="flex-1 bg-teal-500/80 rounded-t h-[45%]"></div>
-                            <div class="flex-1 bg-slate-700/80 rounded-t h-[35%]"></div>
-                            <div class="flex-1 bg-cyan-300/90 rounded-t h-[25%]"></div>
+                    @php
+                        $maxPaxMonth = max(1, $monthlyTrends->max('pax'));
+                    @endphp
+                    @foreach ($monthlyTrends as $item)
+                        @php
+                            $bPct = $maxPaxMonth > 0 ? max(8, round(($item['bahari_pax'] / $maxPaxMonth) * 100)) : 8;
+                            $gPct = $maxPaxMonth > 0 ? max(8, round(($item['gunung_pax'] / $maxPaxMonth) * 100)) : 8;
+                            $hPct = $maxPaxMonth > 0 ? max(8, round(($item['heritage_pax'] / $maxPaxMonth) * 100)) : 8;
+                            $isPeak = ($peakMonth && $peakMonth['label'] === $item['label'] && $item['pax'] > 0);
+                        @endphp
+                        <div class="flex-1 flex flex-col items-center gap-2 relative">
+                            @if ($isPeak)
+                                <div class="absolute -top-6 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-extrabold whitespace-nowrap">
+                                    PEAK
+                                </div>
+                            @endif
+                            <div class="w-full max-w-[40px] flex items-end gap-1 h-32" title="{{ $item['label'] }}: {{ $item['pax'] }} Pax, Rp {{ number_format($item['revenue'], 0, ',', '.') }}">
+                                <div class="flex-1 bg-teal-600 rounded-t shadow-xs" style="height: {{ $item['pax'] > 0 ? $bPct : 6 }}%"></div>
+                                <div class="flex-1 bg-slate-700 rounded-t shadow-xs" style="height: {{ $item['pax'] > 0 ? $gPct : 6 }}%"></div>
+                                <div class="flex-1 bg-cyan-400 rounded-t shadow-xs" style="height: {{ $item['pax'] > 0 ? $hPct : 6 }}%"></div>
+                            </div>
+                            <span class="text-[11px] font-bold {{ $item['is_current'] ? 'text-teal-800 font-extrabold' : 'text-slate-500' }}">
+                                {{ $item['label'] }}
+                            </span>
                         </div>
-                        <span class="text-[11px] font-bold text-slate-500">Jan 2025</span>
-                    </div>
-
-                    {{-- Feb 2025 --}}
-                    <div class="flex-1 flex flex-col items-center gap-2">
-                        <div class="w-full max-w-[40px] flex items-end gap-1 h-32">
-                            <div class="flex-1 bg-teal-500/80 rounded-t h-[55%]"></div>
-                            <div class="flex-1 bg-slate-700/80 rounded-t h-[40%]"></div>
-                            <div class="flex-1 bg-cyan-300/90 rounded-t h-[30%]"></div>
-                        </div>
-                        <span class="text-[11px] font-bold text-slate-500">Feb 2025</span>
-                    </div>
-
-                    {{-- Mar 2025 --}}
-                    <div class="flex-1 flex flex-col items-center gap-2">
-                        <div class="w-full max-w-[40px] flex items-end gap-1 h-32">
-                            <div class="flex-1 bg-teal-500/80 rounded-t h-[65%]"></div>
-                            <div class="flex-1 bg-slate-700/80 rounded-t h-[50%]"></div>
-                            <div class="flex-1 bg-cyan-300/90 rounded-t h-[35%]"></div>
-                        </div>
-                        <span class="text-[11px] font-bold text-slate-500">Mar 2025</span>
-                    </div>
-
-                    {{-- Apr 2025 --}}
-                    <div class="flex-1 flex flex-col items-center gap-2">
-                        <div class="w-full max-w-[40px] flex items-end gap-1 h-32">
-                            <div class="flex-1 bg-teal-500/80 rounded-t h-[75%]"></div>
-                            <div class="flex-1 bg-slate-700/80 rounded-t h-[60%]"></div>
-                            <div class="flex-1 bg-cyan-300/90 rounded-t h-[40%]"></div>
-                        </div>
-                        <span class="text-[11px] font-bold text-slate-500">Apr 2025</span>
-                    </div>
-
-                    {{-- Mei 2025 (Peak High Season) --}}
-                    <div class="flex-1 flex flex-col items-center gap-2 relative">
-                        <div class="absolute -top-6 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[9px] font-extrabold whitespace-nowrap">
-                            PEAK
-                        </div>
-                        <div class="w-full max-w-[40px] flex items-end gap-1 h-32">
-                            <div class="flex-1 bg-teal-600 rounded-t h-[95%] shadow-sm"></div>
-                            <div class="flex-1 bg-slate-800 rounded-t h-[80%] shadow-sm"></div>
-                            <div class="flex-1 bg-cyan-400 rounded-t h-[60%] shadow-sm"></div>
-                        </div>
-                        <span class="text-[11px] font-extrabold text-teal-800">Mei 2025</span>
-                    </div>
-
-                    {{-- Jun 2025 (Est.) --}}
-                    <div class="flex-1 flex flex-col items-center gap-2">
-                        <div class="w-full max-w-[40px] flex items-end gap-1 h-32 opacity-80">
-                            <div class="flex-1 bg-teal-500/60 rounded-t h-[70%] border-t border-dashed border-teal-700"></div>
-                            <div class="flex-1 bg-slate-700/60 rounded-t h-[60%] border-t border-dashed border-slate-900"></div>
-                            <div class="flex-1 bg-cyan-300/60 rounded-t h-[45%] border-t border-dashed border-cyan-500"></div>
-                        </div>
-                        <span class="text-[11px] font-bold text-slate-400">Jun (Est.)</span>
-                    </div>
+                    @endforeach
                 </div>
             </div>
 
@@ -260,7 +232,7 @@
             <div class="mt-4 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 gap-2">
                 <div class="flex items-center gap-2">
                     <svg class="w-4 h-4 text-teal-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
-                    <span>Konversi libur panjang Hari Raya Waisak &amp; Kenaikan Isa Almasih melonjak <strong>38.6%</strong> pada pekan ke-3 Mei.</span>
+                    <span>Total reservasi 6 bulan terakhir: <strong>{{ number_format($monthlyTrends->sum('pax'), 0, ',', '.') }} Pax</strong> dengan akumulasi omzet <strong>Rp {{ number_format($monthlyTrends->sum('revenue'), 0, ',', '.') }}</strong>.</span>
                 </div>
                 @if (auth()->user()?->isSuperAdmin())
                     <a href="{{ route('admin.reports.index') }}" class="font-bold text-teal-700 hover:text-teal-900 whitespace-nowrap">
@@ -276,15 +248,15 @@
             <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-2xs">
                 <div class="flex items-center justify-between mb-1">
                     <h3 class="text-sm font-extrabold text-slate-900">Performa Kategori Wisata</h3>
-                    <span class="text-[10px] font-bold text-slate-400">Q1-Q2 2025</span>
+                    <span class="text-[10px] font-bold text-slate-400">Real-Time Database</span>
                 </div>
                 <p class="text-[11px] text-slate-500 mb-4">Pangsa pasar volume Pax berdasarkan preferensi destinasi pelanggan.</p>
 
                 {{-- Multi-color segmented progress bar --}}
                 <div class="h-3 w-full bg-slate-100 rounded-full flex overflow-hidden mb-4 shadow-inner">
-                    <div class="bg-teal-600 h-full" style="width: 45%" title="Wisata Bahari 45%"></div>
-                    <div class="bg-slate-700 h-full" style="width: 30%" title="Mountain Trekking 30%"></div>
-                    <div class="bg-cyan-300 h-full" style="width: 25%" title="Cultural & Heritage 25%"></div>
+                    <div class="bg-teal-600 h-full transition-all duration-300" style="width: {{ $routeStats['bahari']['percent'] }}%" title="Wisata Bahari {{ $routeStats['bahari']['percent'] }}%"></div>
+                    <div class="bg-slate-700 h-full transition-all duration-300" style="width: {{ $routeStats['gunung']['percent'] }}%" title="Mountain Trekking {{ $routeStats['gunung']['percent'] }}%"></div>
+                    <div class="bg-cyan-400 h-full transition-all duration-300" style="width: {{ $routeStats['heritage']['percent'] }}%" title="Cultural &amp; Heritage {{ $routeStats['heritage']['percent'] }}%"></div>
                 </div>
 
                 {{-- Legend & metrics --}}
@@ -295,8 +267,8 @@
                             <span class="font-medium text-slate-700">Wisata Bahari &amp; Island Hopping</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <strong class="text-slate-900">561 Pax</strong>
-                            <span class="text-slate-400 font-bold">45%</span>
+                            <strong class="text-slate-900">{{ number_format($routeStats['bahari']['pax'], 0, ',', '.') }} Pax</strong>
+                            <span class="text-slate-400 font-bold">{{ $routeStats['bahari']['percent'] }}%</span>
                         </div>
                     </div>
 
@@ -306,19 +278,19 @@
                             <span class="font-medium text-slate-700">Mountain Trekking &amp; Sunrise</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <strong class="text-slate-900">374 Pax</strong>
-                            <span class="text-slate-400 font-bold">30%</span>
+                            <strong class="text-slate-900">{{ number_format($routeStats['gunung']['pax'], 0, ',', '.') }} Pax</strong>
+                            <span class="text-slate-400 font-bold">{{ $routeStats['gunung']['percent'] }}%</span>
                         </div>
                     </div>
 
                     <div class="flex items-center justify-between">
                         <div class="flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-cyan-300"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
                             <span class="font-medium text-slate-700">Cultural, Heritage &amp; City Tour</span>
                         </div>
                         <div class="flex items-center gap-2">
-                            <strong class="text-slate-900">313 Pax</strong>
-                            <span class="text-slate-400 font-bold">25%</span>
+                            <strong class="text-slate-900">{{ number_format($routeStats['heritage']['pax'], 0, ',', '.') }} Pax</strong>
+                            <span class="text-slate-400 font-bold">{{ $routeStats['heritage']['percent'] }}%</span>
                         </div>
                     </div>
                 </div>
@@ -326,7 +298,7 @@
                 <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
                     <span class="text-slate-500">Rata-rata kepuasan pax:</span>
                     <span class="flex items-center gap-1 font-extrabold text-slate-800">
-                        <span class="text-amber-500">★</span> 4.88 / 5.0
+                        <span class="text-amber-500">★</span> {{ number_format($avgCustomerRating, 2) }} / 5.0
                     </span>
                 </div>
             </div>
@@ -451,7 +423,7 @@
 
             {{-- Table Footer --}}
             <div class="p-4 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-500 gap-2">
-                <div>Menampilkan 5 dari 1.248 transaksi bulan ini</div>
+                <div>Menampilkan {{ $latestBookings->count() }} dari {{ $totalTransactionsThisMonth }} transaksi bulan ini</div>
                 <a href="{{ route('admin.bookings.index') }}" class="font-extrabold text-teal-700 hover:text-teal-900 transition flex items-center gap-1">
                     Buka Laporan Transaksi Lengkap &rarr;
                 </a>

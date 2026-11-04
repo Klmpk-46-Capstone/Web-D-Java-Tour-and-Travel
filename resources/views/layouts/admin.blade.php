@@ -59,6 +59,15 @@
 
         {{-- Right: Actions & Profile --}}
         <div class="flex items-center gap-3">
+            {{-- Real-Time System Clock (WIB) --}}
+            <div class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-700 shadow-2xs">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="admin-live-date">{{ now()->timezone('Asia/Jakarta')->translatedFormat('d M Y') }}</span>
+                <span class="text-slate-300">•</span>
+                <span id="admin-live-time" class="font-mono text-teal-800 font-extrabold">{{ now()->timezone('Asia/Jakarta')->format('H:i:s') }}</span>
+                <span class="text-[10px] text-slate-400 font-semibold">WIB</span>
+            </div>
+
             {{-- Quick action button --}}
             <button 
                 type="button"
@@ -329,13 +338,13 @@
             </div>
             <p class="text-xs text-slate-500 mb-5">Jadwal trip yang dibuat di sini akan otomatis tampil dinamis di opsi booking customer.</p>
 
-            <form action="{{ route('admin.trips.store') }}" method="POST" class="space-y-4">
+            <form action="{{ route('admin.trips.store') }}" method="POST" class="space-y-4" id="formQuickTrip">
                 @csrf
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Pilih Paket Wisata</label>
-                    <select name="package_id" required class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 focus:bg-white focus:outline-none focus:border-teal-600">
+                    <select id="quick_package_id" name="package_id" required class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 focus:bg-white focus:outline-none focus:border-teal-600">
                         @foreach (\App\Models\Package::where('is_active', true)->get() as $p)
-                            <option value="{{ $p->id }}">{{ $p->name }} ({{ $p->category }})</option>
+                            <option value="{{ $p->id }}" data-days="{{ $p->durationInDays() }}" data-duration="{{ $p->duration }}">{{ $p->name }} ({{ $p->duration }} • {{ $p->category }})</option>
                         @endforeach
                     </select>
                 </div>
@@ -345,15 +354,18 @@
                     <input type="text" name="batch_name" required placeholder="Cth: Karimunjawa Batch Akhir Pekan #25" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 focus:bg-white focus:outline-none focus:border-teal-600">
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Keberangkatan</label>
-                        <input type="date" name="departure_date" required min="{{ date('Y-m-d') }}" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:bg-white focus:outline-none focus:border-teal-600">
+                <div class="space-y-1">
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Keberangkatan</label>
+                            <input id="quick_dep_date" type="date" name="departure_date" required min="{{ date('Y-m-d') }}" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:bg-white focus:outline-none focus:border-teal-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Kepulangan (Otomatis)</label>
+                            <input id="quick_ret_date" type="date" name="return_date" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:bg-white focus:outline-none focus:border-teal-600">
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Tanggal Kepulangan</label>
-                        <input type="date" name="return_date" class="w-full text-xs sm:text-sm bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:bg-white focus:outline-none focus:border-teal-600">
-                    </div>
+                    <p id="quick_duration_hint" class="text-[11px] font-semibold text-teal-700 pt-0.5"></p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
@@ -380,6 +392,63 @@
             </form>
         </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const pkgSelect = document.getElementById('quick_package_id');
+            const depInput = document.getElementById('quick_dep_date');
+            const retInput = document.getElementById('quick_ret_date');
+            const hint = document.getElementById('quick_duration_hint');
+
+            function syncQuickDates() {
+                if (!pkgSelect || !depInput || !retInput) return;
+                const opt = pkgSelect.options[pkgSelect.selectedIndex];
+                if (!opt) return;
+
+                const days = parseInt(opt.dataset.days, 10) || 1;
+                const durationLabel = opt.dataset.duration || (days + ' Hari');
+
+                if (depInput.value) {
+                    const depDate = new Date(depInput.value + 'T00:00:00');
+                    if (!isNaN(depDate.getTime())) {
+                        const retDate = new Date(depDate);
+                        retDate.setDate(retDate.getDate() + (days - 1));
+                        const yyyy = retDate.getFullYear();
+                        const mm = String(retDate.getMonth() + 1).padStart(2, '0');
+                        const dd = String(retDate.getDate()).padStart(2, '0');
+                        retInput.value = `${yyyy}-${mm}-${dd}`;
+                        if (hint) {
+                            hint.textContent = `✓ Terikat Durasi Paket: ${durationLabel} (Rentang ${days} Hari: ${depInput.value} s/d ${retInput.value})`;
+                        }
+                    }
+                } else if (hint) {
+                    hint.textContent = `Durasi paket terpilih: ${durationLabel} (${days} Hari)`;
+                }
+            }
+
+            if (pkgSelect && depInput) {
+                pkgSelect.addEventListener('change', syncQuickDates);
+                depInput.addEventListener('change', syncQuickDates);
+                syncQuickDates();
+            }
+
+            // Real-Time System Clock (WIB)
+            function updateAdminClock() {
+                const timeEl = document.getElementById('admin-live-time');
+                const dateEl = document.getElementById('admin-live-date');
+                if (!timeEl) return;
+                const now = new Date();
+                const timeOptions = { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+                const dateOptions = { timeZone: 'Asia/Jakarta', day: '2-digit', month: 'short', year: 'numeric' };
+                timeEl.textContent = new Intl.DateTimeFormat('id-ID', timeOptions).format(now).replace(/\./g, ':');
+                if (dateEl) {
+                    dateEl.textContent = new Intl.DateTimeFormat('id-ID', dateOptions).format(now);
+                }
+            }
+            setInterval(updateAdminClock, 1000);
+            updateAdminClock();
+        });
+    </script>
 
     @stack('scripts')
 </body>

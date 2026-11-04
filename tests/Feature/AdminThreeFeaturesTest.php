@@ -473,4 +473,91 @@ class AdminThreeFeaturesTest extends TestCase
         $successDelete->assertSessionHas('success');
         $this->assertDatabaseMissing('trips', ['id' => $emptyTrip->id]);
     }
+
+    /**
+     * Test: Dashboard computes pure real-time data from database.
+     */
+    public function test_admin_dashboard_renders_pure_realtime_database_metrics(): void
+    {
+        $trip = Trip::create([
+            'package_id' => $this->package->id,
+            'batch_name' => 'Batch Realtime Test',
+            'departure_date' => Carbon::now()->addDays(5),
+            'quota' => 20,
+            'booked_seats' => 4,
+            'status' => 'available',
+        ]);
+
+        $booking = Booking::create([
+            'booking_code' => 'BK-REAL-001',
+            'user_id' => $this->customer->id,
+            'trip_id' => $trip->id,
+            'package_id' => $this->package->id,
+            'customer_name' => 'Real Customer',
+            'customer_email' => 'real@example.com',
+            'customer_phone' => '08123456789',
+            'pax' => 4,
+            'total_price' => 5000000,
+            'payment_status' => 'paid',
+            'booking_status' => 'confirmed',
+        ]);
+
+        Transaction::create([
+            'transaction_code' => 'TRX-REAL-001',
+            'booking_id' => $booking->id,
+            'amount' => 5000000,
+            'payment_method' => 'BCA Virtual Account',
+            'status' => 'success',
+            'service_type' => 'paket',
+            'service_name' => $this->package->name,
+        ]);
+
+        $response = $this->actingAs($this->superAdmin)->get('/admin');
+        $response->assertOk();
+        $response->assertViewHas('totalGrossRevenue', 5000000);
+        $response->assertViewHas('totalBookingsPax', 4);
+        $response->assertViewHas('topPackagePax', 4);
+        $response->assertViewHas('topPackageRevenue', 5000000);
+        $response->assertSee('Rp 5.000.000');
+        $response->assertSee('4 Pax');
+    }
+
+    /**
+     * Test: Reports compute pure real-time data from database without mock fallbacks.
+     */
+    public function test_admin_reports_renders_pure_realtime_database_metrics(): void
+    {
+        $booking = Booking::create([
+            'booking_code' => 'BK-REPORT-001',
+            'user_id' => $this->customer->id,
+            'package_id' => $this->package->id,
+            'customer_name' => 'Report Customer',
+            'customer_email' => 'report@example.com',
+            'customer_phone' => '08123456789',
+            'pax' => 2,
+            'total_price' => 2500000,
+            'down_payment' => 750000,
+            'payment_status' => 'partial',
+            'booking_status' => 'confirmed',
+        ]);
+
+        Transaction::create([
+            'transaction_code' => 'TRX-REPORT-001',
+            'booking_id' => $booking->id,
+            'amount' => 750000,
+            'payment_method' => 'BCA Virtual Account (DP)',
+            'payment_stage' => 'dp',
+            'status' => 'success',
+            'service_type' => 'paket',
+            'service_name' => $this->package->name,
+        ]);
+
+        $response = $this->actingAs($this->superAdmin)->get('/admin/reports');
+        $response->assertOk();
+        $response->assertViewHas('totalRevenue', 750000);
+        $response->assertViewHas('totalDp', 750000);
+        $response->assertViewHas('dpCount', 1);
+        $response->assertSee('Rp 750.000');
+        $response->assertSee('1 Transaksi');
+    }
 }

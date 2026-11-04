@@ -8,6 +8,7 @@ use App\Models\Package;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -44,7 +45,8 @@ class AdminPackageController extends Controller
 
     public function create(): View
     {
-        return view('admin.packages.create');
+        $categories = Package::getAvailableCategories();
+        return view('admin.packages.create', compact('categories'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -53,7 +55,7 @@ class AdminPackageController extends Controller
             'name' => ['required', 'string', 'max:180'],
             'category' => ['required', 'string', 'max:100'],
             'route_type' => ['required', 'in:bahari,gunung,heritage'],
-            'duration' => ['required', 'string', 'max:80'],
+            'duration' => ['nullable', 'string', 'max:80'],
             'price' => ['required', 'integer', 'min:0'],
             'badge' => ['nullable', 'string', 'max:80'],
             'image_url' => ['nullable', 'url'],
@@ -74,10 +76,17 @@ class AdminPackageController extends Controller
         $uploadedImageUrl = $this->storeUploadedImage($request);
         $validated['image_url'] = $uploadedImageUrl ?? ($validated['image_url'] ?? null);
 
+        $itinerariesData = $request->input('itineraries', []);
+        $validItineraries = is_array($itinerariesData)
+            ? array_values(array_filter($itinerariesData, fn($it) => !empty($it['title'])))
+            : [];
+        $dayCount = max(1, count($validItineraries));
+        $validated['duration'] = Package::calculateDurationFromDays($dayCount);
+
         $package = Package::create($validated);
 
-        if (!empty($validated['itineraries'])) {
-            foreach ($validated['itineraries'] as $idx => $it) {
+        if (!empty($validItineraries)) {
+            foreach ($validItineraries as $idx => $it) {
                 Itinerary::create([
                     'package_id' => $package->id,
                     'day_number' => $idx + 1,
@@ -91,10 +100,22 @@ class AdminPackageController extends Controller
             ->with('success', "Paket wisata '{$package->name}' berhasil ditambahkan ke katalog.");
     }
 
+    public function show(Package $package): View
+    {
+        $package->load([
+            'itineraries' => fn($q) => $q->orderBy('day_number'),
+            'trips' => fn($q) => $q->orderBy('departure_date'),
+            'reviews' => fn($q) => $q->latest(),
+        ]);
+
+        return view('admin.packages.show', compact('package'));
+    }
+
     public function edit(Package $package): View
     {
-        $package->load('itineraries');
-        return view('admin.packages.edit', compact('package'));
+        $package->load(['itineraries' => fn($q) => $q->orderBy('day_number')]);
+        $categories = Package::getAvailableCategories();
+        return view('admin.packages.edit', compact('package', 'categories'));
     }
 
     public function update(Request $request, Package $package): RedirectResponse
@@ -103,7 +124,7 @@ class AdminPackageController extends Controller
             'name' => ['required', 'string', 'max:180'],
             'category' => ['required', 'string', 'max:100'],
             'route_type' => ['required', 'in:bahari,gunung,heritage'],
-            'duration' => ['required', 'string', 'max:80'],
+            'duration' => ['nullable', 'string', 'max:80'],
             'price' => ['required', 'integer', 'min:0'],
             'badge' => ['nullable', 'string', 'max:80'],
             'image_url' => ['nullable', 'url'],
@@ -111,6 +132,9 @@ class AdminPackageController extends Controller
             'description' => ['nullable', 'string'],
             'is_featured' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],
+            'itineraries' => ['nullable', 'array'],
+            'itineraries.*.title' => ['required_with:itineraries', 'string'],
+            'itineraries.*.description' => ['nullable', 'string'],
         ]);
 
         $validated['is_featured'] = $request->boolean('is_featured');
@@ -125,11 +149,40 @@ class AdminPackageController extends Controller
         }
 
         $validated['image_url'] = $newImageUrl;
+        $itinerariesData = $validated['itineraries'] ?? null;
+        unset($validated['itineraries']);
 
-        $package->update($validated);
+        if ($request->has('itineraries')) {
+            $validItineraries = is_array($itinerariesData)
+                ? array_values(array_filter($itinerariesData, fn($it) => !empty($it['title'])))
+                : [];
+            $dayCount = max(1, count($validItineraries));
+            $validated['duration'] = Package::calculateDurationFromDays($dayCount);
+        }
+
+        DB::transaction(function () use ($package, $validated, $itinerariesData, $request) {
+            $package->update($validated);
+
+            if ($request->has('itineraries')) {
+                $package->itineraries()->delete();
+                if (!empty($itinerariesData) && is_array($itinerariesData)) {
+                    $day = 1;
+                    foreach ($itinerariesData as $it) {
+                        if (!empty($it['title'])) {
+                            Itinerary::create([
+                                'package_id' => $package->id,
+                                'day_number' => $day++,
+                                'title' => $it['title'],
+                                'description' => $it['description'] ?? '',
+                            ]);
+                        }
+                    }
+                }
+            }
+        });
 
         return redirect()->route('admin.packages.index')
-            ->with('success', "Paket wisata '{$package->name}' berhasil diperbarui.");
+            ->with('success', "Paket wisata '{$package->name}' dan susunan itinerary berhasil diperbarui.");
     }
 
     public function destroy(Package $package): RedirectResponse

@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 : localized_route('login')
         );
 
+        $middleware->web(append: [
+            \App\Http\Middleware\CustomerSecurityMiddleware::class,
+        ]);
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'setlocale' => \App\Http\Middleware\SetLocale::class,
