@@ -134,6 +134,15 @@ class AdminPackageController extends Controller
 
     public function destroy(Package $package): RedirectResponse
     {
+        if ($package->bookings()->exists()) {
+            return redirect()
+                ->route('admin.packages.index')
+                ->with(
+                    'error',
+                    "Paket '{$package->name}' tidak dapat dihapus karena sudah memiliki riwayat booking. Nonaktifkan paket ini sebagai gantinya."
+                );
+        }
+
         $name = $package->name;
         $imageUrl = $package->image_url;
 
