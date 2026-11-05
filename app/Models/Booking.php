@@ -25,6 +25,7 @@ class Booking extends Model
 
         // Data Armada
         'vehicle_id',
+        'vehicle_unit_id',
         'rental_date',
         'duration',
         'rental_option',
@@ -96,6 +97,45 @@ class Booking extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function vehicleUnit(): BelongsTo
+    {
+        return $this->belongsTo(VehicleUnit::class);
+    }
+
+    /**
+     * Unit yang menempel pada booking: unit langsung (sewa) atau unit trip (paket).
+     */
+    public function getAssignedVehicleUnitAttribute(): ?VehicleUnit
+    {
+        if ($this->vehicle_unit_id) {
+            return $this->vehicleUnit;
+        }
+
+        return $this->trip?->vehicleUnit;
+    }
+
+    /**
+     * Plat hanya boleh terlihat customer setelah DP/lunas berhasil.
+     */
+    public function getRevealedPlateAttribute(): ?string
+    {
+        if (! in_array($this->payment_status, ['partial', 'paid'], true)) {
+            return null;
+        }
+
+        if (in_array($this->booking_status, ['cancelled', 'canceled', 'refunded'], true)) {
+            return null;
+        }
+
+        $refundStatus = strtolower((string) ($this->refund?->status ?? ''));
+
+        if (in_array($refundStatus, ['approved', 'refunded', 'completed', 'processed'], true)) {
+            return null;
+        }
+
+        return $this->assigned_vehicle_unit?->plate_number;
     }
 
     public function user(): BelongsTo

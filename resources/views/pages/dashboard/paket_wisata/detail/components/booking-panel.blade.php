@@ -130,14 +130,25 @@
                                     data-booked="{{ $trip->booked_seats }}"
                                     data-batch="{{ $trip->batch_name }}"
                                     data-check-url="{{ route('trips.check-quota', $trip->id) }}"
+                                    data-vehicle-name="{{ $trip->vehicle?->name }}"
+                                    data-vehicle-seats="{{ $trip->vehicle?->seats }}"
+                                    data-vehicle-transmission="{{ $trip->vehicle?->transmission }}"
                                     @selected($firstTrip && $firstTrip->id === $trip->id)
                                 >
-                                    {{ \Illuminate\Support\Carbon::parse($trip->departure_date)->translatedFormat('d F Y') }} (Sisa {{ $trip->remaining_seats }} Kursi)
+                                    {{ \Illuminate\Support\Carbon::parse($trip->departure_date)->translatedFormat('d F Y') }} (Sisa {{ $trip->remaining_seats }} Kursi)@if ($trip->vehicle) &middot; {{ $trip->vehicle->name }} &middot; {{ $trip->vehicle->seats }} kursi &middot; {{ $trip->vehicle->transmission ?: 'Transmisi fleksibel' }}@endif
                                 </option>
                             @endif
                         @endforeach
                     </select>
                 </div>
+
+                <p id="selectedTripVehicle" class="mt-2 text-[11px] font-semibold text-slate-500">
+                    @if ($firstTrip?->vehicle)
+                        {{ $firstTrip->vehicle->name }} &middot; {{ $firstTrip->vehicle->seats }} kursi &middot; {{ $firstTrip->vehicle->transmission ?: 'Transmisi fleksibel' }}
+                    @else
+                        Tipe armada diinformasikan admin saat jadwal tersedia.
+                    @endif
+                </p>
 
                 {{-- BADGE STATUS SISA KUOTA DINAMIS --}}
                 <div

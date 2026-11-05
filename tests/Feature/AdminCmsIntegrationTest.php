@@ -8,6 +8,8 @@ use App\Models\Refund;
 use App\Models\Review;
 use App\Models\Trip;
 use App\Models\User;
+use App\Models\Vehicle;
+use App\Models\VehicleUnit;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -95,6 +97,26 @@ class AdminCmsIntegrationTest extends TestCase
         $trip->update([
             'departure_date' => now()->addDays(5),
             'return_date' => now()->addDays(7),
+        ]);
+
+        $vehicle = Vehicle::create([
+            'name' => 'CMS Integration Fleet',
+            'slug' => 'cms-integration-fleet',
+            'category' => 'mpv',
+            'seats' => 7,
+            'price_per_day' => 500000,
+            'is_active' => true,
+        ]);
+
+        $unit = VehicleUnit::create([
+            'vehicle_id' => $vehicle->id,
+            'plate_number' => 'N 9001 CMS',
+            'status' => VehicleUnit::STATUS_ACTIVE,
+        ]);
+
+        $trip->update([
+            'vehicle_id' => $vehicle->id,
+            'vehicle_unit_id' => $unit->id,
         ]);
 
         $initialBooked = $trip->booked_seats;

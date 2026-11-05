@@ -23,7 +23,7 @@ class AdminManifestController extends Controller
 
     public function index(Request $request): View
     {
-        $trips = Trip::with('package')
+        $trips = Trip::with(['package', 'vehicle', 'vehicleUnit'])
             ->where('status', '!=', 'cancelled')
             ->orderBy('departure_date')
             ->get();
@@ -270,7 +270,7 @@ class AdminManifestController extends Controller
 
     public function showPassenger(Booking $booking, int $index = 0): View
     {
-        $booking->load(['trip.package', 'trip.vehicle', 'user', 'transactions']);
+        $booking->load(['trip.package', 'trip.vehicle', 'trip.vehicleUnit', 'user', 'transactions']);
         $pax = max(1, (int) $booking->pax);
         $index = max(0, min($pax - 1, $index));
 
@@ -427,7 +427,7 @@ class AdminManifestController extends Controller
     private function resolveTrip(Request $request, $trips): ?Trip
     {
         if ($request->filled('trip_id')) {
-            $found = Trip::with(['package', 'vehicle'])->find($request->query('trip_id'));
+            $found = Trip::with(['package', 'vehicle', 'vehicleUnit'])->find($request->query('trip_id'));
             if ($found) {
                 return $found;
             }
@@ -436,7 +436,7 @@ class AdminManifestController extends Controller
         $today = now()->startOfDay();
         $pick = $trips->first(fn (Trip $t) => $t->departure_date->gte($today)) ?? $trips->last();
 
-        return $pick ? Trip::with(['package', 'vehicle'])->find($pick->id) : null;
+        return $pick ? Trip::with(['package', 'vehicle', 'vehicleUnit'])->find($pick->id) : null;
     }
 
     private function paymentLabel(Booking $b): string

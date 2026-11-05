@@ -292,6 +292,25 @@
                                     </p>
                                 @endif
 
+                                @php
+                                    $revealedPlate = $booking->revealed_plate;
+                                @endphp
+                                @if ($revealedPlate)
+                                    <p class="mt-1 text-sm font-semibold text-slate-700">
+                                        Plat Kendaraan:
+                                        <span class="rounded-md bg-slate-900 px-2 py-0.5 font-mono text-xs font-extrabold tracking-wider text-white">{{ $revealedPlate }}</span>
+                                    </p>
+                                @elseif (in_array($booking->payment_status, ['partial', 'paid'], true)
+                                    && ! in_array($booking->booking_status, ['cancelled', 'canceled', 'refunded'], true))
+                                    <p class="mt-1 text-sm text-slate-600">
+                                        Plat Kendaraan: <span class="font-semibold">Plat akan diinformasikan admin</span>
+                                    </p>
+                                @elseif (! in_array($booking->booking_status, ['cancelled', 'canceled', 'refunded'], true))
+                                    <p class="mt-1 text-sm text-slate-500">
+                                        Plat Kendaraan: Plat akan tampil setelah DP berhasil.
+                                    </p>
+                                @endif
+
                                 <p class="mt-2 text-sm leading-6 text-slate-600">
                                     {{ e($package?->description ?? 'Informasi paket wisata sesuai reservasi Anda.') }}
                                 </p>

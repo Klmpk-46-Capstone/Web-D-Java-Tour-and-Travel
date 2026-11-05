@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Vehicle;
+use App\Models\VehicleUnit;
 use Illuminate\Database\Seeder;
 
 class VehicleSeeder extends Seeder
@@ -105,11 +106,31 @@ class VehicleSeeder extends Seeder
             ],
         ];
 
+        $unitsByVehicle = [
+            'toyota-all-new-avanza' => ['B 9101 AVZ', 'B 9102 AVZ', 'B 9103 AVZ'],
+            'suzuki-all-new-ertiga' => ['B 9201 ERT', 'B 9202 ERT', 'B 9203 ERT'],
+            'toyota-innova-reborn' => ['B 9301 INV', 'B 9302 INV', 'B 9303 INV'],
+            'toyota-innova-zenix-hybrid' => ['B 9401 ZNX', 'B 9402 ZNX'],
+            'toyota-hiace-commuter' => ['B 9501 HAC', 'B 9502 HAC', 'B 9503 HAC'],
+            'hiace-premio-luxury' => ['B 9601 PRM', 'B 9602 PRM'],
+        ];
+
         foreach ($vehicles as $vehicle) {
-            Vehicle::updateOrCreate(
+            $vehicleModel = Vehicle::updateOrCreate(
                 ['slug' => $vehicle['slug']],
                 $vehicle
             );
+
+            foreach ($unitsByVehicle[$vehicle['slug']] ?? [] as $plateNumber) {
+                VehicleUnit::updateOrCreate(
+                    ['plate_number' => $plateNumber],
+                    [
+                        'vehicle_id' => $vehicleModel->id,
+                        'status' => VehicleUnit::STATUS_ACTIVE,
+                        'notes' => 'Unit contoh dari seeder.',
+                    ]
+                );
+            }
         }
     }
 }

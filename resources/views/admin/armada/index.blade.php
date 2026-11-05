@@ -77,6 +77,7 @@
                         <th class="py-3.5 px-4">ARMADA</th>
                         <th class="py-3.5 px-4">KATEGORI &amp; TRANSMISI</th>
                         <th class="py-3.5 px-4">KAPASITAS</th>
+                        <th class="py-3.5 px-4">UNIT</th>
                         <th class="py-3.5 px-4">TARIF SEWA</th>
                         <th class="py-3.5 px-4 text-center">STATUS</th>
                         <th class="py-3.5 px-4 text-right">AKSI</th>
@@ -125,6 +126,14 @@
                             <td class="py-3.5 px-4">
                                 <span class="font-bold text-slate-700 block">{{ $vehicle->seats }} kursi</span>
                                 <span class="text-[11px] text-slate-500">{{ $vehicle->luggage_capacity }} koper</span>
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="font-extrabold text-slate-900 block">
+                                    {{ (int) ($vehicle->active_units_count ?? 0) }} unit
+                                </span>
+                                <span class="text-[11px] text-slate-500">
+                                    {{ (int) ($vehicle->units_available_today ?? 0) }} tersedia hari ini
+                                </span>
                             </td>
                             <td class="py-3.5 px-4">
                                 <span class="font-extrabold text-slate-900 block">
@@ -184,7 +193,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="py-10 text-center text-slate-400">
+                            <td colspan="7" class="py-10 text-center text-slate-400">
                                 Tidak ada armada yang cocok dengan filter.
                             </td>
                         </tr>

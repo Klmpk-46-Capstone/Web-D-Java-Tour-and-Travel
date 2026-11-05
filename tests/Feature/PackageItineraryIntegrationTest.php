@@ -8,6 +8,7 @@ use App\Models\Package;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\VehicleUnit;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -21,6 +22,7 @@ class PackageItineraryIntegrationTest extends TestCase
     private User $superAdmin;
     private User $customer;
     private Vehicle $vehicle;
+    private VehicleUnit $vehicleUnit;
 
     protected function setUp(): void
     {
@@ -45,6 +47,12 @@ class PackageItineraryIntegrationTest extends TestCase
             'seats' => 14,
             'plate_number' => 'L 7788 DJ',
             'is_active' => true,
+        ]);
+
+        $this->vehicleUnit = VehicleUnit::create([
+            'vehicle_id' => $this->vehicle->id,
+            'plate_number' => 'L 7788 DJ',
+            'status' => VehicleUnit::STATUS_ACTIVE,
         ]);
     }
 
@@ -172,6 +180,8 @@ class PackageItineraryIntegrationTest extends TestCase
             'quota' => 20,
             'booked_seats' => 0,
             'status' => 'available',
+            'vehicle_id' => $this->vehicle->id,
+            'vehicle_unit_id' => $this->vehicleUnit->id,
         ]);
 
         // Customer can open booking form
@@ -269,6 +279,8 @@ class PackageItineraryIntegrationTest extends TestCase
             'quota' => 15,
             'booked_seats' => 0,
             'status' => 'available',
+            'vehicle_id' => $this->vehicle->id,
+            'vehicle_unit_id' => $this->vehicleUnit->id,
         ]);
 
         // Customer submits booking without selected_armada
@@ -415,6 +427,8 @@ class PackageItineraryIntegrationTest extends TestCase
             'booked_seats' => 0,
             'status' => 'available',
             'meeting_point' => 'Terminal Wonosobo, Alun-alun Wonosobo',
+            'vehicle_id' => $this->vehicle->id,
+            'vehicle_unit_id' => $this->vehicleUnit->id,
         ]);
 
         // Access formulir booking with 3 pax
@@ -465,6 +479,8 @@ class PackageItineraryIntegrationTest extends TestCase
             'booked_seats' => 0,
             'status' => 'available',
             'meeting_point' => 'Stasiun Malang Kota Baru',
+            'vehicle_id' => $this->vehicle->id,
+            'vehicle_unit_id' => $this->vehicleUnit->id,
         ]);
 
         $fakeKtp = UploadedFile::fake()->image('ktp_leader.jpg');

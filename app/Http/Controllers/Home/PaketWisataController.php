@@ -31,6 +31,7 @@ class PaketWisataController extends Controller
 
         $query = Package::with(['trips', 'itineraries', 'reviews'])
             ->where('is_active', true)
+            ->visibleToCustomer()
             ->when($q !== '', function ($query) use ($q) {
                 $keyword = '%' . $q . '%';
 
@@ -77,11 +78,25 @@ class PaketWisataController extends Controller
     {
         $package = Package::with([
             'itineraries',
-            'trips' => fn($q) => $q->orderBy('departure_date', 'asc'),
+            'trips' => fn($q) => $q
+                ->with(['vehicle', 'vehicleUnit'])
+                ->where('status', '!=', 'cancelled')
+                ->whereDate('departure_date', '>=', now()->toDateString())
+                ->whereNotNull('vehicle_id')
+                ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'))
+                ->orderBy('departure_date', 'asc'),
             'reviews' => fn($q) => $q->where('is_approved', true)->where('is_hidden', false)->latest('id'),
-        ])->where('slug', $slug)->firstOrFail();
+        ])->where('slug', $slug)->visibleToCustomer()->firstOrFail();
+
+        // Tipe armada unik dari trip mendatang. Plat tidak pernah dikirim ke halaman customer.
+        $vehicles = $package->trips
+            ->pluck('vehicle')
+            ->filter()
+            ->unique('id')
+            ->values();
 
         $relatedPackages = Package::where('is_active', true)
+            ->visibleToCustomer()
             ->where('id', '!=', $package->id)
             ->where('category', $package->category)
             ->limit(3)
@@ -89,6 +104,7 @@ class PaketWisataController extends Controller
 
         return view($this->dashboardView('paket_wisata.detail.detail_package'), compact(
             'package',
+            'vehicles',
             'relatedPackages'
         ));
     }
@@ -109,10 +125,13 @@ class PaketWisataController extends Controller
         ]);
 
         $selectedTrip = Trip::query()
+            ->with('vehicle')
             ->where('package_id', $package->id)
             ->whereKey($validated['trip_id'])
             ->whereIn('status', ['available', 'open', 'almost_full'])
             ->whereDate('departure_date', '>=', now()->toDateString())
+            ->whereNotNull('vehicle_id')
+            ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'))
             ->first();
 
         $isEnglish = app()->getLocale() === 'en';
@@ -138,7 +157,7 @@ class PaketWisataController extends Controller
             'package' => $package,
             'selectedTrip' => $selectedTrip,
             'selectedPax' => (int) $validated['pax'],
-            'selectedArmada' => $validated['selected_armada'] ?? null,
+            'selectedArmada' => $selectedTrip->vehicle?->name ?? ($validated['selected_armada'] ?? null),
             'pickupOptions' => $pickupOptions,
         ]);
     }
@@ -188,6 +207,15 @@ class PaketWisataController extends Controller
                 abort(422, app()->getLocale() === 'en'
                     ? 'The selected schedule does not match this tour package.'
                     : 'Jadwal tidak sesuai dengan paket yang dipilih.');
+            }
+
+            $trip->loadMissing('vehicle');
+            if (empty($trip->vehicle_id) || ! $trip->vehicle?->activeUnits()->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'trip_id' => app()->getLocale() === 'en'
+                        ? 'The vehicle for this schedule has not been assigned yet. Please choose another schedule.'
+                        : 'Armada untuk jadwal ini belum ditentukan. Silakan pilih jadwal lain.',
+                ]);
             }
 
             $remainingSeats = max(0, (int) $trip->quota - (int) $trip->booked_seats);
@@ -259,7 +287,7 @@ class PaketWisataController extends Controller
                 'participants' => $participantsList,
                 'pickup_location' => $validated['pickup_location'],
                 'pickup_details' => $validated['pickup_details'] ?? null,
-                'selected_armada' => $validated['selected_armada'] ?? ($trip->vehicle?->name ?? null),
+                'selected_armada' => $trip->vehicle?->name ?? ($validated['selected_armada'] ?? null),
                 'identity_file_path' => $identityPath,
                 'total_price' => $totalPrice,
                 'payment_method' => 'Xendit',
@@ -303,6 +331,11 @@ class PaketWisataController extends Controller
 
     public function checkTripQuota(Trip $trip): JsonResponse
     {
+        abort_unless(
+            $trip->vehicle_id && $trip->vehicle?->activeUnits()->exists(),
+            404
+        );
+
         $formattedDate = $trip->departure_date ? \Illuminate\Support\Carbon::parse($trip->departure_date)->translatedFormat('d F Y') : '';
 
         return response()->json([

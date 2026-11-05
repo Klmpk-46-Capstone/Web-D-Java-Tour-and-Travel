@@ -5,16 +5,22 @@ namespace App\Http\Controllers\Home;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\Vehicle;
+use App\Services\FleetAvailability;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ArmadaController extends Controller
 {
+    public function __construct(private readonly FleetAvailability $fleet)
+    {
+    }
+
     public function armada(Request $request): View
     {
         $filters = $request->validate([
@@ -31,6 +37,7 @@ class ArmadaController extends Controller
 
         $query = Vehicle::query()
             ->where('is_active', true)
+            ->whereHas('activeUnits')
             ->when($q !== '', function ($query) use ($q) {
                 $keyword = '%' . $q . '%';
 
@@ -75,12 +82,21 @@ class ArmadaController extends Controller
 
     // Customer Vehicle Detail: spesifikasi, opsi sewa (dengan/tanpa supir), dan unit terkait.
 
-    public function armadaDetail(Vehicle $vehicle): View
+    public function armadaDetail(Request $request, Vehicle $vehicle): View
     {
-        abort_unless($vehicle->is_active, 404);
+        abort_unless($vehicle->is_active && $vehicle->activeUnits()->exists(), 404);
+
+        $validated = $request->validate([
+            'rental_date' => ['nullable', 'date', 'after_or_equal:today'],
+        ]);
+
+        $availabilityDate = isset($validated['rental_date'])
+            ? Carbon::parse($validated['rental_date'])->startOfDay()
+            : Carbon::today();
 
         $relatedVehicles = Vehicle::query()
             ->active()
+            ->whereHas('activeUnits')
             ->whereKeyNot($vehicle->getKey())
             ->orderByRaw('CASE WHEN category = ? THEN 0 ELSE 1 END', [$vehicle->category])
             ->orderBy('price_per_day')
@@ -92,19 +108,43 @@ class ArmadaController extends Controller
             ? round((float) $reviews->avg('rating'), 1)
             : 0;
 
-        return view($this->dashboardView('armada.detail'), compact(
-            'vehicle',
-            'relatedVehicles',
-            'reviews',
-            'averageRating'
-        ));
+        return view($this->dashboardView('armada.detail'), [
+            'vehicle' => $vehicle,
+            'relatedVehicles' => $relatedVehicles,
+            'reviews' => $reviews,
+            'averageRating' => $averageRating,
+            'availabilityDate' => $availabilityDate,
+            'availableUnitsCount' => $this->fleet->countAvailable($vehicle, $availabilityDate, $availabilityDate),
+            'totalUnitsCount' => $this->fleet->countTotal($vehicle),
+        ]);
+    }
+
+    public function availability(Request $request, Vehicle $vehicle)
+    {
+        abort_unless($vehicle->is_active, 404);
+
+        $validated = $request->validate([
+            'rental_date' => ['required', 'date', 'after_or_equal:today'],
+            'duration' => ['nullable', 'integer', 'min:1', 'max:30'],
+        ]);
+
+        $start = Carbon::parse($validated['rental_date'])->startOfDay();
+        $duration = (int) ($validated['duration'] ?? 1);
+        $end = $start->copy()->addDays($duration - 1);
+
+        return response()->json([
+            'rental_date' => $start->toDateString(),
+            'duration' => $duration,
+            'available' => $this->fleet->countAvailable($vehicle, $start, $end),
+            'total' => $this->fleet->countTotal($vehicle),
+        ]);
     }
 
     // Customer Vehicle Booking Form: mempertahankan unit, opsi sewa, tanggal, dan pax dari halaman detail.
 
-    public function armadaBookingForm(Request $request, Vehicle $vehicle): View
+    public function armadaBookingForm(Request $request, Vehicle $vehicle): View|RedirectResponse
     {
-        abort_unless($vehicle->is_active, 404);
+        abort_unless($vehicle->is_active && $vehicle->activeUnits()->exists(), 404);
 
         $options = collect($vehicle->rentalOptions())->values();
         $optionKeys = $options->pluck('key')->all();
@@ -118,6 +158,20 @@ class ArmadaController extends Controller
 
         $selectedOptionKey = $validated['rental_option'] ?? ($optionKeys[0] ?? null);
         $selectedOption = $options->firstWhere('key', $selectedOptionKey) ?? $options->first();
+        $selectedRentalDate = $validated['rental_date'] ?? null;
+        $selectedDuration = (int) ($validated['duration'] ?? 1);
+
+        if ($selectedRentalDate) {
+            $start = Carbon::parse($selectedRentalDate)->startOfDay();
+            $end = $start->copy()->addDays($selectedDuration - 1);
+
+            if ($this->fleet->countAvailable($vehicle, $start, $end) === 0) {
+                return redirect()->to(localized_route('armada.show', [
+                    'vehicle' => $vehicle->slug,
+                    'rental_date' => $start->toDateString(),
+                ]));
+            }
+        }
 
         return view($this->dashboardView('armada.formulir.index'), [
             'vehicle' => $vehicle,
@@ -161,58 +215,65 @@ class ArmadaController extends Controller
         $downPaymentRate = 30;
         $downPayment = (int) round($totalPrice * $downPaymentRate / 100);
 
-        $identityPath = null;
-        if ($request->hasFile('identity_file')) {
-            $identityPath = $request->file('identity_file')->store('identities', 'public');
-        }
-
+        $start = Carbon::parse($validated['rental_date'])->startOfDay();
+        $end = $start->copy()->addDays($duration - 1);
         $bookingCode = 'BK-' . strtoupper(Str::random(8));
 
-        // Diagnostik koneksi database saat booking
-        $bookingModel = new Booking();
-        $connection = $bookingModel->getConnection();
+        $booking = DB::transaction(function () use (
+            $request,
+            $vehicle,
+            $validated,
+            $duration,
+            $rate,
+            $totalPrice,
+            $downPayment,
+            $bookingCode,
+            $start,
+            $end
+        ) {
+            $unit = $this->fleet->allocate($vehicle, $start, $end);
 
-        Log::info('DIAGNOSTIK BOOKING ARMADA', [
-            'database' => $connection->getDatabaseName(),
-            'host' => $connection->selectOne(
-                'SELECT @@hostname AS host'
-            )->host,
-            'port' => $connection->selectOne(
-                'SELECT @@port AS port'
-            )->port,
-            'table' => $bookingModel->getTable(),
-            'vehicle_id_exists' => Schema::connection(
-                $bookingModel->getConnectionName()
-            )->hasColumn(
-                $bookingModel->getTable(),
-                'vehicle_id'
-            ),
-        ]);
+            if (! $unit) {
+                $totalUnits = $this->fleet->countTotal($vehicle);
 
-        $booking = Booking::create([
-            'booking_code' => $bookingCode,
-            'user_id' => $request->user()->id,
-            'vehicle_id' => $vehicle->id,
-            'rental_date' => $validated['rental_date'],
-            'duration' => $duration,
-            'pax' => $validated['pax'],
-            'rental_option' => $validated['rental_option'],
-            'rate' => $rate,
-            'total_price' => $totalPrice,
-            'down_payment' => $downPayment,
-            'customer_name' => $validated['customer_name'],
-            'customer_phone' => $validated['customer_phone'],
-            'customer_email' => $validated['customer_email'],
-            'delivery_method' => $validated['delivery_method'] ?? 'self_pickup',
-            'pickup_location' => $validated['pickup_location'] ?? null,
-            'pickup_details' => $validated['pickup_details'] ?? null,
-            'notes' => $validated['notes'] ?? null,
-            'identity_file_path' => $identityPath,
-            'selected_armada' => $vehicle->name,
-            'payment_method' => 'Xendit',
-            'payment_status' => 'pending',
-            'booking_status' => 'pending',
-        ]);
+                throw ValidationException::withMessages([
+                    'rental_date' => $totalUnits === 0
+                        ? 'Belum ada unit terdaftar untuk tipe armada ini. Silakan hubungi admin.'
+                        : 'Semua unit untuk tipe armada ini sudah terpakai pada tanggal tersebut. Silakan pilih tanggal lain.',
+                ]);
+            }
+
+            $identityPath = null;
+            if ($request->hasFile('identity_file')) {
+                $identityPath = $request->file('identity_file')->store('identities', 'public');
+            }
+
+            return Booking::create([
+                'booking_code' => $bookingCode,
+                'user_id' => $request->user()->id,
+                'vehicle_id' => $vehicle->id,
+                'vehicle_unit_id' => $unit->id,
+                'rental_date' => $validated['rental_date'],
+                'duration' => $duration,
+                'pax' => $validated['pax'],
+                'rental_option' => $validated['rental_option'],
+                'rate' => $rate,
+                'total_price' => $totalPrice,
+                'down_payment' => $downPayment,
+                'customer_name' => $validated['customer_name'],
+                'customer_phone' => $validated['customer_phone'],
+                'customer_email' => $validated['customer_email'],
+                'delivery_method' => $validated['delivery_method'] ?? 'self_pickup',
+                'pickup_location' => $validated['pickup_location'] ?? null,
+                'pickup_details' => $validated['pickup_details'] ?? null,
+                'notes' => $validated['notes'] ?? null,
+                'identity_file_path' => $identityPath,
+                'selected_armada' => $vehicle->name,
+                'payment_method' => 'Xendit',
+                'payment_status' => 'pending',
+                'booking_status' => 'pending',
+            ]);
+        });
 
         return redirect()->to(localized_route('pembayaran.mulai', [
             'bookingCode' => $booking->booking_code,

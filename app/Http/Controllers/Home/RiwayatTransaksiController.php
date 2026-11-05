@@ -25,8 +25,9 @@ class RiwayatTransaksiController extends Controller
         $query = Booking::query()
             ->with([
                 'package',
-                'trip',
+                'trip' => fn ($query) => $query->with(['vehicle', 'vehicleUnit']),
                 'vehicle',
+                'vehicleUnit',
                 'review',
                 'transactions' => fn ($transactionQuery) => $transactionQuery
                     ->latest('id'),
@@ -131,8 +132,9 @@ class RiwayatTransaksiController extends Controller
         $booking = Booking::query()
             ->with([
                 'package',
-                'trip',
+                'trip' => fn ($query) => $query->with(['vehicle', 'vehicleUnit']),
                 'vehicle',
+                'vehicleUnit',
                 'transactions' => fn ($query) => $query->latest('id'),
                 'refund',
             ])
@@ -310,8 +312,9 @@ class RiwayatTransaksiController extends Controller
         $booking = Booking::query()
             ->with([
                 'package',
-                'trip',
+                'trip' => fn ($query) => $query->with(['vehicle', 'vehicleUnit']),
                 'vehicle',
+                'vehicleUnit',
                 'transactions' => fn ($query) => $query->latest('id'),
                 'refund',
             ])

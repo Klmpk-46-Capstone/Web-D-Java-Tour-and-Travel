@@ -292,6 +292,25 @@
                                     </p>
                                 @endif
 
+                                @php
+                                    $revealedPlate = $booking->revealed_plate;
+                                @endphp
+                                @if ($revealedPlate)
+                                    <p class="mt-1 text-sm font-semibold text-slate-700">
+                                        License Plate:
+                                        <span class="rounded-md bg-slate-900 px-2 py-0.5 font-mono text-xs font-extrabold tracking-wider text-white">{{ $revealedPlate }}</span>
+                                    </p>
+                                @elseif (in_array($booking->payment_status, ['partial', 'paid'], true)
+                                    && ! in_array($booking->booking_status, ['cancelled', 'canceled', 'refunded'], true))
+                                    <p class="mt-1 text-sm text-slate-600">
+                                        License Plate: <span class="font-semibold">The plate will be informed by the admin</span>
+                                    </p>
+                                @elseif (! in_array($booking->booking_status, ['cancelled', 'canceled', 'refunded'], true))
+                                    <p class="mt-1 text-sm text-slate-500">
+                                        License Plate: The plate will appear after the down payment succeeds.
+                                    </p>
+                                @endif
+
                                 <p class="mt-2 text-sm leading-6 text-slate-600">
                                     {{ e($package?->description ?? 'Tour package information according to your reservation.') }}
                                 </p>

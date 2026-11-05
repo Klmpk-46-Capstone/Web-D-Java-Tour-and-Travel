@@ -95,6 +95,10 @@
                     <div>
                         <dt class="{{ $labelCls }} !mb-1">Armada / Pengemudi</dt>
                         <dd class="font-extrabold text-slate-800">{{ $selectedTrip->vehicle->name ?? 'Armada belum ditentukan' }}</dd>
+                        <dd class="text-slate-500">
+                            Plat:
+                            <span class="font-mono font-extrabold text-slate-700">{{ $selectedTrip->vehicleUnit?->plate_number ?? 'Belum dialokasikan' }}</span>
+                        </dd>
                         <dd class="text-slate-400">{{ $selectedTrip->driver_name ?: 'Driver belum ditentukan' }}</dd>
                     </div>
                     <div>

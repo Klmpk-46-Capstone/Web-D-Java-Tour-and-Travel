@@ -351,6 +351,26 @@
                             </div>
                         </div>
 
+                        <div>
+                            <label for="f_vehicle_unit" class="{{ $labelCls }}">Plat Unit <span class="font-normal text-slate-400">(opsional)</span></label>
+                            <select id="f_vehicle_unit" name="vehicle_unit_id" class="{{ $inputCls }}">
+                                <option value="">Otomatis pilih unit bebas</option>
+                                @foreach ($vehicleUnits as $unit)
+                                    <option
+                                        value="{{ $unit->id }}"
+                                        data-vehicle-id="{{ $unit->vehicle_id }}"
+                                        @selected((int) old('vehicle_unit_id', $t->vehicle_unit_id) === $unit->id)
+                                    >{{ $unit->plate_number }} &middot; {{ $unit->vehicle?->name }}</option>
+                                @endforeach
+                            </select>
+                            <p class="mt-1 text-[10px] text-slate-400">
+                                Kosongkan agar sistem memilih unit bebas secara otomatis. Pilih plat hanya jika ingin override.
+                            </p>
+                            @error('vehicle_unit_id')
+                                <p class="mt-1 text-[11px] font-semibold text-rose-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <div class="grid grid-cols-2 gap-3">
                             <div class="rounded-xl border border-slate-100 bg-slate-50 p-3">
                                 <span class="{{ $labelCls }} !mb-1">Harga Per Pax</span>
@@ -414,7 +434,7 @@
                 </span>
                 <div>
                     <h2 class="text-base font-extrabold text-slate-900">Log Armada Aktif Hari Ini &amp; Cadangan Garasi</h2>
-                    <p class="text-[11px] text-slate-400">Berdasarkan penugasan armada pada jadwal trip</p>
+                    <p class="text-[11px] text-slate-400">Berdasarkan unit fisik yang dipakai trip atau booking sewa hari ini</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 text-[11px] font-bold">
@@ -424,22 +444,30 @@
         </div>
 
         <div class="mt-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            @foreach ($onDuty as $i => $trip)
+            @foreach ($onDuty as $i => $unit)
+                @php
+                    $usage = $usageByUnit[$unit->id] ?? null;
+                    $usageLabel = $usage instanceof \App\Models\Trip
+                        ? ($usage->package?->name ?? $usage->batch_name)
+                        : ($usage instanceof \App\Models\Booking
+                            ? 'Booking ' . $usage->booking_code
+                            : 'Sedang bertugas');
+                @endphp
                 <div class="flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/60 p-3">
                     <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-xs font-black text-slate-700 ring-1 ring-slate-200">{{ str_pad($i + 1, 2, '0', STR_PAD_LEFT) }}</span>
                     <div class="min-w-0 flex-1">
-                        <p class="truncate text-xs font-extrabold text-slate-900">{{ $trip->vehicle->name }}</p>
-                        <p class="truncate text-[11px] text-slate-400">{{ $trip->package->name ?? $trip->batch_name }} · {{ $trip->driver_name ?: 'Driver belum ditentukan' }}</p>
+                        <p class="truncate text-xs font-extrabold text-slate-900">{{ $unit->plate_number }} <span class="font-semibold text-slate-500">· {{ $unit->vehicle?->name }}</span></p>
+                        <p class="truncate text-[11px] text-slate-400">{{ $usageLabel }}</p>
                     </div>
                     <span class="rounded-full bg-teal-100 px-2 py-0.5 text-[9px] font-extrabold text-teal-800">On Duty</span>
                 </div>
             @endforeach
-            @foreach ($standby as $v)
+            @foreach ($standby as $unit)
                 <div class="flex items-center gap-3 rounded-xl border border-slate-100 bg-white p-3">
                     <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-slate-50 text-xs font-black text-slate-400 ring-1 ring-slate-200">R{{ $loop->iteration }}</span>
                     <div class="min-w-0 flex-1">
-                        <p class="truncate text-xs font-extrabold text-slate-900">{{ $v->name }}</p>
-                        <p class="truncate text-[11px] text-slate-400">{{ $v->seats }} kursi · siap ditugaskan</p>
+                        <p class="truncate text-xs font-extrabold text-slate-900">{{ $unit->plate_number }} <span class="font-semibold text-slate-500">· {{ $unit->vehicle?->name }}</span></p>
+                        <p class="truncate text-[11px] text-slate-400">{{ $unit->vehicle?->seats ?? '-' }} kursi · siap ditugaskan</p>
                     </div>
                     <span class="rounded-full bg-sky-100 px-2 py-0.5 text-[9px] font-extrabold text-sky-800">Standby</span>
                 </div>
@@ -511,6 +539,38 @@
             fPkg.addEventListener('change', syncEditTripDates);
             fDep.addEventListener('change', syncEditTripDates);
             syncEditTripDates();
+        }
+
+        // Tampilkan hanya plat milik tipe armada yang dipilih.
+        const fVehicle = document.getElementById('f_vehicle');
+        const fVehicleUnit = document.getElementById('f_vehicle_unit');
+
+        function syncVehicleUnitOptions() {
+            if (!fVehicle || !fVehicleUnit) return;
+
+            const vehicleId = fVehicle.value;
+            let selectedWasHidden = false;
+
+            Array.from(fVehicleUnit.options).forEach((option, index) => {
+                if (index === 0) return;
+
+                const matches = !vehicleId || option.dataset.vehicleId === vehicleId;
+                option.hidden = !matches;
+                option.disabled = !matches;
+
+                if (!matches && option.selected) {
+                    selectedWasHidden = true;
+                }
+            });
+
+            if (selectedWasHidden) {
+                fVehicleUnit.value = '';
+            }
+        }
+
+        if (fVehicle && fVehicleUnit) {
+            fVehicle.addEventListener('change', syncVehicleUnitOptions);
+            syncVehicleUnitOptions();
         }
     })();
 </script>

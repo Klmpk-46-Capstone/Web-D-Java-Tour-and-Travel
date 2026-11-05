@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Models\Trip;
 use App\Models\User;
 use App\Models\Vehicle;
+use App\Models\VehicleUnit;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -64,6 +65,12 @@ class AdminThreeFeaturesTest extends TestCase
             'seats' => 14,
             'plate_number' => 'L 7788 DJ',
             'is_active' => true,
+        ]);
+
+        VehicleUnit::create([
+            'vehicle_id' => $this->vehicle->id,
+            'plate_number' => 'L 7788 DJ',
+            'status' => VehicleUnit::STATUS_ACTIVE,
         ]);
     }
 

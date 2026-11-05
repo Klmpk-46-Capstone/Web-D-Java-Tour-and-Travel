@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\AdminReportController;
 use App\Http\Controllers\Admin\AdminReviewController;
 use App\Http\Controllers\Admin\AdminTripController;
 use App\Http\Controllers\Admin\AdminVehicleController;
+use App\Http\Controllers\Admin\AdminVehicleUnitController;
 use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\AuthController;
@@ -46,6 +47,9 @@ $customerRoutes = function () {
 
     Route::get('/armada/{vehicle:slug}/formulir', [ArmadaController::class, 'armadaBookingForm'])
         ->name('armada.booking.form');
+
+    Route::get('/armada/{vehicle:slug}/ketersediaan', [ArmadaController::class, 'availability'])
+        ->name('armada.availability');
 
     Route::post('/armada/{vehicle:slug}/booking', [
         ArmadaController::class,
@@ -359,6 +363,15 @@ Route::middleware(['auth', 'admin', 'setlocale:id'])->prefix('admin')->name('adm
     Route::put('/armada/{vehicle}', [AdminVehicleController::class, 'update'])->name('armada.update');
     Route::delete('/armada/{vehicle}', [AdminVehicleController::class, 'destroy'])->name('armada.destroy');
     Route::post('/armada/{vehicle}/toggle-status', [AdminVehicleController::class, 'toggleStatus'])->name('armada.toggle-status');
+
+    // 3a. Unit & Plat Armada
+    Route::get('/unit-armada', [AdminVehicleUnitController::class, 'index'])->name('units.index');
+    Route::get('/unit-armada/create', [AdminVehicleUnitController::class, 'create'])->name('units.create');
+    Route::post('/unit-armada', [AdminVehicleUnitController::class, 'store'])->name('units.store');
+    Route::get('/unit-armada/{unit}/edit', [AdminVehicleUnitController::class, 'edit'])->name('units.edit');
+    Route::put('/unit-armada/{unit}', [AdminVehicleUnitController::class, 'update'])->name('units.update');
+    Route::delete('/unit-armada/{unit}', [AdminVehicleUnitController::class, 'destroy'])->name('units.destroy');
+    Route::post('/unit-armada/{unit}/toggle-status', [AdminVehicleUnitController::class, 'toggleStatus'])->name('units.toggle-status');
 
     // 4. Rekomendasi Utama (Featured)
     Route::get('/featured-packages', [AdminPackageController::class, 'featured'])->name('packages.featured');

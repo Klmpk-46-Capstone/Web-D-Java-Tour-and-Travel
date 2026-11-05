@@ -182,6 +182,16 @@ class Vehicle extends Model
         return $this->hasMany(Booking::class);
     }
 
+    public function units(): HasMany
+    {
+        return $this->hasMany(VehicleUnit::class);
+    }
+
+    public function activeUnits(): HasMany
+    {
+        return $this->units()->where('status', VehicleUnit::STATUS_ACTIVE);
+    }
+
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class)

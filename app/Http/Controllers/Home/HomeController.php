@@ -41,6 +41,7 @@ class HomeController extends Controller
         // Opsi dropdown destinasi selalu memakai data penuh, bukan hasil filter.
         $destinationOptions = Package::query()
             ->where('is_active', true)
+            ->visibleToCustomer()
             ->orderByDesc('is_featured')
             ->latest('id')
             ->limit(8)
@@ -76,7 +77,9 @@ class HomeController extends Controller
             if (filled($departureDate)) {
                 $query->whereHas('trips', function ($tripQuery) use ($departureDate, $passengers) {
                     $tripQuery->whereDate('departure_date', $departureDate)
-                        ->whereIn('status', ['available', 'open', 'almost_full']);
+                        ->whereIn('status', ['available', 'open', 'almost_full'])
+                        ->whereNotNull('vehicle_id')
+                        ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
 
                     if ($passengers > 0) {
                         $tripQuery->whereRaw('(quota - booked_seats) >= ?', [$passengers]);
@@ -85,7 +88,9 @@ class HomeController extends Controller
             } elseif ($passengers > 0) {
                 $query->whereHas('trips', function ($tripQuery) use ($passengers) {
                     $tripQuery->whereIn('status', ['available', 'open', 'almost_full'])
-                        ->where('quota', '>=', $passengers);
+                        ->where('quota', '>=', $passengers)
+                        ->whereNotNull('vehicle_id')
+                        ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
                 });
             }
 
@@ -94,8 +99,17 @@ class HomeController extends Controller
 
         // 1. Featured Packages (Rekomendasi Utama) - Data-driven from CMS toggle
         $featuredPackages = $applyPackageFilters(
-            Package::with(['trips', 'itineraries', 'reviews'])
+            Package::with([
+                'trips' => fn ($tripQuery) => $tripQuery
+                    ->where('status', '!=', 'cancelled')
+                    ->whereDate('departure_date', '>=', now()->toDateString())
+                    ->whereNotNull('vehicle_id')
+                    ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits')),
+                'itineraries',
+                'reviews',
+            ])
                 ->where('is_active', true)
+                ->visibleToCustomer()
                 ->where('is_featured', true)
                 ->latest('id')
         )->get();
@@ -104,6 +118,7 @@ class HomeController extends Controller
         $destinations = $applyPackageFilters(
             Package::query()
                 ->where('is_active', true)
+                ->visibleToCustomer()
                 ->orderByDesc('is_featured')
                 ->latest('id')
         )->limit(8)->get();
@@ -111,6 +126,7 @@ class HomeController extends Controller
         // 3. Armada: kapasitas kursi dan kata kunci nama/kategori/deskripsi.
         $vehicles = Vehicle::query()
             ->where('is_active', true)
+            ->whereHas('activeUnits')
             ->when(
                 $searchActive && $mode === 'mobil' && $pickup !== '',
                 function ($query) use ($pickup) {

@@ -147,6 +147,11 @@
                     <x-ui.badge variant="warning">
                         {{ $vehicle->luggage_capacity }} koper
                     </x-ui.badge>
+
+                    <x-ui.badge :variant="$availableUnitsCount > 0 ? 'success' : 'danger'">
+                        Tersisa {{ $availableUnitsCount }} dari {{ $totalUnitsCount }} unit
+                        <span class="font-medium opacity-75">&middot; {{ $availabilityDate->translatedFormat('d M') }}</span>
+                    </x-ui.badge>
                 </div>
             </section>
 

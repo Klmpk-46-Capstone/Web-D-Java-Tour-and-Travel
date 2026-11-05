@@ -4,9 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Vehicle;
+use App\Models\VehicleUnit;
+use App\Services\FleetAvailability;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -14,6 +17,10 @@ use Illuminate\View\View;
 
 class AdminVehicleController extends Controller
 {
+    public function __construct(private readonly FleetAvailability $fleet)
+    {
+    }
+
     public function index(Request $request): View
     {
         $search = trim((string) $request->query('search'));
@@ -21,7 +28,12 @@ class AdminVehicleController extends Controller
         $transmission = $request->query('transmission');
 
         $vehicles = Vehicle::query()
-            ->withCount('reviews')
+            ->withCount([
+                'reviews',
+                'units as total_units_count',
+                'units as active_units_count' => fn ($query) => $query
+                    ->where('status', VehicleUnit::STATUS_ACTIVE),
+            ])
             ->withAvg('reviews', 'rating')
             ->when($search !== '', function ($query) use ($search) {
                 $keyword = '%' . $search . '%';
@@ -46,6 +58,13 @@ class AdminVehicleController extends Controller
             ->latest('id')
             ->paginate(10)
             ->withQueryString();
+
+        $today = Carbon::today();
+        $vehicles->getCollection()->transform(function (Vehicle $vehicle) use ($today) {
+            $vehicle->units_available_today = $this->fleet->countAvailable($vehicle, $today, $today);
+
+            return $vehicle;
+        });
 
         $categories = Vehicle::CATEGORIES;
 
@@ -123,6 +142,15 @@ class AdminVehicleController extends Controller
 
     public function destroy(Vehicle $vehicle): RedirectResponse
     {
+        if ($vehicle->units()->exists()) {
+            return redirect()
+                ->route('admin.armada.index')
+                ->with(
+                    'error',
+                    "Armada '{$vehicle->name}' tidak dapat dihapus karena masih memiliki unit/plat terdaftar. Hapus atau pindahkan unit tersebut terlebih dahulu."
+                );
+        }
+
         if ($vehicle->bookings()->exists()) {
             return redirect()
                 ->route('admin.armada.index')

@@ -149,6 +149,8 @@
 
                 @include('pages.dashboard.paket_wisata.detail.components.gallery')
 
+                @include('pages.dashboard.paket_wisata.detail.components.vehicles')
+
                 @include('pages.dashboard.paket_wisata.detail.components.itinerary')
 
                 @include('pages.dashboard.paket_wisata.detail.components.facilities')
@@ -180,6 +182,7 @@
             const maxPaxText = document.getElementById('maxPaxText');
             const quotaSeatsText = document.getElementById('quotaSeatsText');
             const quotaBatchText = document.getElementById('quotaBatchText');
+            const selectedTripVehicle = document.getElementById('selectedTripVehicle');
             const quotaStatusBadge = document.getElementById('quotaStatusBadge');
             const paxLimitAlert = document.getElementById('paxLimitAlert');
             const paxLimitMessage = document.getElementById('paxLimitMessage');
@@ -208,7 +211,10 @@
                         quota: 20,
                         batch: 'B1',
                         formattedDate: '',
-                        checkUrl: ''
+                        checkUrl: '',
+                        vehicleName: '',
+                        vehicleSeats: '',
+                        vehicleTransmission: ''
                     };
                 }
                 const opt = tripSelect.options[tripSelect.selectedIndex];
@@ -218,7 +224,10 @@
                         quota: 0,
                         batch: '-',
                         formattedDate: '',
-                        checkUrl: ''
+                        checkUrl: '',
+                        vehicleName: '',
+                        vehicleSeats: '',
+                        vehicleTransmission: ''
                     };
                 }
                 return {
@@ -226,7 +235,10 @@
                     quota: Math.max(0, parseInt(opt.dataset.quota, 10) || 0),
                     batch: opt.dataset.batch || 'B1',
                     formattedDate: opt.dataset.formattedDate || opt.text,
-                    checkUrl: opt.dataset.checkUrl || ''
+                    checkUrl: opt.dataset.checkUrl || '',
+                    vehicleName: opt.dataset.vehicleName || '',
+                    vehicleSeats: opt.dataset.vehicleSeats || '',
+                    vehicleTransmission: opt.dataset.vehicleTransmission || ''
                 };
             }
 
@@ -242,6 +254,17 @@
                 }
                 if (quotaSeatsText) {
                     quotaSeatsText.textContent = quota + ' Kursi';
+                }
+                if (selectedTripVehicle) {
+                    const vehicleParts = [];
+                    if (tripInfo.vehicleName) {
+                        vehicleParts.push(tripInfo.vehicleName);
+                        if (tripInfo.vehicleSeats) vehicleParts.push(tripInfo.vehicleSeats + ' kursi');
+                        if (tripInfo.vehicleTransmission) vehicleParts.push(tripInfo.vehicleTransmission);
+                    }
+                    selectedTripVehicle.textContent = vehicleParts.length
+                        ? vehicleParts.join(' · ')
+                        : 'Tipe armada diinformasikan admin saat jadwal tersedia.';
                 }
 
                 paxInput.max = Math.max(1, quota);
@@ -509,8 +532,9 @@
 
                 if (modalSummaryDate) modalSummaryDate.textContent = tripInfo.formattedDate || 'Tanggal Terpilih';
                 if (modalSummaryPax) modalSummaryPax.textContent = paxInput.value + ' Pax';
-                if (modalSummaryArmada) modalSummaryArmada.textContent = inputArmada ? inputArmada.value :
-                    'Innova Reborn';
+                if (modalSummaryArmada) modalSummaryArmada.textContent = inputArmada?.value
+                    || tripInfo.vehicleName
+                    || 'Armada sesuai jadwal';
                 if (modalSummaryDP) modalSummaryDP.textContent = dpDisplay.textContent;
 
                 if (bookingModal) {

@@ -172,6 +172,9 @@
                         <div>
                             <dt class="text-[10px] uppercase font-bold text-slate-400">Armada</dt>
                             <dd class="font-bold text-slate-800 mt-0.5">{{ $booking->trip?->vehicle?->name ?? 'Belum ditentukan' }}</dd>
+                            <dd class="font-mono text-[10px] font-extrabold text-slate-500 mt-0.5">
+                                {{ $booking->trip?->vehicleUnit?->plate_number ?? 'Plat belum dialokasikan' }}
+                            </dd>
                         </div>
                         <div>
                             <dt class="text-[10px] uppercase font-bold text-slate-400">Driver / Tour Leader</dt>

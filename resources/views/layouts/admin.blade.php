@@ -155,6 +155,15 @@
                             <span>Armada</span>
                         </a>
 
+                        {{-- Unit & Plat --}}
+                        <a
+                            href="{{ route('admin.units.index') }}"
+                            class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition {{ request()->routeIs('admin.units.*') ? 'bg-teal-50 text-teal-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}"
+                        >
+                            <svg class="w-4 h-4 {{ request()->routeIs('admin.units.*') ? 'text-teal-700' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 15h4m3 0h3M7 11h10"/></svg>
+                            <span>Unit &amp; Plat</span>
+                        </a>
+
                         {{-- Rekomendasi Utama (Featured) --}}
                         <a 
                             href="{{ route('admin.packages.featured') }}" 

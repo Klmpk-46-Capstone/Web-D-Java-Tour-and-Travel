@@ -263,6 +263,26 @@
                                         </p>
                                     @endif
 
+                                    @php
+                                        $revealedPlate = $booking->revealed_plate;
+                                    @endphp
+                                    @if ($revealedPlate)
+                                        <p>
+                                            <strong class="inline-block min-w-28 sm:min-w-32">
+                                                Plat Kendaraan:
+                                            </strong>
+                                            <span class="rounded bg-slate-900 px-1.5 py-0.5 font-mono text-xs font-extrabold tracking-wider text-white">{{ $revealedPlate }}</span>
+                                        </p>
+                                    @elseif (in_array($booking->payment_status, ['partial', 'paid'], true)
+                                        && ! in_array($booking->booking_status, ['cancelled', 'canceled', 'refunded'], true))
+                                        <p>
+                                            <strong class="inline-block min-w-28 sm:min-w-32">
+                                                Plat Kendaraan:
+                                            </strong>
+                                            Plat akan diinformasikan admin
+                                        </p>
+                                    @endif
+
                                     <p>
                                         <strong class="inline-block min-w-28 sm:min-w-32">
                                             Durasi:

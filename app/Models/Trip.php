@@ -20,6 +20,7 @@ class Trip extends Model
         'booked_seats',
         'status',
         'vehicle_id',
+        'vehicle_unit_id',
         'driver_name',
         'meeting_point',
         'departure_time',
@@ -53,6 +54,11 @@ class Trip extends Model
     public function vehicle(): BelongsTo
     {
         return $this->belongsTo(Vehicle::class);
+    }
+
+    public function vehicleUnit(): BelongsTo
+    {
+        return $this->belongsTo(VehicleUnit::class);
     }
 
     public function getStatusLabelAttribute(): string

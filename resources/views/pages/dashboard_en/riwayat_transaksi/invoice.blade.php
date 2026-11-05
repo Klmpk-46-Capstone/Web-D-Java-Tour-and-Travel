@@ -512,6 +512,22 @@
                                     </p>
                                 @endif
 
+                                @php
+                                    $revealedPlate = $booking->revealed_plate;
+                                @endphp
+                                @if ($revealedPlate)
+                                    <p>
+                                        <strong>License Plate:</strong>
+                                        <span class="rounded bg-slate-900 px-1.5 py-0.5 font-mono text-xs font-extrabold tracking-wider text-white">{{ $revealedPlate }}</span>
+                                    </p>
+                                @elseif (in_array($booking->payment_status, ['partial', 'paid'], true)
+                                    && ! in_array($booking->booking_status, ['cancelled', 'canceled', 'refunded'], true))
+                                    <p>
+                                        <strong>License Plate:</strong>
+                                        The plate will be informed by the admin
+                                    </p>
+                                @endif
+
                                 <p>
                                     <strong>Durasi:</strong>
                                     {{ $invoiceDuration }}

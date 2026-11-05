@@ -8,11 +8,14 @@ use App\Models\Package;
 use App\Models\Transaction;
 use App\Models\Trip;
 use App\Models\Vehicle;
+use App\Models\VehicleUnit;
+use App\Services\FleetAvailability;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -21,12 +24,16 @@ use Illuminate\View\View;
  */
 class AdminTripController extends Controller
 {
+    public function __construct(private readonly FleetAvailability $fleet)
+    {
+    }
+
     public function index(Request $request): View
     {
         $packageId = $request->integer('package_id') ?: null;
 
         $selectedTrip = $request->filled('trip_id')
-            ? Trip::with(['package', 'vehicle'])->find($request->query('trip_id'))
+            ? Trip::with(['package', 'vehicle', 'vehicleUnit'])->find($request->query('trip_id'))
             : null;
 
         $month = $this->resolveMonth($request->query('month'), $selectedTrip);
@@ -52,6 +59,12 @@ class AdminTripController extends Controller
 
         $packages = Package::where('is_active', true)->orderBy('name')->get();
         $vehicles = Vehicle::where('is_active', true)->orderBy('name')->get();
+        $vehicleUnits = VehicleUnit::query()
+            ->with('vehicle')
+            ->where('status', VehicleUnit::STATUS_ACTIVE)
+            ->orderBy('vehicle_id')
+            ->orderBy('plate_number')
+            ->get();
 
         // Daftar paket yang punya trip di bulan ini (untuk chip filter).
         $packageChips = $this->tripsOverlapping($monthStart, $monthEnd, null)
@@ -66,20 +79,22 @@ class AdminTripController extends Controller
         $selectedPrice = (int) ($selectedTrip?->package?->price ?? 0);
         $selectedTotal = $selectedPrice * (int) ($selectedTrip?->booked_seats ?? 0);
 
-        // Log armada: unit yang bertugas hari ini & unit cadangan (belum terjadwal).
+        // Log armada berbasis unit fisik (bukan tipe), agar tipe dengan banyak
+        // plat tidak dianggap satu unit yang sama.
         $today = CarbonImmutable::today();
-        $onDuty = Trip::with(['vehicle', 'package'])
-            ->whereNotNull('vehicle_id')
-            ->whereNotIn('status', ['cancelled', 'completed'])
-            ->whereDate('departure_date', '<=', $today->toDateString())
-            ->where(function ($q) use ($today) {
-                $q->whereDate('return_date', '>=', $today->toDateString())
-                    ->orWhere(function ($q2) use ($today) {
-                        $q2->whereNull('return_date')->whereDate('departure_date', '=', $today->toDateString());
-                    });
-            })
+        $loggedUnits = VehicleUnit::query()
+            ->with('vehicle')
+            ->where('status', VehicleUnit::STATUS_ACTIVE)
+            ->orderBy('vehicle_id')
+            ->orderBy('id')
             ->get();
-        $standby = $vehicles->whereNotIn('id', $onDuty->pluck('vehicle_id'))->values();
+        $usageByUnit = $this->fleet->usageForUnits($loggedUnits->pluck('id'), $today, $today);
+        $onDuty = $loggedUnits
+            ->filter(fn (VehicleUnit $unit) => isset($usageByUnit[$unit->id]))
+            ->values();
+        $standby = $loggedUnits
+            ->reject(fn (VehicleUnit $unit) => isset($usageByUnit[$unit->id]))
+            ->values();
 
         return view('admin.trips.index', [
             'month' => $month,
@@ -94,10 +109,12 @@ class AdminTripController extends Controller
             'calendar' => $calendar,
             'packages' => $packages,
             'vehicles' => $vehicles,
+            'vehicleUnits' => $vehicleUnits,
             'packageChips' => $packageChips,
             'packageId' => $packageId,
             'onDuty' => $onDuty,
             'standby' => $standby,
+            'usageByUnit' => $usageByUnit,
             'statusLabels' => Trip::STATUS_LABELS,
         ]);
     }
@@ -111,6 +128,7 @@ class AdminTripController extends Controller
             'return_date' => ['nullable', 'date', 'after_or_equal:departure_date'],
             'quota' => ['required', 'integer', 'min:1', 'max:500'],
             'vehicle_id' => ['nullable', 'exists:vehicles,id'],
+            'vehicle_unit_id' => ['nullable', 'integer', 'exists:vehicle_units,id'],
             'driver_name' => ['nullable', 'string', 'max:120'],
             'meeting_point' => ['nullable', 'string', 'max:200'],
             'departure_time' => ['nullable', 'date_format:H:i'],
@@ -119,11 +137,16 @@ class AdminTripController extends Controller
         $this->validateAndBindTripDuration($validated);
         $this->assertVehicleRules($validated, null);
 
-        $trip = Trip::create([
-            ...$validated,
-            'booked_seats' => 0,
-            'status' => 'available',
-        ]);
+        $trip = DB::transaction(function () use ($validated) {
+            $unit = $this->resolveUnit($validated, null);
+
+            return Trip::create([
+                ...$validated,
+                'vehicle_unit_id' => $unit?->id,
+                'booked_seats' => 0,
+                'status' => 'available',
+            ]);
+        });
 
         return redirect()
             ->route('admin.trips.index', [
@@ -143,6 +166,7 @@ class AdminTripController extends Controller
             'quota' => ['required', 'integer', 'min:1', 'max:500'],
             'status' => ['required', 'in:' . implode(',', array_keys(Trip::STATUS_LABELS))],
             'vehicle_id' => ['nullable', 'exists:vehicles,id'],
+            'vehicle_unit_id' => ['nullable', 'integer', 'exists:vehicle_units,id'],
             'driver_name' => ['nullable', 'string', 'max:120'],
             'meeting_point' => ['nullable', 'string', 'max:200'],
             'departure_time' => ['nullable', 'date_format:H:i'],
@@ -177,12 +201,17 @@ class AdminTripController extends Controller
             }
         }
 
-        $trip->fill([
-            ...$validated,
-        ]);
-        $trip->booked_seats = $activeSeats;
-        $trip->status = $trip->resolveStatus($requested);
-        $trip->save();
+        DB::transaction(function () use ($trip, $validated, $requested, $activeSeats) {
+            $unit = $this->resolveUnit($validated, $trip);
+
+            $trip->fill([
+                ...$validated,
+                'vehicle_unit_id' => $unit?->id,
+            ]);
+            $trip->booked_seats = $activeSeats;
+            $trip->status = $trip->resolveStatus($requested);
+            $trip->save();
+        });
 
         return redirect()
             ->route('admin.trips.index', [
@@ -332,7 +361,7 @@ class AdminTripController extends Controller
 
     private function tripsOverlapping(CarbonImmutable $start, CarbonImmutable $end, ?int $packageId)
     {
-        return Trip::with(['package', 'vehicle'])
+        return Trip::with(['package', 'vehicle', 'vehicleUnit'])
             ->whereDate('departure_date', '<=', $end->toDateString())
             ->where(function ($q) use ($start) {
                 $q->whereDate('return_date', '>=', $start->toDateString())
@@ -434,7 +463,7 @@ class AdminTripController extends Controller
     }
 
     /**
-     * Aturan armada: kapasitas kursi & bentrok jadwal armada/driver.
+     * Aturan armada: kapasitas kursi, ketersediaan unit, & bentrok driver.
      */
     private function assertVehicleRules(array $data, ?Trip $current): void
     {
@@ -449,8 +478,35 @@ class AdminTripController extends Controller
                 $errors['quota'] = "Kuota ({$data['quota']} pax) melebihi kapasitas {$vehicle->name} ({$vehicle->seats} kursi).";
             }
 
-            if ($this->hasOverlap('vehicle_id', $data['vehicle_id'], $departure, $return, $current)) {
-                $errors['vehicle_id'] = 'Armada ini sudah dijadwalkan pada trip lain di rentang tanggal tersebut.';
+            if ($vehicle) {
+                $requestedUnitId = $data['vehicle_unit_id'] ?? null;
+                $isCancelling = ($data['status'] ?? null) === 'cancelled';
+                $isLegacySameVehicle = $current
+                    && ! $current->vehicle_unit_id
+                    && (int) $current->vehicle_id === (int) $vehicle->id
+                    && empty($requestedUnitId);
+
+                if ($isCancelling || $isLegacySameVehicle) {
+                    // Trip lama tanpa unit tetap boleh diedit/dibatalkan tanpa
+                    // memaksa admin menyiapkan unit baru.
+                } elseif (! empty($requestedUnitId)) {
+                    $unit = VehicleUnit::find($requestedUnitId);
+
+                    if (! $unit || (int) $unit->vehicle_id !== (int) $vehicle->id) {
+                        $errors['vehicle_unit_id'] = 'Plat yang dipilih tidak sesuai dengan tipe armada.';
+                    } elseif (! $this->fleet->isUnitAvailable($unit, $departure, $return, $current)) {
+                        $errors['vehicle_unit_id'] = "Plat {$unit->plate_number} sudah terpakai pada rentang tanggal tersebut.";
+                    }
+                } else {
+                    $available = $this->fleet->countAvailable($vehicle, $departure, $return, $current);
+
+                    if ($available === 0) {
+                        $total = $this->fleet->countTotal($vehicle);
+                        $errors['vehicle_id'] = $total === 0
+                            ? 'Belum ada unit terdaftar untuk tipe ini.'
+                            : "Semua unit {$vehicle->name} sudah terpakai pada rentang tanggal tersebut.";
+                    }
+                }
             }
         }
 
@@ -462,6 +518,84 @@ class AdminTripController extends Controller
         if ($errors) {
             throw ValidationException::withMessages($errors);
         }
+    }
+
+    /**
+     * Tentukan unit yang dipakai trip. Unit lama dipertahankan bila masih bebas.
+     */
+    private function resolveUnit(array $data, ?Trip $current): ?VehicleUnit
+    {
+        if (empty($data['vehicle_id'])) {
+            return null;
+        }
+
+        $vehicle = Vehicle::find($data['vehicle_id']);
+
+        if (! $vehicle) {
+            throw ValidationException::withMessages([
+                'vehicle_id' => 'Tipe armada tidak ditemukan.',
+            ]);
+        }
+
+        $from = Carbon::parse($data['departure_date'])->toDateString();
+        $to = Carbon::parse($data['return_date'] ?? $data['departure_date'])->toDateString();
+        $requestedUnitId = $data['vehicle_unit_id'] ?? null;
+        $isLegacySameVehicle = $current
+            && ! $current->vehicle_unit_id
+            && (int) $current->vehicle_id === (int) $vehicle->id
+            && empty($requestedUnitId);
+
+        if (! empty($requestedUnitId)) {
+            $unit = VehicleUnit::find($requestedUnitId);
+
+            if (! $unit || (int) $unit->vehicle_id !== (int) $vehicle->id) {
+                throw ValidationException::withMessages([
+                    'vehicle_unit_id' => 'Plat yang dipilih tidak sesuai dengan tipe armada.',
+                ]);
+            }
+
+            if (! $this->fleet->isUnitAvailable($unit, $from, $to, $current)) {
+                throw ValidationException::withMessages([
+                    'vehicle_unit_id' => "Plat {$unit->plate_number} sudah terpakai pada rentang tanggal tersebut.",
+                ]);
+            }
+
+            return $unit;
+        }
+
+        if (
+            $current
+            && $current->vehicle_unit_id
+            && (int) $current->vehicle_id === (int) $vehicle->id
+        ) {
+            $currentUnit = $current->vehicleUnit;
+
+            if (
+                $currentUnit
+                && $currentUnit->status === VehicleUnit::STATUS_ACTIVE
+                && $this->fleet->isUnitAvailable($currentUnit, $from, $to, $current)
+            ) {
+                return $currentUnit;
+            }
+        }
+
+        $unit = $this->fleet->allocate($vehicle, $from, $to, $current);
+
+        if (! $unit) {
+            if ($isLegacySameVehicle) {
+                return null;
+            }
+
+            $total = $this->fleet->countTotal($vehicle);
+
+            throw ValidationException::withMessages([
+                'vehicle_id' => $total === 0
+                    ? 'Belum ada unit terdaftar untuk tipe ini.'
+                    : "Semua unit {$vehicle->name} sudah terpakai pada rentang tanggal tersebut.",
+            ]);
+        }
+
+        return $unit;
     }
 
     private function hasOverlap(string $column, mixed $value, string $departure, string $return, ?Trip $current): bool

@@ -88,6 +88,30 @@ class Package extends Model
         return $query->where('is_featured', true);
     }
 
+    /**
+     * Paket yang masih layak tampil ke customer.
+     *
+     * Paket tanpa jadwal mendatang tetap tampil sebagai informasi paket, tetapi
+     * paket yang sudah punya jadwal mendatang wajib memiliki minimal satu jadwal
+     * dengan tipe armada aktif. Jadwal "Belum ditentukan" tidak dihitung.
+     */
+    public function scopeVisibleToCustomer($query)
+    {
+        $today = now()->toDateString();
+
+        return $query->where(function ($subQuery) use ($today) {
+            $subQuery->whereDoesntHave('trips', function ($tripQuery) use ($today) {
+                $tripQuery->where('status', '!=', 'cancelled')
+                    ->whereDate('departure_date', '>=', $today);
+            })->orWhereHas('trips', function ($tripQuery) use ($today) {
+                $tripQuery->where('status', '!=', 'cancelled')
+                    ->whereDate('departure_date', '>=', $today)
+                    ->whereNotNull('vehicle_id')
+                    ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
+            });
+        });
+    }
+
     public function getFormattedPriceAttribute(): string
     {
         return 'Rp ' . number_format($this->price, 0, ',', '.');

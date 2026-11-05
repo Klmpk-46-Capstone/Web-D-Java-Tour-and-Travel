@@ -32,7 +32,7 @@
                 @php
                     $popularDestinations = isset($destinations)
                         ? $destinations->take(4)
-                        : \App\Models\Package::where('is_active', true)->orderByDesc('is_featured')->limit(4)->get();
+                        : \App\Models\Package::where('is_active', true)->visibleToCustomer()->orderByDesc('is_featured')->limit(4)->get();
                     $footerWa = $whatsappUrl ?? (config('services.djava.whatsapp') ? 'https://wa.me/'.preg_replace('/\D+/', '', config('services.djava.whatsapp')) : null);
                 @endphp
                 @forelse ($popularDestinations as $destination)

@@ -130,14 +130,25 @@
                                     data-booked="{{ $trip->booked_seats }}"
                                     data-batch="{{ $trip->batch_name }}"
                                     data-check-url="{{ localized_route('trips.check-quota', $trip->id) }}"
+                                    data-vehicle-name="{{ $trip->vehicle?->name }}"
+                                    data-vehicle-seats="{{ $trip->vehicle?->seats }}"
+                                    data-vehicle-transmission="{{ $trip->vehicle?->transmission }}"
                                     @selected($firstTrip && $firstTrip->id === $trip->id)
                                 >
-                                    {{ \Illuminate\Support\Carbon::parse($trip->departure_date)->translatedFormat('d F Y') }} ({{ $trip->remaining_seats }} Seats Left)
+                                    {{ \Illuminate\Support\Carbon::parse($trip->departure_date)->translatedFormat('d F Y') }} ({{ $trip->remaining_seats }} Seats Left)@if ($trip->vehicle) &middot; {{ $trip->vehicle->name }} &middot; {{ $trip->vehicle->seats }} seats &middot; {{ $trip->vehicle->transmission ?: 'Flexible transmission' }}@endif
                                 </option>
                             @endif
                         @endforeach
                     </select>
                 </div>
+
+                <p id="selectedTripVehicle" class="mt-2 text-[11px] font-semibold text-slate-500">
+                    @if ($firstTrip?->vehicle)
+                        {{ $firstTrip->vehicle->name }} &middot; {{ $firstTrip->vehicle->seats }} seats &middot; {{ $firstTrip->vehicle->transmission ?: 'Flexible transmission' }}
+                    @else
+                        The vehicle type will be confirmed by the admin when the schedule is available.
+                    @endif
+                </p>
 
                 {{-- BADGE STATUS SISA KUOTA DINAMIS --}}
                 <div
