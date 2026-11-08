@@ -304,10 +304,25 @@
                                 <th class="py-2.5 px-4 text-center">Pax</th>
                                 <th class="py-2.5 px-4 text-left">No. HP</th>
                                 <th class="py-2.5 px-4 text-left">Status</th>
+                                <th class="py-2.5 px-4 text-center">Aksi Pengingat</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-amber-50">
                             @foreach ($h1Bookings as $hb)
+                            @php
+                                $rawPhone = preg_replace('/[^0-9]/', '', (string) ($hb->customer_phone ?? ''));
+                                if (str_starts_with($rawPhone, '0')) {
+                                    $waPhone = '62' . substr($rawPhone, 1);
+                                } else {
+                                    $waPhone = $rawPhone;
+                                }
+                                $tripTitle = $hb->trip?->package?->name ?? $hb->vehicle?->name ?? 'Trip';
+                                $plate = $hb->revealed_plate ?? 'Armada Terjadwal';
+                                $time = $hb->trip?->departure_time ? \Carbon\Carbon::createFromFormat('H:i:s', $hb->trip->departure_time)->format('H:i') . ' WIB' : 'Pagi';
+                                $meeting = $hb->pickup_location ?: ($hb->trip?->meeting_point ?: 'Titik Kumpul');
+                                $waText = "Halo Kak {$hb->customer_name}, pengingat perjalanan dari D'Java Tour & Travel: trip {$tripTitle} (Booking #{$hb->booking_code}) dijadwalkan berangkat BESOK jam {$time}. Titik kumpul: {$meeting}. Armada: {$plate}. Mohon hadir 15 menit sebelum keberangkatan. Sampai jumpa besok!";
+                                $waUrl = !empty($waPhone) ? 'https://wa.me/' . $waPhone . '?text=' . rawurlencode($waText) : null;
+                            @endphp
                             <tr class="hover:bg-amber-50/40 transition">
                                 <td class="py-2.5 px-4">
                                     <div class="font-bold text-slate-900">{{ $hb->customer_name }}</div>
@@ -323,6 +338,16 @@
                                         {{ $hb->payment_status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
                                         {{ $hb->payment_status === 'paid' ? 'Lunas' : 'DP' }}
                                     </span>
+                                </td>
+                                <td class="py-2.5 px-4 text-center">
+                                    @if ($waUrl)
+                                        <a href="{{ $waUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200 transition no-underline">
+                                            <span>WA Pengingat</span>
+                                            <svg class="w-3 h-3 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                        </a>
+                                    @else
+                                        <span class="text-[10px] text-slate-400">-</span>
+                                    @endif
                                 </td>
                             </tr>
                             @endforeach

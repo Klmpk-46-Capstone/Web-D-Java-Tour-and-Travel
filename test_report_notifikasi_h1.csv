@@ -1,0 +1,45 @@
+﻿No,Test Case ID,Modul / Fitur,Skenario Pengujian,Pra-Kondisi,Langkah Pengujian,Data Uji,Hasil yang Diharapkan,Hasil Aktual,Status,Keterangan / Bukti
+1,TC-NOTIF-01,Autentikasi & Akun Customer,Customer baru melakukan registrasi akun untuk persiapan pemesanan trip,User belum memiliki akun terdaftar,"1. Buka halaman /register
+2. Isi formulir nama, email, no whatsapp, password, dan centang terms
+3. Klik Daftar Akun","Nama: Dimas Berlian
+Email: dimas.berlian@student.telkomuniversity.ac.id
+WhatsApp: 082199887766
+Password: Password123!","Akun berhasil terdaftar di database dengan role 'customer', user otomatis diarahkan ke halaman login / beranda",Akun berhasil dibuat dengan user_id valid dan diarahkan sesuai alur,PASS,Tervalidasi via CustomerH1BookingFlowTest::test_complete_customer_h1_booking_and_notification_workflow
+2,TC-NOTIF-02,Pemesanan & Jadwal H-1,Customer melakukan reservasi paket wisata dengan jadwal keberangkatan besok (H-1),Tersedia paket wisata aktif dan batch trip dengan departure_date = H-1 (besok),"1. Login sebagai customer
+2. Pilih paket wisata 'Eksplorasi Karimunjawa Bahari'
+3. Pilih tanggal keberangkatan besok
+4. Submit pemesanan dan lakukan pembayaran","Paket: Eksplorasi Karimunjawa Bahari
+Trip: Batch Bahari Besok #01
+Departure: H-1 (Besok)
+Booking Code: DJV-TELKOM46
+Pax: 2
+Status: Paid & Confirmed","Pemesanan tersimpan dengan kode booking unik, status 'confirmed' dan payment_status 'paid'",Data booking tersimpan sukses di tabel bookings dengan relasi trip_id jadwal besok,PASS,"Database Assertion: bookings (code: DJV-TELKOM46, payment_status: paid, booking_status: confirmed)"
+3,TC-NOTIF-03,Customer Notification Service,Sistem mendeteksi jadwal trip H-1 dan meng-generate notifikasi pengingat,Customer memiliki booking berstatus confirmed/paid untuk trip besok,"1. Eksekusi CustomerNotificationService::forUser(customer)
+2. Periksa koleksi notifikasi yang dihasilkan","User: Dimas Berlian (ID: customer)
+Tanggal Trip: Carbon::tomorrow()","Dihasilkan notifikasi bertipe 'h1_reminder' dengan level 'urgent', status unread = true, memuat nama paket, jam berangkat, dan titik kumpul","Notifikasi H-1 berhasil di-generate: Title 'Trip Berangkat Besok!', memuat jam 06:45 WIB dan Pelabuhan Kartini Jepara",PASS,"Assert: contains('type', 'h1_reminder') & is_unread == true"
+4,TC-NOTIF-04,Navbar Customer,Ikon lonceng di navbar menampilkan indikator badge merah dan dropdown notifikasi H-1,Customer telah login dan memiliki notifikasi H-1 aktif,"1. Akses halaman beranda (/) sebagai customer yang login
+2. Cek ikon lonceng di header navbar (desktop dan mobile)
+3. Buka dropdown notifikasi",Akun Customer login: Dimas Berlian,Muncul badge merah pada lonceng navbar; saat dibuka menampilkan panel notifikasi 'Trip Berangkat Besok!' beserta rincian jadwal,Lonceng notifikasi render dengan tombol id notifMenuDesktop & notifMenuMobile serta teks 'Trip Berangkat Besok!',PASS,Assert: assertSee('Trip Berangkat Besok!') & assertSee('notifMenuDesktop')
+5,TC-NOTIF-05,Riwayat Transaksi Customer,Halaman Riwayat Transaksi menampilkan Banner Peringatan H-1 Keberangkatan,Customer membuka menu /riwayat-transaksi,"1. Buka URL /riwayat-transaksi
+2. Periksa bagian atas daftar transaksi","URL: /riwayat-transaksi
+User: Dimas Berlian","Tampil banner amber interaktif '🔔 Trip Berangkat Besok!' lengkap dengan pesan persiapan, kode booking, dan tombol 'Lihat Detail & Plat'","Banner H-1 tampil dengan styling gradient amber, kode booking DJV-TELKOM46, dan tombol aksi detail",PASS,Assert: assertSee('Trip Berangkat Besok!') & assertSee('DJV-TELKOM46') & assertSee('Lihat Detail')
+6,TC-NOTIF-06,Profil Akun Customer,Tab Notifikasi & Upcoming Trip di halaman profil menampilkan pengingat H-1,Customer membuka /profile?tab=notifications dan tab profil utama,"1. Buka /profile?tab=notifications
+2. Periksa bagian Pusat Notifikasi & Aktivitas
+3. Periksa badge pada kartu Upcoming Trip","URL: /profile?tab=notifications
+User: Dimas Berlian",Muncul daftar notifikasi aktif H-1 pada Pusat Notifikasi dan badge berkedip '🔔 Berangkat Besok (H-1)' pada kartu perjalanan mendatang,Bagian Pusat Notifikasi & Aktivitas menampilkan item notifikasi H-1 beserta badge status,PASS,Assert: assertSee('Pusat Notifikasi & Aktivitas') & assertSee('Trip Berangkat Besok!')
+7,TC-NOTIF-07,Admin Dashboard Utama,Card Notifikasi H-1 muncul di Dashboard Utama Admin (/admin/dashboard),Admin login dan membuka /admin/dashboard saat terdapat trip yang berangkat besok,"1. Login sebagai admin_ops / super_admin
+2. Akses halaman /admin/dashboard
+3. Periksa section Notifikasi H-1 di bawah metric cards","User: admin.ops@djavatour.com
+Data: 1 trip aktif Karimunjawa berangkat besok dengan 2 pax customer","Tampil card '🔔 Notifikasi H-1 — Trip Berangkat Besok', kartu kesiapan operasional (Driver, Armada Plat, Titik Kumpul), dan tabel nama customer","Card H-1 tampil dengan nama paket 'Eksplorasi Karimunjawa Bahari', driver 'Bambang Supriyadi', plat 'K 8899 ZA', dan customer 'Dimas Berlian'",PASS,Assert: assertSee('Notifikasi H-1 — Trip Berangkat Besok') & assertSee('Dimas Berlian') & assertSee('K 8899 ZA')
+8,TC-NOTIF-08,Admin Dashboard Header,Lonceng notifikasi di Header Admin menampilkan badge dan dropdown trip H-1,Admin login dan berada di halaman admin mana pun,"1. Periksa header bar admin di sisi kanan atas
+2. Klik tombol lonceng notifikasi (adminNotifBtn)
+3. Periksa daftar notifikasi di dropdown","Element: #adminNotifBtn, #adminNotifDropdown",Badge merah menampilkan jumlah notifikasi aktif; dropdown menampilkan daftar 'Trip Berangkat Besok (H-1)' dan refund menunggu,Dropdown lonceng admin berfungsi lancar dengan vanilla JS dan menampilkan rincian trip H-1,PASS,Assert: assertSee('adminNotifBtn') & assertSee('Trip Berangkat Besok (H-1)')
+9,TC-NOTIF-09,Aksi Pengingat WhatsApp,Admin dapat mengirim pesan pengingat WA secara langsung melalui tabel H-1,Nomor telepon/WA customer tersedia pada data pemesanan,"1. Buka tabel penumpang H-1 di dashboard admin
+2. Klik tombol 'WA Pengingat' pada baris customer","Customer: Dimas Berlian
+No. HP: 082199887766
+Format Target: wa.me/6282199887766","Tersedia tombol aksi dengan tautan wa.me yang memuat template pesan pengingat keberangkatan lengkap dengan nama paket, jam, titik kumpul, dan plat armada",Tautan wa.me ter-generate dengan URL-encoded message yang memuat rincian trip secara otomatis,PASS,Assert: assertSee('WA Pengingat') pada baris customer Dimas Berlian
+10,TC-NOTIF-10,Console / Scheduler Command,Perintah artisan notifications:send-h1 berjalan sukses dan mencatat customer ke log,Terdapat data booking H-1 di database,"1. Jalankan perintah di terminal: php artisan notifications:send-h1
+2. Periksa output tabel di terminal","Perintah: php artisan notifications:send-h1
+Jadwal: dailyAt('08:00')","Command selesai dengan exit code 0, mencetak tabel rincian customer yang berangkat besok, dan mencatat log sistem",Command berhasil dijalankan dengan output 'Ditemukan 1 customer yang dijadwalkan berangkat besok' dan exit code 0,PASS,Assert: assertExitCode(0) & expectsOutputToContain('Proses Notifikasi Pengingat H-1')
+11,TC-NOTIF-11,Admin Dashboard Empty State,Dashboard Admin menampilkan status aman terkendali saat tidak ada keberangkatan besok,Tidak ada trip yang dijadwalkan berangkat besok (departure_date = tomorrow kosong),"1. Akses /admin/dashboard saat tidak ada trip besok
+2. Periksa area monitor H-1",Database trip besok: 0 record,Tampil banner hijau '🔔 Monitor Keberangkatan H-1 - Operasional Terkendali: Tidak ada keberangkatan trip atau sewa armada untuk besok',Banner status operasional terkendali tampil rapi menggantikan card peringatan darurat,PASS,Tervalidasi via CustomerNotificationTest::test_admin_dashboard_shows_h1_monitor_empty_state_when_no_trips_tomorrow
