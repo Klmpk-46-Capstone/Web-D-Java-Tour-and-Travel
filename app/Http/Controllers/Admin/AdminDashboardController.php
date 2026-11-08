@@ -248,6 +248,29 @@ class AdminDashboardController extends Controller
             ->limit(3)
             ->get();
 
+        // 10. Notifikasi H-1: trip dan sewa armada yang berangkat besok
+        $tomorrow = Carbon::tomorrow()->toDateString();
+        $h1Trips = Trip::with(['package', 'vehicleUnit', 'bookings.user'])
+            ->whereDate('departure_date', $tomorrow)
+            ->whereIn('status', ['available', 'almost_full', 'full'])
+            ->get();
+
+        // Hitung total customer yang akan berangkat besok
+        $h1TotalCustomers = $h1Trips->sum(fn($t) => $t->bookings
+            ->whereIn('booking_status', ['confirmed', 'completed'])
+            ->whereIn('payment_status', ['partial', 'paid'])
+            ->sum('pax')
+        );
+
+        $h1Bookings = Booking::with(['user', 'trip.package', 'trip.vehicleUnit', 'vehicle', 'vehicleUnit'])
+            ->where(function ($q) use ($tomorrow) {
+                $q->whereHas('trip', fn($t) => $t->whereDate('departure_date', $tomorrow))
+                  ->orWhereDate('rental_date', $tomorrow);
+            })
+            ->whereIn('booking_status', ['confirmed', 'completed'])
+            ->whereIn('payment_status', ['partial', 'paid'])
+            ->get();
+
         // All packages for modal "+ Buat Trip Baru"
         $allPackages = Package::where('is_active', true)->get();
 
@@ -283,7 +306,10 @@ class AdminDashboardController extends Controller
             'warningTrips',
             'allPackages',
             'maritimeWeather',
-            'searchQuery'
+            'searchQuery',
+            'h1Trips',
+            'h1TotalCustomers',
+            'h1Bookings'
         ));
     }
 

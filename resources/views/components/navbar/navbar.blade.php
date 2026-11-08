@@ -158,6 +158,107 @@
                 @endif
 
                 @auth
+                    @php
+                        $customerNotifs = \App\Services\CustomerNotificationService::forUser(auth()->user());
+                        $unreadNotifCount = $customerNotifs->where('is_unread', true)->count();
+                    @endphp
+
+                    {{-- Tombol Notifikasi (Desktop) --}}
+                    <div class="relative hidden lg:block">
+                        <button
+                            type="button"
+                            data-profile-toggle
+                            aria-expanded="false"
+                            aria-controls="notifMenuDesktop"
+                            class="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-100 hover:text-teal-700 cursor-pointer shadow-xs"
+                            title="{{ $customerNotifs->count() }} {{ $isEnglish ? 'Notifications' : 'Notifikasi' }}"
+                        >
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                            </svg>
+                            @if ($unreadNotifCount > 0)
+                                <span class="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center px-1 text-[10px] font-extrabold bg-rose-500 text-white rounded-full ring-2 ring-white animate-pulse">
+                                    {{ $unreadNotifCount }}
+                                </span>
+                            @elseif ($customerNotifs->count() > 0)
+                                <span class="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-teal-600 ring-2 ring-white"></span>
+                            @endif
+                        </button>
+
+                        <div
+                            id="notifMenuDesktop"
+                            class="absolute right-0 top-full z-50 mt-3 hidden w-80 sm:w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl text-left"
+                        >
+                            <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+                                <div class="flex items-center gap-2">
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800">
+                                        {{ $isEnglish ? 'Notifications' : 'Notifikasi' }}
+                                    </h4>
+                                    @if ($unreadNotifCount > 0)
+                                        <span class="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-extrabold text-rose-700">
+                                            {{ $unreadNotifCount }} {{ $isEnglish ? 'new' : 'baru' }}
+                                        </span>
+                                    @endif
+                                </div>
+                                <span class="text-[11px] text-slate-400">
+                                    {{ now()->timezone('Asia/Jakarta')->translatedFormat('d M Y') }}
+                                </span>
+                            </div>
+
+                            <div class="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                                @forelse ($customerNotifs as $cn)
+                                    <a
+                                        href="{{ $cn['url'] }}"
+                                        class="flex items-start gap-3 p-3.5 transition hover:bg-slate-50 no-underline group {{ $cn['is_unread'] ? 'bg-amber-50/40' : '' }}"
+                                    >
+                                        <div class="mt-0.5 shrink-0 grid h-8 w-8 place-items-center rounded-xl {{ $cn['level'] === 'urgent' ? 'bg-amber-100 text-amber-800 font-bold' : ($cn['level'] === 'warning' ? 'bg-orange-100 text-orange-700' : 'bg-teal-50 text-teal-700') }}">
+                                            @if ($cn['icon'] === 'calendar-clock')
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            @elseif ($cn['icon'] === 'credit-card')
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                            @else
+                                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            @endif
+                                        </div>
+
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center justify-between gap-1">
+                                                <p class="text-xs font-bold text-slate-900 group-hover:text-teal-700 truncate">
+                                                    {{ $cn['title'] }}
+                                                </p>
+                                                <span class="text-[10px] text-slate-400 shrink-0">
+                                                    {{ $cn['date'] }}
+                                                </span>
+                                            </div>
+                                            <p class="mt-0.5 text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                                                {{ $cn['message'] }}
+                                            </p>
+                                        </div>
+                                    </a>
+                                @empty
+                                    <div class="p-6 text-center text-slate-400">
+                                        <svg class="mx-auto h-8 w-8 text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                        <p class="text-xs font-semibold text-slate-600">
+                                            {{ $isEnglish ? 'No notifications' : 'Belum ada notifikasi baru' }}
+                                        </p>
+                                        <p class="text-[11px] text-slate-400 mt-0.5">
+                                            {{ $isEnglish ? 'Trip updates will appear here.' : 'Informasi perjalanan Anda akan muncul di sini.' }}
+                                        </p>
+                                    </div>
+                                @endforelse
+                            </div>
+
+                            <div class="border-t border-slate-100 bg-slate-50/80 px-4 py-2.5 text-center">
+                                <a
+                                    href="{{ localized_route('customer.bookings.index') }}"
+                                    class="text-xs font-bold text-teal-700 hover:text-teal-900 no-underline"
+                                >
+                                    {{ $isEnglish ? 'View All Bookings →' : 'Lihat Semua Riwayat Pesanan →' }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
                     {{-- Dropdown profil desktop --}}
                     <div class="relative hidden lg:block">
                         <button
@@ -191,6 +292,49 @@
                     </a>
                 @endauth
             </div>
+
+            @auth
+                {{-- Tombol Notifikasi Mobile --}}
+                <div class="relative lg:hidden">
+                    <button
+                        type="button"
+                        data-profile-toggle
+                        aria-expanded="false"
+                        aria-controls="notifMenuMobile"
+                        class="relative grid h-9 w-9 shrink-0 place-items-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-2xs cursor-pointer"
+                        aria-label="{{ $isEnglish ? 'Notifications' : 'Notifikasi' }}"
+                    >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                        @if ($unreadNotifCount > 0)
+                            <span class="absolute -top-0.5 -right-0.5 h-3 w-3 rounded-full bg-rose-500 ring-2 ring-white"></span>
+                        @endif
+                    </button>
+
+                    <div
+                        id="notifMenuMobile"
+                        class="absolute right-0 top-full z-50 mt-2 hidden w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl text-left"
+                    >
+                        <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-3.5 py-2.5 text-xs font-bold text-slate-800">
+                            <span>{{ $isEnglish ? 'Notifications' : 'Notifikasi' }}</span>
+                            @if ($unreadNotifCount > 0)
+                                <span class="rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] text-rose-700">{{ $unreadNotifCount }} baru</span>
+                            @endif
+                        </div>
+                        <div class="max-h-60 overflow-y-auto divide-y divide-slate-100 text-xs">
+                            @forelse ($customerNotifs as $cn)
+                                <a href="{{ $cn['url'] }}" class="block p-3 hover:bg-slate-50 no-underline {{ $cn['is_unread'] ? 'bg-amber-50/50' : '' }}">
+                                    <div class="font-bold text-slate-900">{{ $cn['title'] }}</div>
+                                    <div class="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{{ $cn['message'] }}</div>
+                                </a>
+                            @empty
+                                <div class="p-4 text-center text-slate-400 text-xs">
+                                    {{ $isEnglish ? 'No notifications' : 'Belum ada notifikasi baru' }}
+                                </div>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+            @endauth
 
             {{-- Tombol menu mobile (Hamburger) --}}
             <button

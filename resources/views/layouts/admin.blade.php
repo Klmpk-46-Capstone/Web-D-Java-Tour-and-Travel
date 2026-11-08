@@ -24,6 +24,16 @@
             ->map(fn ($w) => \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($w, 0, 1)))
             ->implode('');
         $pendingRefunds = \App\Models\Refund::where('status', 'pending')->count();
+
+        // Notifikasi H-1: trip besok
+        $adminH1Trips = \App\Models\Trip::with('package')
+            ->whereDate('departure_date', \Carbon\Carbon::tomorrow()->toDateString())
+            ->whereIn('status', ['available', 'almost_full', 'full'])
+            ->get();
+        $adminH1Count = $adminH1Trips->count();
+
+        // Total notifikasi admin (refund pending + h1 trips)
+        $totalAdminNotifs = $pendingRefunds + $adminH1Count;
     @endphp
 
     {{-- TOPBAR BRAND & HEADER --}}
@@ -78,13 +88,95 @@
                 Buat Trip Baru
             </button>
 
-            {{-- Notification Badge --}}
-            <a href="{{ route('admin.refunds.index') }}" class="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition" title="{{ $pendingRefunds }} refund menunggu">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                @if ($pendingRefunds > 0)
-                    <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full ring-2 ring-white"></span>
-                @endif
-            </a>
+            {{-- Notification Badge (Dropdown) --}}
+            <div class="relative" id="adminNotifWrapper">
+                <button
+                    type="button"
+                    id="adminNotifBtn"
+                    class="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+                    title="{{ $totalAdminNotifs }} notifikasi"
+                    aria-expanded="false"
+                    aria-controls="adminNotifDropdown"
+                >
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    @if ($totalAdminNotifs > 0)
+                        <span class="absolute top-1 right-1 min-w-[16px] h-4 flex items-center justify-center px-1 text-[9px] font-extrabold bg-rose-500 text-white rounded-full ring-2 ring-white">
+                            {{ $totalAdminNotifs > 9 ? '9+' : $totalAdminNotifs }}
+                        </span>
+                    @endif
+                </button>
+
+                {{-- Dropdown Panel --}}
+                <div
+                    id="adminNotifDropdown"
+                    class="hidden absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden"
+                >
+                    {{-- Header --}}
+                    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/80">
+                        <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Notifikasi Admin</h4>
+                        <span class="text-[10px] font-bold text-slate-400">{{ now()->timezone('Asia/Jakarta')->translatedFormat('d M Y') }}</span>
+                    </div>
+
+                    <div class="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                        {{-- H-1 Notifications --}}
+                        @if ($adminH1Count > 0)
+                            <div class="px-4 py-2 bg-amber-50/60">
+                                <div class="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider mb-2">🔔 Trip Berangkat Besok (H-1)</div>
+                                @foreach ($adminH1Trips as $nt)
+                                <a href="{{ route('admin.dashboard') }}" class="flex items-start gap-3 py-2 hover:bg-amber-100/60 rounded-lg px-2 transition no-underline group">
+                                    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-200 text-amber-800 mt-0.5">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    </span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-bold text-slate-900 truncate group-hover:text-amber-800">
+                                            {{ $nt->package->name ?? $nt->batch_name ?? 'Trip #'.$nt->id }}
+                                        </div>
+                                        <div class="text-[10px] text-slate-500">
+                                            Berangkat {{ \Carbon\Carbon::tomorrow()->translatedFormat('d M') }} · {{ $nt->booked_seats }} pax
+                                            @if(empty($nt->driver_name))
+                                                · <span class="text-rose-600 font-semibold">Driver kosong</span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </a>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        {{-- Pending Refunds --}}
+                        @if ($pendingRefunds > 0)
+                            <div class="px-4 py-2">
+                                <div class="text-[10px] font-extrabold text-rose-700 uppercase tracking-wider mb-2">⚠ Refund Menunggu Review</div>
+                                <a href="{{ route('admin.refunds.index') }}" class="flex items-center gap-3 py-2 hover:bg-rose-50 rounded-lg px-2 transition no-underline group">
+                                    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-rose-100 text-rose-700">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                    </span>
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-900 group-hover:text-rose-700">{{ $pendingRefunds }} Tiket Refund Ditahan</div>
+                                        <div class="text-[10px] text-slate-500">Klik untuk lihat & selesaikan</div>
+                                    </div>
+                                </a>
+                            </div>
+                        @endif
+
+                        {{-- Empty State --}}
+                        @if ($totalAdminNotifs === 0)
+                            <div class="px-4 py-8 text-center">
+                                <div class="text-2xl mb-2">✅</div>
+                                <div class="text-xs font-semibold text-slate-500">Semua notifikasi sudah ditangani</div>
+                            </div>
+                        @endif
+                    </div>
+
+                    {{-- Footer --}}
+                    <div class="px-4 py-2.5 border-t border-slate-100 bg-slate-50/60 flex justify-between items-center">
+                        <a href="{{ route('admin.dashboard') }}" class="text-[11px] font-bold text-teal-700 hover:text-teal-900 no-underline">
+                            Lihat Dashboard →
+                        </a>
+                        <span class="text-[10px] text-slate-400 font-semibold">{{ $totalAdminNotifs }} belum selesai</span>
+                    </div>
+                </div>
+            </div>
 
             {{-- Profil admin yang sedang login --}}
             <div class="relative group">
@@ -439,6 +531,32 @@
                 pkgSelect.addEventListener('change', syncQuickDates);
                 depInput.addEventListener('change', syncQuickDates);
                 syncQuickDates();
+            }
+
+            // Admin Notification Dropdown Toggle
+            const notifBtn = document.getElementById('adminNotifBtn');
+            const notifDropdown = document.getElementById('adminNotifDropdown');
+            if (notifBtn && notifDropdown) {
+                notifBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    const isHidden = notifDropdown.classList.contains('hidden');
+                    notifDropdown.classList.toggle('hidden', !isHidden);
+                    notifBtn.setAttribute('aria-expanded', String(isHidden));
+                });
+
+                document.addEventListener('click', function (e) {
+                    if (!notifDropdown.contains(e.target) && !notifBtn.contains(e.target)) {
+                        notifDropdown.classList.add('hidden');
+                        notifBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
+
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') {
+                        notifDropdown.classList.add('hidden');
+                        notifBtn.setAttribute('aria-expanded', 'false');
+                    }
+                });
             }
 
             // Real-Time System Clock (WIB)

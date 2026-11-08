@@ -36,9 +36,23 @@
             {{-- Trip Details --}}
             <div class="min-w-0 flex-1">
 
-                <p class="text-xs font-bold uppercase tracking-wide text-teal-700">
-                    Perjalanan Mendatang
-                </p>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <p class="text-xs font-bold uppercase tracking-wide text-teal-700">
+                        Perjalanan Mendatang
+                    </p>
+                    @php
+                        $depDate = \Illuminate\Support\Carbon::parse($upcomingBooking->departure_date);
+                    @endphp
+                    @if ($depDate->isTomorrow())
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-extrabold text-amber-800 animate-pulse">
+                            🔔 Berangkat Besok (H-1)
+                        </span>
+                    @elseif ($depDate->isToday())
+                        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-extrabold text-emerald-800 animate-pulse">
+                            🚀 Hari Keberangkatan!
+                        </span>
+                    @endif
+                </div>
 
                 <h3 class="mt-1 text-base font-bold text-slate-900 sm:text-lg">
                     {{ $upcomingBooking->package_name ?? 'Perjalanan East Java Trans' }}

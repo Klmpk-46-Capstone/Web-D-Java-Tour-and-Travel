@@ -154,6 +154,210 @@
         </div>
     </div>
 
+    {{-- NOTIFIKASI H-1 CUSTOMER: Trip yang Berangkat Besok --}}
+    @if ($h1Trips->count() > 0)
+    <div class="rounded-2xl border border-amber-200 bg-amber-50 shadow-xs overflow-hidden">
+        {{-- Header --}}
+        <div class="flex items-center justify-between px-5 py-4 border-b border-amber-200/80 bg-amber-100/50">
+            <div class="flex items-center gap-3">
+                <span class="relative flex h-9 w-9 place-items-center">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-40"></span>
+                    <span class="relative grid h-9 w-9 place-items-center rounded-xl bg-amber-500 text-white shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </span>
+                </span>
+                <div>
+                    <h2 class="text-sm font-extrabold text-amber-900">
+                        🔔 Notifikasi H-1 — Trip Berangkat Besok ({{ Carbon\Carbon::tomorrow()->translatedFormat('d M Y') }})
+                    </h2>
+                    <p class="text-xs text-amber-700 mt-0.5">
+                        {{ $h1Trips->count() }} trip aktif · {{ $h1TotalCustomers }} customer siap berangkat · Pastikan armada & manifes sudah disiapkan
+                    </p>
+                </div>
+            </div>
+            <div class="hidden sm:flex items-center gap-2">
+                <a href="{{ route('admin.manifest.index') }}"
+                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition shadow-xs no-underline">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                    Cek Manifes
+                </a>
+                <a href="{{ route('admin.trips.index') }}"
+                   class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold border border-amber-400 text-amber-800 bg-white hover:bg-amber-50 transition shadow-xs no-underline">
+                    Detail Trip
+                </a>
+            </div>
+        </div>
+
+        {{-- Trip Cards Grid --}}
+        <div class="p-5 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            @foreach ($h1Trips as $ht)
+                @php
+                    $htBookings = $h1Bookings->where('trip_id', $ht->id);
+                    $htPax = $htBookings->sum('pax');
+                    $hasDriver = !empty($ht->driver_name);
+                    $hasVehicle = $ht->vehicleUnit !== null;
+                    $hasMeetingPoint = !empty($ht->meeting_point);
+                    $readinessScore = ($hasDriver ? 1 : 0) + ($hasVehicle ? 1 : 0) + ($hasMeetingPoint ? 1 : 0);
+                @endphp
+                <div class="bg-white rounded-xl border border-amber-100 shadow-xs p-4 flex flex-col gap-3 hover:border-amber-300 transition">
+                    {{-- Trip Header --}}
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <div class="font-extrabold text-sm text-slate-900 truncate">
+                                {{ $ht->package->name ?? $ht->batch_name ?? 'Trip #'.$ht->id }}
+                            </div>
+                            <div class="text-[11px] text-slate-500 mt-0.5">
+                                {{ $ht->batch_name }}
+                            </div>
+                        </div>
+                        @if ($readinessScore === 3)
+                            <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-700">
+                                ✓ Siap
+                            </span>
+                        @elseif ($readinessScore === 2)
+                            <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-100 text-amber-700">
+                                ⚠ Periksa
+                            </span>
+                        @else
+                            <span class="shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-rose-100 text-rose-700">
+                                ✗ Belum Siap
+                            </span>
+                        @endif
+                    </div>
+
+                    {{-- Stats Row --}}
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="rounded-lg bg-slate-50 px-2 py-2">
+                            <div class="font-extrabold text-base text-slate-900">{{ $htPax }}</div>
+                            <div class="text-[10px] text-slate-500 font-semibold">Pax</div>
+                        </div>
+                        <div class="rounded-lg bg-slate-50 px-2 py-2">
+                            <div class="font-extrabold text-base text-slate-900">{{ $htBookings->count() }}</div>
+                            <div class="text-[10px] text-slate-500 font-semibold">Booking</div>
+                        </div>
+                        <div class="rounded-lg {{ $ht->departure_time ? 'bg-teal-50' : 'bg-rose-50' }} px-2 py-2">
+                            <div class="font-extrabold text-sm {{ $ht->departure_time ? 'text-teal-800' : 'text-rose-600' }}">
+                                {{ $ht->departure_time ? \Carbon\Carbon::createFromFormat('H:i:s', $ht->departure_time)->format('H:i') : '—' }}
+                            </div>
+                            <div class="text-[10px] text-slate-500 font-semibold">Jam</div>
+                        </div>
+                    </div>
+
+                    {{-- Readiness Checklist --}}
+                    <div class="space-y-1.5 text-xs">
+                        <div class="flex items-center gap-2 {{ $hasDriver ? 'text-emerald-700' : 'text-rose-600' }}">
+                            @if ($hasDriver)
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span class="font-semibold">Driver: {{ $ht->driver_name }}</span>
+                            @else
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <span class="font-semibold">Driver belum ditugaskan</span>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-2 {{ $hasVehicle ? 'text-emerald-700' : 'text-rose-600' }}">
+                            @if ($hasVehicle)
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span class="font-semibold">Armada: {{ $ht->vehicleUnit->plate_number }}</span>
+                            @else
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+                                <span class="font-semibold">Armada/plat belum ditentukan</span>
+                            @endif
+                        </div>
+                        <div class="flex items-center gap-2 {{ $hasMeetingPoint ? 'text-emerald-700' : 'text-amber-600' }}">
+                            @if ($hasMeetingPoint)
+                                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                                <span class="font-semibold truncate" title="{{ $ht->meeting_point }}">Titik kumpul: {{ \Illuminate\Support\Str::limit($ht->meeting_point, 30) }}</span>
+                            @else
+                                <svg class="w-3.5 h-3.5 shrink-0 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 9v2m0 4h.01"/></svg>
+                                <span class="font-semibold text-amber-600">Titik kumpul belum diisi</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- Action --}}
+                    <a href="{{ route('admin.trips.index') }}"
+                       class="mt-auto w-full text-center text-[11px] font-bold py-2 px-3 rounded-lg border border-amber-200 text-amber-800 bg-amber-50 hover:bg-amber-100 transition no-underline">
+                        Edit Detail Trip →
+                    </a>
+                </div>
+            @endforeach
+        </div>
+
+        {{-- Customer List Footer --}}
+        @if ($h1Bookings->count() > 0)
+        <div class="px-5 pb-4">
+            <details class="group">
+                <summary class="cursor-pointer text-xs font-bold text-amber-800 hover:text-amber-900 flex items-center gap-1.5 select-none">
+                    <svg class="w-3.5 h-3.5 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                    Lihat {{ $h1Bookings->count() }} customer yang berangkat besok
+                </summary>
+                <div class="mt-3 overflow-x-auto rounded-xl border border-amber-200 bg-white">
+                    <table class="w-full text-xs">
+                        <thead>
+                            <tr class="bg-amber-50 text-[10px] font-extrabold text-amber-800 uppercase tracking-wider border-b border-amber-100">
+                                <th class="py-2.5 px-4 text-left">Customer</th>
+                                <th class="py-2.5 px-4 text-left">Paket</th>
+                                <th class="py-2.5 px-4 text-center">Pax</th>
+                                <th class="py-2.5 px-4 text-left">No. HP</th>
+                                <th class="py-2.5 px-4 text-left">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-amber-50">
+                            @foreach ($h1Bookings as $hb)
+                            <tr class="hover:bg-amber-50/40 transition">
+                                <td class="py-2.5 px-4">
+                                    <div class="font-bold text-slate-900">{{ $hb->customer_name }}</div>
+                                    <div class="text-[10px] text-slate-400">#{{ $hb->booking_code }}</div>
+                                </td>
+                                <td class="py-2.5 px-4 text-slate-700">
+                                    {{ $hb->trip?->package?->name ?? $hb->trip?->batch_name ?? '-' }}
+                                </td>
+                                <td class="py-2.5 px-4 text-center font-bold text-slate-900">{{ $hb->pax }}</td>
+                                <td class="py-2.5 px-4 text-slate-600">{{ $hb->customer_phone ?? '-' }}</td>
+                                <td class="py-2.5 px-4">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold
+                                        {{ $hb->payment_status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700' }}">
+                                        {{ $hb->payment_status === 'paid' ? 'Lunas' : 'DP' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </details>
+        </div>
+        @endif
+    </div>
+    @else
+    {{-- Empty State H-1 (Operasional Aman) --}}
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-teal-50 text-teal-700">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+            <div>
+                <h3 class="text-xs font-bold text-slate-900 flex items-center gap-2">
+                    <span>🔔 Monitor Keberangkatan H-1</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800">Operasional Terkendali</span>
+                </h3>
+                <p class="text-[11px] text-slate-500 mt-0.5">
+                    Tidak ada keberangkatan trip atau sewa armada untuk besok ({{ Carbon\Carbon::tomorrow()->translatedFormat('d M Y') }}). Jadwal berikutnya dapat dipantau di menu Jadwal Trip.
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <a href="{{ route('admin.trips.index') }}" class="text-xs font-bold text-teal-700 hover:text-teal-900 px-3.5 py-2 rounded-xl border border-teal-200 bg-teal-50/50 hover:bg-teal-100 transition no-underline">
+                Lihat Jadwal Trip →
+            </a>
+        </div>
+    </div>
+    @endif
+
     {{-- MIDDLE ROW: GRAFIK TREN PENJUALAN & PERFORMA KATEGORI + CUACA MARITIM --}}
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {{-- LEFT: Tren Penjualan & Reservasi Bulanan (8 cols on lg) --}}

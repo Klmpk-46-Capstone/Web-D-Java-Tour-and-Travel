@@ -91,6 +91,51 @@
                 </div>
             @endif
 
+            {{-- H-1 Customer Notification Banner --}}
+            @php
+                $h1CustomerNotifs = \App\Services\CustomerNotificationService::forUser(auth()->user())
+                    ->whereIn('type', ['h1_reminder', 'today_trip']);
+            @endphp
+
+            @if ($h1CustomerNotifs->isNotEmpty())
+                <div class="mt-6 space-y-3">
+                    @foreach ($h1CustomerNotifs as $hn)
+                        <div class="rounded-2xl border border-amber-300 bg-gradient-to-r from-amber-50 via-amber-100/50 to-white p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex items-start gap-3.5">
+                                <span class="relative flex h-10 w-10 shrink-0 place-items-center">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-50"></span>
+                                    <span class="relative grid h-10 w-10 place-items-center rounded-xl bg-amber-500 text-white shadow-xs">
+                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                        </svg>
+                                    </span>
+                                </span>
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center rounded-full bg-amber-200 px-2.5 py-0.5 text-xs font-bold text-amber-900">
+                                            🔔 {{ $hn['title'] }}
+                                        </span>
+                                        <span class="text-xs text-amber-800 font-semibold">{{ $hn['date'] }}</span>
+                                    </div>
+                                    <p class="mt-1 text-sm font-semibold text-slate-800 leading-relaxed">
+                                        {{ $hn['message'] }}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="shrink-0 flex items-center gap-2">
+                                <a
+                                    href="{{ $hn['url'] }}"
+                                    class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition no-underline w-full sm:w-auto"
+                                >
+                                    <span>Details & Plate</span>
+                                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                </a>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+
             {{-- Filter status dan pencarian --}}
             <div class="mt-6">
                 @include('pages.dashboard_en.riwayat_transaksi.components.filters')
