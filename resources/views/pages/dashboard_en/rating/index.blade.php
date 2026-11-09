@@ -12,61 +12,7 @@
 
 <body class="min-h-screen bg-slate-50 text-slate-800 antialiased">
 
-    {{-- NAVBAR --}}
-    <header class="sticky top-0 z-40 border-b border-slate-100 bg-white/95 shadow-sm backdrop-blur">
-        <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-5 py-4 lg:px-8">
-            <a
-                href="{{ localized_route('home') }}"
-                class="flex items-center gap-3"
-                aria-label="D'Java Tour & Travel"
-            >
-                <span class="flex h-11 w-11 items-center justify-center rounded-xl bg-teal-50 text-xl font-bold text-teal-700">
-                    ✦
-                </span>
-
-                <span>
-                    <span class="block text-base font-bold text-slate-900">
-                        D'Java Tour & Travel
-                    </span>
-                    <span class="block text-xs font-semibold uppercase tracking-wide text-teal-700">
-                        Explore East Java
-                    </span>
-                </span>
-            </a>
-
-            <nav class="flex flex-wrap items-center gap-2 text-sm font-medium">
-                <a href="{{ localized_route('home') }}" class="rounded-full px-4 py-2 hover:bg-slate-100">
-                    Home
-                </a>
-
-                <a href="{{ localized_route('armada') }}" class="rounded-full px-4 py-2 hover:bg-slate-100">
-                    Vehicles
-                </a>
-
-                <a href="{{ localized_route('packages.index') }}" class="rounded-full px-4 py-2 hover:bg-slate-100">
-                    Tour Packages
-                </a>
-
-                <a
-                    href="{{ localized_route('customer.bookings.index') }}"
-                    class="rounded-full bg-teal-700 px-4 py-2 font-semibold text-white"
-                >
-                    Transaction History
-                </a>
-            </nav>
-
-            <div class="flex items-center gap-2">
-                @include('components.language-switcher', ['compact' => true, 'inline' => true])
-
-                <a
-                    href="{{ localized_route('customer.bookings.index') }}"
-                    class="rounded-full bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800"
-                >
-                    Profile
-                </a>
-            </div>
-        </div>
-    </header>
+    @include('components.navbar.navbar')
 
     <main class="mx-auto max-w-7xl px-5 py-8 lg:px-8 lg:py-10">
 
@@ -291,46 +237,7 @@
         </div>
     </main>
 
-    {{-- FOOTER --}}
-    <footer class="mt-12 border-t border-slate-200 bg-blue-50">
-        <div class="mx-auto grid max-w-7xl gap-8 px-5 py-10 sm:grid-cols-2 lg:grid-cols-3 lg:px-8">
-            <div>
-                <h2 class="text-lg font-extrabold text-slate-900">
-                    D'Java Tour & Travel
-                </h2>
-
-                <p class="mt-3 text-sm leading-6 text-slate-600">
-                    Travel services and vehicle rental for exploring East Java destinations.
-                </p>
-            </div>
-
-            <div>
-                <h3 class="font-bold text-slate-900">Popular Destinations</h3>
-
-                <ul class="mt-3 space-y-2 text-sm text-slate-600">
-                    <li>Gunung Bromo</li>
-                    <li>Kawah Ijen</li>
-                    <li>Tumpak Sewu</li>
-                    <li>Kota Batu</li>
-                </ul>
-            </div>
-
-            <div>
-                <h3 class="font-bold text-slate-900">Contact & Service</h3>
-
-                <p class="mt-3 text-sm leading-6 text-slate-600">
-                    Contact our customer service team through the official contact channels available on the website.
-                </p>
-            </div>
-        </div>
-
-        <div class="border-t border-slate-200">
-            <div class="mx-auto flex max-w-7xl flex-wrap justify-between gap-3 px-5 py-4 text-xs text-slate-500 lg:px-8">
-                <span>© {{ date('Y') }} D'Java Tour & Travel.</span>
-                <span>Terms & Conditions · Privacy Policy</span>
-            </div>
-        </div>
-    </footer>
+    @include('components.footer.footer')
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
