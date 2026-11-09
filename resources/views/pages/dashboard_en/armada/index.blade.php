@@ -83,6 +83,8 @@
             </div>
 
             {{-- FILTER DAN PENCARIAN --}}
+            <x-catalog.validation-errors />
+
             <x-catalog.filter-card :action="localized_route('armada')">
                 <x-catalog.text-field
                     name="q"

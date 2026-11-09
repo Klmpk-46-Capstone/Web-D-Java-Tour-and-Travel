@@ -32,6 +32,7 @@
     @include('components.navbar.navbar')
 
     <main>
+        <div class="pt-6"><x-catalog.validation-errors /></div>
         @include('pages.dashboard.beranda.components.form_pencarian')
 
         @if ($searchActive)

@@ -54,6 +54,8 @@
                 $hasActiveFilter = filled($q) || filled($category);
             @endphp
 
+            <x-catalog.validation-errors />
+
             <x-catalog.filter-card :action="route('packages.index')">
                 <x-catalog.text-field
                     name="q"

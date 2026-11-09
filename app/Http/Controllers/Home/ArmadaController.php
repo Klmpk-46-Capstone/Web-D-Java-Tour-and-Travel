@@ -28,7 +28,7 @@ class ArmadaController extends Controller
             'kategori' => ['nullable', 'in:mpv,premium,minibus'],
             'transmisi' => ['nullable', 'in:at,mt'],
             'urutkan' => ['nullable', 'in:rekomendasi,harga_terendah,harga_tertinggi,kapasitas'],
-        ]);
+        ], $this->catalogValidationMessages());
 
         $q = trim((string) ($filters['q'] ?? ''));
         $category = $filters['kategori'] ?? null;

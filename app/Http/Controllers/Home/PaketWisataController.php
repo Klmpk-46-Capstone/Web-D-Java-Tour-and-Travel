@@ -23,7 +23,7 @@ class PaketWisataController extends Controller
             'q' => ['nullable', 'string', 'max:150'],
             'kategori' => ['nullable', 'string', 'max:150'],
             'urutkan' => ['nullable', 'in:rekomendasi,harga_terendah,harga_tertinggi,rating'],
-        ]);
+        ], $this->catalogValidationMessages());
 
         $q = trim((string) ($filters['q'] ?? ''));
         $category = $filters['kategori'] ?? null;
@@ -86,7 +86,7 @@ class PaketWisataController extends Controller
                 ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'))
                 ->orderBy('departure_date', 'asc'),
             'reviews' => fn($q) => $q->where('is_approved', true)->where('is_hidden', false)->latest('id'),
-        ])->where('slug', $slug)->visibleToCustomer()->firstOrFail();
+        ])->where('slug', $slug)->where('is_active', true)->visibleToCustomer()->firstOrFail();
 
         // Tipe armada unik dari trip mendatang. Plat tidak pernah dikirim ke halaman customer.
         $vehicles = $package->trips

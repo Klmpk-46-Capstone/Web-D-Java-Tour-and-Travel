@@ -29,7 +29,7 @@ class HomeController extends Controller
                 'min:1',
                 'max:100',
             ],
-        ]);
+        ], $this->catalogValidationMessages());
 
         $searchActive = $request->boolean('search');
         $mode = $filters['mode'] ?? 'paket';

@@ -35,6 +35,14 @@ return Application::configure(basePath: dirname(__DIR__))
     // Untuk tahap hosting, sesuaikan konfigurasi
     // middleware dengan kebutuhan server.
     ->withExceptions(function (Exceptions $exceptions): void {
+        // Dashboard customer: gangguan basis data/server tidak boleh menampilkan
+        // halaman 500 mentah; tampilkan pesan yang bisa ditindaklanjuti.
+        $exceptions->render(function (\Illuminate\Database\QueryException|\PDOException $e, Request $request) {
+            if ($request->isMethod('GET') && ($request->is('/') || $request->is('en')) && ! $request->expectsJson()) {
+                return response()->view('errors.dashboard-gagal', [], 503);
+            }
+        });
+
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*')
                 || $request->expectsJson(),
