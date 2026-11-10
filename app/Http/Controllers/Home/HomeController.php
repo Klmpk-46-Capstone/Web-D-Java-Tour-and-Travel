@@ -6,18 +6,35 @@ use App\Http\Controllers\Controller;
 use App\Models\Package;
 use App\Models\Vehicle;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class HomeController extends Controller
 {
 
+    /**
+     * Destinasi tetap untuk dropdown pencarian paket wisata.
+     * Nilai = label; alias dipakai untuk mencocokkan penulisan lain di data paket.
+     */
+    private const DESTINATION_OPTIONS = [
+        'Dieng' => ['Dieng'],
+        'Bromo' => ['Bromo'],
+        'Karimunjawa' => ['Karimunjawa', 'Karimun Jawa'],
+        'Kawah Ijen' => ['Kawah Ijen', 'Ijen'],
+        'Jogja' => ['Jogja', 'Yogyakarta', 'Jogjakarta'],
+        'Borobudur' => ['Borobudur'],
+    ];
+
     public function index(Request $request): View
     {
+        $destinationOptions = array_keys(self::DESTINATION_OPTIONS);
+
         $filters = $request->validate([
             'search' => ['nullable', 'boolean'],
             'mode' => ['nullable', 'in:paket,mobil'],
             'pickup' => ['nullable', 'string', 'max:150'],
-            'destination' => ['nullable', 'string', 'max:150'],
+            'destination' => ['nullable', 'string', Rule::in($destinationOptions)],
+            'transmission' => ['nullable', 'in:manual,automatic'],
             'departure_date' => [
                 'nullable',
                 'date',
@@ -34,26 +51,17 @@ class HomeController extends Controller
         $searchActive = $request->boolean('search');
         $mode = $filters['mode'] ?? 'paket';
         $pickup = trim((string) ($filters['pickup'] ?? ''));
-        $destinationId = $filters['destination'] ?? null;
+        $selectedDestination = $filters['destination'] ?? null;
+        $transmission = $filters['transmission'] ?? null;
         $departureDate = $filters['departure_date'] ?? null;
         $passengers = (int) ($filters['passengers'] ?? 4);
-
-        // Opsi dropdown destinasi selalu memakai data penuh, bukan hasil filter.
-        $destinationOptions = Package::query()
-            ->where('is_active', true)
-            ->visibleToCustomer()
-            ->orderByDesc('is_featured')
-            ->latest('id')
-            ->limit(8)
-            ->get(['id', 'name']);
 
         $applyPackageFilters = function ($query) use (
             $searchActive,
             $mode,
             $pickup,
-            $destinationId,
-            $departureDate,
-            $passengers
+            $selectedDestination,
+            $departureDate
         ) {
             if (! $searchActive || $mode !== 'paket') {
                 return $query;
@@ -70,25 +78,24 @@ class HomeController extends Controller
                 });
             }
 
-            if (filled($destinationId)) {
-                $query->whereKey($destinationId);
+            if (filled($selectedDestination)) {
+                $aliases = self::DESTINATION_OPTIONS[$selectedDestination] ?? [$selectedDestination];
+
+                $query->where(function ($subQuery) use ($aliases) {
+                    foreach ($aliases as $alias) {
+                        $keyword = '%' . $alias . '%';
+
+                        $subQuery->orWhere('name', 'like', $keyword)
+                            ->orWhere('category', 'like', $keyword)
+                            ->orWhere('description', 'like', $keyword);
+                    }
+                });
             }
 
             if (filled($departureDate)) {
-                $query->whereHas('trips', function ($tripQuery) use ($departureDate, $passengers) {
+                $query->whereHas('trips', function ($tripQuery) use ($departureDate) {
                     $tripQuery->whereDate('departure_date', $departureDate)
                         ->whereIn('status', ['available', 'open', 'almost_full'])
-                        ->whereNotNull('vehicle_id')
-                        ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
-
-                    if ($passengers > 0) {
-                        $tripQuery->whereRaw('(quota - booked_seats) >= ?', [$passengers]);
-                    }
-                });
-            } elseif ($passengers > 0) {
-                $query->whereHas('trips', function ($tripQuery) use ($passengers) {
-                    $tripQuery->whereIn('status', ['available', 'open', 'almost_full'])
-                        ->where('quota', '>=', $passengers)
                         ->whereNotNull('vehicle_id')
                         ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
                 });
@@ -140,6 +147,14 @@ class HomeController extends Controller
                 }
             )
             ->when(
+                $searchActive && $mode === 'mobil' && $transmission === 'automatic',
+                fn ($query) => $query->where('transmission', 'like', '%matic%')
+            )
+            ->when(
+                $searchActive && $mode === 'mobil' && $transmission === 'manual',
+                fn ($query) => $query->where('transmission', 'like', '%manual%')
+            )
+            ->when(
                 $searchActive && $mode === 'mobil' && $passengers > 0,
                 fn ($query) => $query->where('seats', '>=', $passengers)
             )
@@ -150,8 +165,6 @@ class HomeController extends Controller
         $resultCount = $searchActive
             ? ($mode === 'paket' ? $destinations->count() : $vehicles->count())
             : 0;
-
-        $selectedDestination = $destinationOptions->firstWhere('id', (int) $destinationId);
 
         return view($this->dashboardView('beranda.index'), [
             'featuredPackages' => $featuredPackages,
@@ -164,6 +177,7 @@ class HomeController extends Controller
             'departureDate' => $departureDate,
             'passengers' => $passengers,
             'selectedDestination' => $selectedDestination,
+            'transmission' => $transmission,
             'resultCount' => $resultCount,
         ]);
     }

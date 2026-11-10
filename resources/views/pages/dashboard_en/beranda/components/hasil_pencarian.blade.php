@@ -20,14 +20,14 @@
                             </span>
                         @endif
 
-                        @if ($selectedDestination)
+                        @if ($mode === 'paket' && $selectedDestination)
                             <span class="inline-flex min-w-0 items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
                                 <span class="font-bold text-slate-500">Route:</span>
-                                <span class="min-w-0 break-words font-semibold text-slate-800">{{ $selectedDestination->name }}</span>
+                                <span class="min-w-0 break-words font-semibold text-slate-800">{{ $selectedDestination }}</span>
                             </span>
                         @endif
 
-                        @if ($departureDate)
+                        @if ($mode === 'paket' && $departureDate)
                             <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
                                 <span class="font-bold text-slate-500">Departure:</span>
                                 <span class="font-semibold text-slate-800">
@@ -36,10 +36,19 @@
                             </span>
                         @endif
 
-                        <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
-                            <span class="font-bold text-slate-500">Capacity:</span>
-                            <span class="font-semibold text-slate-800">{{ $passengers }} people</span>
-                        </span>
+                        @if ($mode === 'mobil' && $transmission)
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+                                <span class="font-bold text-slate-500">Transmission:</span>
+                                <span class="font-semibold text-slate-800">{{ ucfirst($transmission) }}</span>
+                            </span>
+                        @endif
+
+                        @if ($mode === 'mobil')
+                            <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1.5">
+                                <span class="font-bold text-slate-500">Capacity:</span>
+                                <span class="font-semibold text-slate-800">{{ $passengers }} people</span>
+                            </span>
+                        @endif
                     </div>
                 </div>
 
@@ -59,7 +68,7 @@
 
             @if ($resultCount === 0)
                 <p class="mb-0 mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-900">
-                    No matching results. Try changing the keyword, route, date, or capacity.
+                    No matching results. Try changing the keyword, destination, date, transmission, or capacity.
                 </p>
             @endif
         </div>
