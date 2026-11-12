@@ -108,37 +108,51 @@
 
         <div class="space-y-3">
             @forelse ($userNotifs as $n)
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border {{ $n['is_unread'] ? 'border-amber-200 bg-amber-50/50' : 'border-slate-200 bg-slate-50/50' }}">
-                    <div class="flex items-start gap-3">
-                        <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl {{ $n['level'] === 'urgent' ? 'bg-amber-100 text-amber-800' : ($n['level'] === 'warning' ? 'bg-orange-100 text-orange-700' : 'bg-teal-100 text-teal-800') }}">
+                @php
+                    $isH1 = in_array($n['type'], ['h1_reminder', 'today_trip']);
+                    $isPending = $n['type'] === 'payment_pending';
+                    $isRefund = $n['type'] === 'refund_update';
+                @endphp
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl border transition shadow-2xs {{ $isH1 ? 'border-amber-200/90 bg-gradient-to-r from-amber-50/80 via-white to-amber-50/30' : ($isPending ? 'border-orange-200/90 bg-gradient-to-r from-orange-50/80 via-white to-orange-50/30' : ($isRefund ? 'border-emerald-200/90 bg-gradient-to-r from-emerald-50/80 via-white to-emerald-50/30' : 'border-slate-200 bg-white')) }}">
+                    <div class="flex items-start gap-3.5 min-w-0 flex-1">
+                        <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl font-bold shadow-2xs mt-0.5 {{ $isH1 ? 'bg-amber-100 text-amber-800' : ($isPending ? 'bg-orange-100 text-orange-700' : ($isRefund ? 'bg-emerald-100 text-emerald-800' : 'bg-teal-100 text-teal-800')) }}">
                             @if ($n['icon'] === 'calendar-clock')
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             @elseif ($n['icon'] === 'credit-card')
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+                            @elseif ($n['icon'] === 'flag')
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"/></svg>
                             @else
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                             @endif
                         </span>
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <h4 class="text-xs font-bold text-slate-900">{{ $n['title'] }}</h4>
-                                <span class="text-[10px] text-slate-400">• {{ $n['date'] }}</span>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <h4 class="text-sm font-bold text-slate-900">{{ $n['title'] }}</h4>
+                                @if (!empty($n['booking_code']))
+                                    <span class="text-[10px] font-mono font-bold text-slate-600 bg-white px-2 py-0.5 rounded-md border border-slate-200 shadow-2xs">
+                                        #{{ $n['booking_code'] }}
+                                    </span>
+                                @endif
+                                <span class="text-[11px] text-slate-400 font-medium">· {{ $n['date'] }}</span>
                             </div>
-                            <p class="mt-0.5 text-xs text-slate-600 leading-relaxed">{{ $n['message'] }}</p>
+                            <p class="mt-1 text-xs text-slate-600 leading-relaxed">{{ $n['message'] }}</p>
                         </div>
                     </div>
                     <div class="shrink-0 self-end sm:self-center">
-                        <a href="{{ $n['url'] }}" class="inline-flex items-center gap-1 text-xs font-bold text-teal-800 hover:text-teal-900 bg-white border border-slate-200 px-3 py-1.5 rounded-lg shadow-2xs hover:bg-slate-50 transition no-underline">
-                            <span>Detail</span>
+                        <a href="{{ $n['url'] }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-teal-800 bg-white hover:bg-slate-50 border border-slate-200/90 px-3.5 py-2 rounded-xl shadow-xs transition no-underline">
+                            <span>Lihat Detail</span>
                             <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </a>
                     </div>
                 </div>
             @empty
-                <div class="p-6 text-center text-slate-400 bg-slate-50/50 rounded-xl border border-slate-100">
-                    <svg class="mx-auto h-8 w-8 text-slate-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                    <p class="text-xs font-semibold text-slate-600">Tidak ada notifikasi aktif saat ini</p>
-                    <p class="text-[11px] text-slate-400 mt-0.5">Semua pembaruan penting mengenai pesanan Anda akan dicatat di sini.</p>
+                <div class="p-8 text-center text-slate-400 bg-slate-50/70 rounded-2xl border border-slate-100">
+                    <div class="inline-grid h-12 w-12 place-items-center rounded-2xl bg-teal-50 text-teal-700 border border-teal-100 shadow-2xs mb-3">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    </div>
+                    <p class="text-sm font-bold text-slate-700">Tidak ada notifikasi aktif saat ini</p>
+                    <p class="text-xs text-slate-400 mt-1">Semua pembaruan jadwal trip, status transaksi, dan pengajuan tiket akan dicatat di sini.</p>
                 </div>
             @endforelse
         </div>

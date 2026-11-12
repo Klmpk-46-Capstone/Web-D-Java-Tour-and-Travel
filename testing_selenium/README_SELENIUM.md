@@ -50,3 +50,4 @@ Skrip akan secara otomatis:
 * Membuka browser Chrome / Edge di latar belakang (*headless mode*).
 * Melakukan pengetesan rute & elemen notifikasi.
 * Mengambil tangkapan layar (*screenshot*) otomatis dan menyimpannya di folder `testing_selenium/screenshots/`.
+

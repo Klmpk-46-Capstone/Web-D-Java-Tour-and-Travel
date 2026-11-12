@@ -93,14 +93,14 @@
                 <button
                     type="button"
                     id="adminNotifBtn"
-                    class="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition cursor-pointer"
-                    title="{{ $totalAdminNotifs }} notifikasi"
+                    class="relative flex items-center justify-center w-10 h-10 rounded-xl border border-slate-200/90 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 shadow-2xs transition-all duration-150 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/20"
+                    title="{{ $totalAdminNotifs }} notifikasi operasional"
                     aria-expanded="false"
                     aria-controls="adminNotifDropdown"
                 >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                    <svg class="w-5 h-5 {{ $totalAdminNotifs > 0 ? 'text-amber-600' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                     @if ($totalAdminNotifs > 0)
-                        <span class="absolute top-1 right-1 min-w-[16px] h-4 flex items-center justify-center px-1 text-[9px] font-extrabold bg-rose-500 text-white rounded-full ring-2 ring-white">
+                        <span class="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center px-1 text-[10px] font-black bg-rose-500 text-white rounded-full ring-2 ring-white shadow-xs">
                             {{ $totalAdminNotifs > 9 ? '9+' : $totalAdminNotifs }}
                         </span>
                     @endif
@@ -109,51 +109,138 @@
                 {{-- Dropdown Panel --}}
                 <div
                     id="adminNotifDropdown"
-                    class="hidden absolute right-0 top-full mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden"
+                    class="hidden absolute right-0 top-full mt-2 w-88 sm:w-[420px] bg-white border border-slate-200/90 rounded-2xl shadow-2xl z-50 overflow-hidden text-left transition-all duration-200"
                 >
                     {{-- Header --}}
-                    <div class="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50/80">
-                        <h4 class="text-xs font-extrabold text-slate-800 uppercase tracking-wider">Notifikasi Admin</h4>
-                        <span class="text-[10px] font-bold text-slate-400">{{ now()->timezone('Asia/Jakarta')->translatedFormat('d M Y') }}</span>
+                    <div class="px-4 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950 text-white flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <span class="grid h-8 w-8 place-items-center rounded-lg bg-teal-500/20 text-teal-300 ring-1 ring-teal-400/30">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            </span>
+                            <div>
+                                <div class="text-xs font-black tracking-wide uppercase text-white flex items-center gap-2">
+                                    <span>Pusat Notifikasi</span>
+                                    @if ($totalAdminNotifs > 0)
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white">
+                                            {{ $totalAdminNotifs }} Action
+                                        </span>
+                                    @endif
+                                </div>
+                                <p class="text-[10px] text-slate-300 font-medium">Monitoring Operasional Real-Time</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-semibold text-slate-300 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                            {{ now()->timezone('Asia/Jakarta')->translatedFormat('d M Y') }}
+                        </span>
                     </div>
 
-                    <div class="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                    {{-- Quick Summary Bar --}}
+                    @if ($totalAdminNotifs > 0)
+                        <div class="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px]">
+                            <span class="text-slate-500 font-medium">Perlu tindakan operasional:</span>
+                            <div class="flex items-center gap-1.5">
+                                @if ($adminH1Count > 0)
+                                    <span class="inline-flex items-center gap-1 font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 text-[10px]">
+                                        🔔 {{ $adminH1Count }} Trip H-1
+                                    </span>
+                                @endif
+                                @if ($pendingRefunds > 0)
+                                    <span class="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200/80 text-[10px]">
+                                        ⚠ {{ $pendingRefunds }} Refund
+                                    </span>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
+
+                    {{-- Notifications Scroll List --}}
+                    <div class="max-h-[380px] overflow-y-auto p-3 space-y-3 divide-y divide-slate-100/80">
                         {{-- H-1 Notifications --}}
                         @if ($adminH1Count > 0)
-                            <div class="px-4 py-2 bg-amber-50/60">
-                                <div class="text-[10px] font-extrabold text-amber-700 uppercase tracking-wider mb-2">🔔 Trip Berangkat Besok (H-1)</div>
-                                @foreach ($adminH1Trips as $nt)
-                                <a href="{{ route('admin.dashboard') }}" class="flex items-start gap-3 py-2 hover:bg-amber-100/60 rounded-lg px-2 transition no-underline group">
-                                    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-amber-200 text-amber-800 mt-0.5">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between px-1">
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                        Trip Berangkat Besok (H-1)
                                     </span>
-                                    <div class="min-w-0">
-                                        <div class="text-xs font-bold text-slate-900 truncate group-hover:text-amber-800">
-                                            {{ $nt->package->name ?? $nt->batch_name ?? 'Trip #'.$nt->id }}
+                                    <span class="text-[10px] font-bold text-slate-400">{{ \Carbon\Carbon::tomorrow()->translatedFormat('d M Y') }}</span>
+                                </div>
+
+                                @foreach ($adminH1Trips as $nt)
+                                    <a href="{{ route('admin.dashboard') }}" class="block p-3 rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50/70 via-white to-amber-50/30 hover:border-amber-400 hover:shadow-xs transition-all duration-150 no-underline group">
+                                        <div class="flex items-start gap-3">
+                                            <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-amber-100 text-amber-800 font-bold mt-0.5 shadow-2xs">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                            </div>
+                                            <div class="min-w-0 flex-1">
+                                                <div class="flex items-center justify-between gap-1">
+                                                    <h5 class="text-xs font-bold text-slate-900 group-hover:text-amber-900 truncate">
+                                                        {{ $nt->package->name ?? $nt->batch_name ?? 'Trip #'.$nt->id }}
+                                                    </h5>
+                                                    <span class="shrink-0 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-amber-500 text-white">
+                                                        H-1
+                                                    </span>
+                                                </div>
+                                                <div class="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                                                    <span class="inline-flex items-center gap-1 font-semibold text-slate-600 bg-white/80 px-2 py-0.5 rounded-md border border-slate-200/70">
+                                                        <svg class="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                                        {{ $nt->booked_seats }} Pax
+                                                    </span>
+                                                    @if (empty($nt->driver_name))
+                                                        <span class="inline-flex items-center gap-1 font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200 text-[10px]">
+                                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Driver Kosong
+                                                        </span>
+                                                    @else
+                                                        <span class="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/70 text-[10px]">
+                                                            ✓ {{ $nt->driver_name }}
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                                <div class="mt-2 text-[10px] font-bold text-amber-800 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                                                    <span>Periksa Kesiapan Armada di Dashboard</span>
+                                                    <span>→</span>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="text-[10px] text-slate-500">
-                                            Berangkat {{ \Carbon\Carbon::tomorrow()->translatedFormat('d M') }} · {{ $nt->booked_seats }} pax
-                                            @if(empty($nt->driver_name))
-                                                · <span class="text-rose-600 font-semibold">Driver kosong</span>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </a>
+                                    </a>
                                 @endforeach
                             </div>
                         @endif
 
                         {{-- Pending Refunds --}}
                         @if ($pendingRefunds > 0)
-                            <div class="px-4 py-2">
-                                <div class="text-[10px] font-extrabold text-rose-700 uppercase tracking-wider mb-2">⚠ Refund Menunggu Review</div>
-                                <a href="{{ route('admin.refunds.index') }}" class="flex items-center gap-3 py-2 hover:bg-rose-50 rounded-lg px-2 transition no-underline group">
-                                    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-rose-100 text-rose-700">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                            <div class="space-y-2 {{ $adminH1Count > 0 ? 'pt-3' : '' }}">
+                                <div class="flex items-center justify-between px-1">
+                                    <span class="text-[10px] font-black uppercase tracking-wider text-rose-700 flex items-center gap-1.5">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                        Permintaan Refund Menunggu Review
                                     </span>
-                                    <div>
-                                        <div class="text-xs font-bold text-slate-900 group-hover:text-rose-700">{{ $pendingRefunds }} Tiket Refund Ditahan</div>
-                                        <div class="text-[10px] text-slate-500">Klik untuk lihat & selesaikan</div>
+                                    <span class="text-[10px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                                        {{ $pendingRefunds }} Tiket
+                                    </span>
+                                </div>
+                                <a href="{{ route('admin.refunds.index') }}" class="block p-3.5 rounded-xl border border-rose-200/80 bg-gradient-to-r from-rose-50/70 via-white to-rose-50/30 hover:border-rose-400 hover:shadow-xs transition-all duration-150 no-underline group">
+                                    <div class="flex items-start gap-3">
+                                        <div class="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-rose-100 text-rose-700 font-bold mt-0.5 shadow-2xs">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
+                                        </div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center justify-between">
+                                                <h5 class="text-xs font-bold text-slate-900 group-hover:text-rose-800">
+                                                    {{ $pendingRefunds }} Tiket Refund Ditahan
+                                                </h5>
+                                                <span class="shrink-0 text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-rose-500 text-white">
+                                                    Action
+                                                </span>
+                                            </div>
+                                            <p class="text-[11px] text-slate-500 mt-1 leading-relaxed">
+                                                Customer menunggu persetujuan pengembalian dana tiket. Klik untuk memproses verifikasi.
+                                            </p>
+                                            <div class="mt-2 text-[10px] font-bold text-rose-700 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                                                <span>Buka Konsol Refund & Tiket</span>
+                                                <span>→</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </a>
                             </div>
@@ -161,19 +248,27 @@
 
                         {{-- Empty State --}}
                         @if ($totalAdminNotifs === 0)
-                            <div class="px-4 py-8 text-center">
-                                <div class="text-2xl mb-2">✅</div>
-                                <div class="text-xs font-semibold text-slate-500">Semua notifikasi sudah ditangani</div>
+                            <div class="py-8 px-4 text-center">
+                                <div class="inline-grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-2xs mb-3">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                </div>
+                                <h5 class="text-xs font-bold text-slate-900">Semua Operasional Terkendali</h5>
+                                <p class="text-[11px] text-slate-500 mt-1 max-w-[260px] mx-auto leading-relaxed">
+                                    Tidak ada trip H-1 tanpa supir dan tidak ada permohonan refund yang menggantung saat ini.
+                                </p>
                             </div>
                         @endif
                     </div>
 
                     {{-- Footer --}}
-                    <div class="px-4 py-2.5 border-t border-slate-100 bg-slate-50/60 flex justify-between items-center">
-                        <a href="{{ route('admin.dashboard') }}" class="text-[11px] font-bold text-teal-700 hover:text-teal-900 no-underline">
-                            Lihat Dashboard →
+                    <div class="px-4 py-2.5 bg-slate-50/90 border-t border-slate-100 flex items-center justify-between">
+                        <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 hover:text-teal-900 no-underline transition">
+                            <span>Dashboard Utama</span>
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </a>
-                        <span class="text-[10px] text-slate-400 font-semibold">{{ $totalAdminNotifs }} belum selesai</span>
+                        <a href="{{ route('admin.trips.index') }}" class="text-[10px] font-semibold text-slate-500 hover:text-slate-800 no-underline transition">
+                            Semua Jadwal Trip →
+                        </a>
                     </div>
                 </div>
             </div>
