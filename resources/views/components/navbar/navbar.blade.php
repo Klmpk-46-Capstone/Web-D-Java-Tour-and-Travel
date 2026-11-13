@@ -187,7 +187,7 @@
 
                         <div
                             id="notifMenuDesktop"
-                            class="absolute right-0 top-full z-50 mt-3 hidden w-[360px] sm:w-[420px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-left transition-all duration-200"
+                            class="absolute right-0 top-full z-50 mt-3 hidden w-[380px] sm:w-[420px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-left transition-all duration-200"
                         >
                             {{-- Header --}}
                             <div class="px-4 py-3.5 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white flex items-center justify-between gap-3">
@@ -196,8 +196,8 @@
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                                     </span>
                                     <div class="min-w-0">
-                                        <div class="text-xs font-black tracking-wide uppercase text-white flex items-center gap-2 whitespace-nowrap">
-                                            <span class="truncate">{{ $isEnglish ? 'Travel Notifications' : 'Notifikasi Perjalanan' }}</span>
+                                        <div class="text-xs font-black tracking-wide uppercase text-white flex items-center gap-2">
+                                            <span class="whitespace-nowrap">{{ $isEnglish ? 'Travel Notifications' : 'Notifikasi Perjalanan' }}</span>
                                             @if ($unreadNotifCount > 0)
                                                 <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white shrink-0">
                                                     {{ $unreadNotifCount }} {{ $isEnglish ? 'New' : 'Baru' }}
@@ -207,7 +207,7 @@
                                         <p class="text-[10px] text-slate-300 font-medium truncate">{{ $isEnglish ? 'Updates & trip reminders' : 'Pembaruan & jadwal trip Anda' }}</p>
                                     </div>
                                 </div>
-                                <span class="shrink-0 whitespace-nowrap text-[10px] font-semibold text-slate-300 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                                <span class="shrink-0 whitespace-nowrap text-[10px] font-semibold text-slate-300 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs border border-white/10">
                                     {{ now()->timezone('Asia/Jakarta')->translatedFormat('d M Y') }}
                                 </span>
                             </div>
@@ -355,7 +355,7 @@
 
                     <div
                         id="notifMenuMobile"
-                        class="absolute right-0 top-full z-50 mt-2 hidden w-[calc(100vw-2rem)] max-w-sm sm:w-[380px] overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-left transition-all duration-200"
+                        class="absolute right-0 top-full z-50 mt-2 hidden w-[320px] sm:w-[360px] max-w-[calc(100vw-1.5rem)] overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-left transition-all duration-200"
                     >
                         {{-- Mobile Header --}}
                         <div class="px-3.5 py-3 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white flex items-center justify-between gap-2">
