@@ -109,43 +109,43 @@
                 {{-- Dropdown Panel --}}
                 <div
                     id="adminNotifDropdown"
-                    class="hidden absolute right-0 top-full mt-2 w-88 sm:w-[420px] bg-white border border-slate-200/90 rounded-2xl shadow-2xl z-50 overflow-hidden text-left transition-all duration-200"
+                    class="hidden absolute right-0 top-full mt-2 w-[360px] sm:w-[420px] max-w-[calc(100vw-2rem)] bg-white border border-slate-200/90 rounded-2xl shadow-2xl z-50 overflow-hidden text-left transition-all duration-200"
                 >
                     {{-- Header --}}
-                    <div class="px-4 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950 text-white flex items-center justify-between">
-                        <div class="flex items-center gap-2.5">
-                            <span class="grid h-8 w-8 place-items-center rounded-lg bg-teal-500/20 text-teal-300 ring-1 ring-teal-400/30">
+                    <div class="px-4 py-3.5 bg-gradient-to-r from-slate-900 via-slate-800 to-teal-950 text-white flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-teal-500/20 text-teal-300 ring-1 ring-teal-400/30">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                             </span>
-                            <div>
-                                <div class="text-xs font-black tracking-wide uppercase text-white flex items-center gap-2">
-                                    <span>Pusat Notifikasi</span>
+                            <div class="min-w-0">
+                                <div class="text-xs font-black tracking-wide uppercase text-white flex items-center gap-2 whitespace-nowrap">
+                                    <span class="truncate">Pusat Notifikasi</span>
                                     @if ($totalAdminNotifs > 0)
-                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white">
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white shrink-0">
                                             {{ $totalAdminNotifs }} Action
                                         </span>
                                     @endif
                                 </div>
-                                <p class="text-[10px] text-slate-300 font-medium">Monitoring Operasional Real-Time</p>
+                                <p class="text-[10px] text-slate-300 font-medium truncate">Monitoring Operasional Real-Time</p>
                             </div>
                         </div>
-                        <span class="text-[10px] font-semibold text-slate-300 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                        <span class="shrink-0 whitespace-nowrap text-[10px] font-semibold text-slate-300 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
                             {{ now()->timezone('Asia/Jakarta')->translatedFormat('d M Y') }}
                         </span>
                     </div>
 
                     {{-- Quick Summary Bar --}}
                     @if ($totalAdminNotifs > 0)
-                        <div class="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px]">
-                            <span class="text-slate-500 font-medium">Perlu tindakan operasional:</span>
-                            <div class="flex items-center gap-1.5">
+                        <div class="px-4 py-2 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px] gap-2">
+                            <span class="text-slate-500 font-medium whitespace-nowrap">Perlu tindakan:</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
                                 @if ($adminH1Count > 0)
-                                    <span class="inline-flex items-center gap-1 font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 text-[10px]">
+                                    <span class="inline-flex items-center gap-1 font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80 text-[10px] whitespace-nowrap">
                                         🔔 {{ $adminH1Count }} Trip H-1
                                     </span>
                                 @endif
                                 @if ($pendingRefunds > 0)
-                                    <span class="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200/80 text-[10px]">
+                                    <span class="inline-flex items-center gap-1 font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200/80 text-[10px] whitespace-nowrap">
                                         ⚠ {{ $pendingRefunds }} Refund
                                     </span>
                                 @endif
@@ -261,13 +261,14 @@
                     </div>
 
                     {{-- Footer --}}
-                    <div class="px-4 py-2.5 bg-slate-50/90 border-t border-slate-100 flex items-center justify-between">
-                        <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-1 text-[11px] font-bold text-teal-700 hover:text-teal-900 no-underline transition">
-                            <span>Dashboard Utama</span>
+                    <div class="px-4 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                        <a href="{{ route('admin.dashboard') }}" class="inline-flex items-center gap-1.5 text-xs font-bold text-teal-800 hover:text-teal-950 no-underline transition">
+                            <span>Buka Dashboard Utama</span>
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                         </a>
-                        <a href="{{ route('admin.trips.index') }}" class="text-[10px] font-semibold text-slate-500 hover:text-slate-800 no-underline transition">
-                            Semua Jadwal Trip →
+                        <a href="{{ route('admin.trips.index') }}" class="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-800 no-underline transition">
+                            <span>Jadwal Trip</span>
+                            <span>→</span>
                         </a>
                     </div>
                 </div>

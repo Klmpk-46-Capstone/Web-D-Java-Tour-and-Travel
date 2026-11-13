@@ -187,27 +187,27 @@
 
                         <div
                             id="notifMenuDesktop"
-                            class="absolute right-0 top-full z-50 mt-3 hidden w-96 sm:w-[420px] overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-left transition-all duration-200"
+                            class="absolute right-0 top-full z-50 mt-3 hidden w-[360px] sm:w-[420px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-left transition-all duration-200"
                         >
                             {{-- Header --}}
-                            <div class="px-4 py-3.5 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white flex items-center justify-between">
-                                <div class="flex items-center gap-2.5">
-                                    <span class="grid h-8 w-8 place-items-center rounded-lg bg-teal-500/20 text-teal-300 ring-1 ring-teal-400/30">
+                            <div class="px-4 py-3.5 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-teal-500/20 text-teal-300 ring-1 ring-teal-400/30">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                                     </span>
-                                    <div>
-                                        <div class="text-xs font-black tracking-wide uppercase text-white flex items-center gap-2">
-                                            <span>{{ $isEnglish ? 'Travel Notifications' : 'Notifikasi Perjalanan' }}</span>
+                                    <div class="min-w-0">
+                                        <div class="text-xs font-black tracking-wide uppercase text-white flex items-center gap-2 whitespace-nowrap">
+                                            <span class="truncate">{{ $isEnglish ? 'Travel Notifications' : 'Notifikasi Perjalanan' }}</span>
                                             @if ($unreadNotifCount > 0)
-                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white">
+                                                <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white shrink-0">
                                                     {{ $unreadNotifCount }} {{ $isEnglish ? 'New' : 'Baru' }}
                                                 </span>
                                             @endif
                                         </div>
-                                        <p class="text-[10px] text-slate-300 font-medium">{{ $isEnglish ? 'Updates & trip reminders' : 'Pembaruan & jadwal trip Anda' }}</p>
+                                        <p class="text-[10px] text-slate-300 font-medium truncate">{{ $isEnglish ? 'Updates & trip reminders' : 'Pembaruan & jadwal trip Anda' }}</p>
                                     </div>
                                 </div>
-                                <span class="text-[10px] font-semibold text-slate-300 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
+                                <span class="shrink-0 whitespace-nowrap text-[10px] font-semibold text-slate-300 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-xs">
                                     {{ now()->timezone('Asia/Jakarta')->translatedFormat('d M Y') }}
                                 </span>
                             </div>
@@ -355,22 +355,22 @@
 
                     <div
                         id="notifMenuMobile"
-                        class="absolute right-0 top-full z-50 mt-2 hidden w-[310px] sm:w-[350px] overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-left transition-all duration-200"
+                        class="absolute right-0 top-full z-50 mt-2 hidden w-[calc(100vw-2rem)] max-w-sm sm:w-[380px] overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-2xl text-left transition-all duration-200"
                     >
                         {{-- Mobile Header --}}
-                        <div class="px-3.5 py-3 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <span class="grid h-6 w-6 place-items-center rounded-md bg-teal-500/20 text-teal-300">
+                        <div class="px-3.5 py-3 bg-gradient-to-r from-slate-900 via-teal-950 to-slate-900 text-white flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-teal-500/20 text-teal-300">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
                                 </span>
-                                <span class="text-xs font-black tracking-wide uppercase">{{ $isEnglish ? 'Notifications' : 'Notifikasi' }}</span>
+                                <span class="text-xs font-black tracking-wide uppercase truncate">{{ $isEnglish ? 'Notifications' : 'Notifikasi' }}</span>
                             </div>
                             @if ($unreadNotifCount > 0)
-                                <span class="rounded-full bg-rose-500 px-2 py-0.5 text-[9px] font-black text-white">
+                                <span class="shrink-0 rounded-full bg-rose-500 px-2 py-0.5 text-[9px] font-black text-white whitespace-nowrap">
                                     {{ $unreadNotifCount }} {{ $isEnglish ? 'New' : 'Baru' }}
                                 </span>
                             @else
-                                <span class="text-[10px] text-slate-300 font-medium">{{ now()->timezone('Asia/Jakarta')->translatedFormat('d M') }}</span>
+                                <span class="shrink-0 text-[10px] text-slate-300 font-medium whitespace-nowrap">{{ now()->timezone('Asia/Jakarta')->translatedFormat('d M') }}</span>
                             @endif
                         </div>
 
