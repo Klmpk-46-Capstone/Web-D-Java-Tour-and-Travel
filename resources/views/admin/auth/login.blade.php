@@ -24,9 +24,11 @@
             {{-- Header Badge --}}
             <div class="flex items-center justify-between mb-6">
                 <div class="flex items-center gap-2.5">
-                    <span class="grid h-9 w-9 place-items-center rounded-xl bg-teal-600 text-white font-black text-lg shadow-sm">
-                        ✦
-                    </span>
+                    <img
+                        src="{{ asset('images/logo.png') }}"
+                        alt="Logo D'Java Tour &amp; Travel"
+                        class="h-9 w-9 shrink-0 rounded-xl object-cover shadow-xs border border-slate-700/80"
+                    >
                     <div>
                         <h2 class="text-base font-extrabold text-white tracking-tight leading-none">D'Java Tour</h2>
                         <span class="text-[10px] font-bold tracking-widest text-teal-400 uppercase">CMS OPS CONSOLE</span>

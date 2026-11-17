@@ -7,7 +7,11 @@
         <div class="grid grid-cols-1 gap-8 pb-9 md:grid-cols-[1.7fr_0.9fr_1.2fr] md:gap-8 xl:gap-14">
             <div>
                 <div class="mb-4 inline-flex items-center gap-2.5 text-slate-900">
-                    <span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-teal-100 bg-teal-50 text-2xl font-extrabold text-teal-700" aria-hidden="true">✦</span>
+                    <img
+                        src="{{ asset('images/logo.png') }}"
+                        alt="Logo D'Java Tour &amp; Travel"
+                        class="h-10 w-10 shrink-0 rounded-xl object-cover shadow-xs border border-slate-200/80"
+                    >
                     <span class="flex flex-col leading-tight">
                         <strong class="text-base tracking-tight">D'Java Tour &amp; Travel</strong>
                         <small class="mt-1 text-xs font-extrabold tracking-wider text-teal-700">EXPLORE EAST JAVA</small>

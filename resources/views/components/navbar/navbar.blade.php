@@ -17,9 +17,11 @@
                 href="{{ localized_route('home') }}"
                 class="flex min-w-0 items-center gap-2 text-slate-900 no-underline md:shrink-0"
             >
-                <span class="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-teal-100 bg-teal-50 text-xl font-extrabold text-teal-700 md:h-10 md:w-10">
-                    ✦
-                </span>
+                <img
+                    src="{{ asset('images/logo.png') }}"
+                    alt="Logo D'Java Tour &amp; Travel"
+                    class="h-9 w-9 shrink-0 rounded-xl object-cover shadow-xs border border-slate-200/80 md:h-10 md:w-10"
+                >
 
                 <span class="flex min-w-0 flex-col leading-tight">
                     <strong class="whitespace-nowrap text-xs tracking-tight sm:text-sm md:text-base">

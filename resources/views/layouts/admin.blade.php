@@ -41,9 +41,11 @@
         {{-- Left: Logo --}}
         <div class="flex items-center gap-3 w-64 shrink-0">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2.5 text-slate-900 no-underline">
-                <span class="grid h-9 w-9 place-items-center rounded-xl bg-teal-600 text-white font-black text-lg shadow-sm">
-                    ✦
-                </span>
+                <img
+                    src="{{ asset('images/logo.png') }}"
+                    alt="Logo D'Java Tour &amp; Travel"
+                    class="h-9 w-9 shrink-0 rounded-xl object-cover shadow-xs border border-slate-200/80"
+                >
                 <div class="flex flex-col leading-tight">
                     <span class="font-extrabold text-sm sm:text-base tracking-tight text-slate-900">D'Java Tour</span>
                     <span class="text-[10px] font-bold tracking-widest text-teal-700 uppercase">CMS OPS CONSOLE</span>
