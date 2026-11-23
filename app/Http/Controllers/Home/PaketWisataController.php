@@ -82,8 +82,10 @@ class PaketWisataController extends Controller
                 ->with(['vehicle', 'vehicleUnit'])
                 ->where('status', '!=', 'cancelled')
                 ->whereDate('departure_date', '>=', now()->toDateString())
-                ->whereNotNull('vehicle_id')
-                ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'))
+                ->where(function ($vq) {
+                    $vq->whereNull('vehicle_id')
+                        ->orWhereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
+                })
                 ->orderBy('departure_date', 'asc'),
             'reviews' => fn($q) => $q->where('is_approved', true)->where('is_hidden', false)->latest('id'),
         ])->where('slug', $slug)->where('is_active', true)->visibleToCustomer()->firstOrFail();
@@ -130,8 +132,10 @@ class PaketWisataController extends Controller
             ->whereKey($validated['trip_id'])
             ->whereIn('status', ['available', 'open', 'almost_full'])
             ->whereDate('departure_date', '>=', now()->toDateString())
-            ->whereNotNull('vehicle_id')
-            ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'))
+            ->where(function ($vq) {
+                $vq->whereNull('vehicle_id')
+                    ->orWhereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
+            })
             ->first();
 
         $isEnglish = app()->getLocale() === 'en';
@@ -210,11 +214,11 @@ class PaketWisataController extends Controller
             }
 
             $trip->loadMissing('vehicle');
-            if (empty($trip->vehicle_id) || ! $trip->vehicle?->activeUnits()->exists()) {
+            if (! empty($trip->vehicle_id) && ! $trip->vehicle?->activeUnits()->exists()) {
                 throw \Illuminate\Validation\ValidationException::withMessages([
                     'trip_id' => app()->getLocale() === 'en'
-                        ? 'The vehicle for this schedule has not been assigned yet. Please choose another schedule.'
-                        : 'Armada untuk jadwal ini belum ditentukan. Silakan pilih jadwal lain.',
+                        ? 'The vehicle for this schedule is not currently active. Please choose another schedule.'
+                        : 'Armada untuk jadwal ini sedang tidak aktif. Silakan pilih jadwal lain.',
                 ]);
             }
 
@@ -332,7 +336,7 @@ class PaketWisataController extends Controller
     public function checkTripQuota(Trip $trip): JsonResponse
     {
         abort_unless(
-            $trip->vehicle_id && $trip->vehicle?->activeUnits()->exists(),
+            $trip->status !== 'cancelled' && (! $trip->vehicle_id || $trip->vehicle?->activeUnits()->exists()),
             404
         );
 

@@ -96,8 +96,10 @@ class HomeController extends Controller
                 $query->whereHas('trips', function ($tripQuery) use ($departureDate) {
                     $tripQuery->whereDate('departure_date', $departureDate)
                         ->whereIn('status', ['available', 'open', 'almost_full'])
-                        ->whereNotNull('vehicle_id')
-                        ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
+                        ->where(function ($vq) {
+                            $vq->whereNull('vehicle_id')
+                                ->orWhereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
+                        });
                 });
             }
 
@@ -110,8 +112,10 @@ class HomeController extends Controller
                 'trips' => fn ($tripQuery) => $tripQuery
                     ->where('status', '!=', 'cancelled')
                     ->whereDate('departure_date', '>=', now()->toDateString())
-                    ->whereNotNull('vehicle_id')
-                    ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits')),
+                    ->where(function ($vq) {
+                        $vq->whereNull('vehicle_id')
+                            ->orWhereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
+                    }),
                 'itineraries',
                 'reviews',
             ])
@@ -120,6 +124,69 @@ class HomeController extends Controller
                 ->where('is_featured', true)
                 ->latest('id')
         )->get();
+
+        // 1b. Active Packages for Interactive Destination Map
+        $activeMapPackages = Package::query()
+            ->with([
+                'trips' => fn ($tripQuery) => $tripQuery
+                    ->where('status', '!=', 'cancelled')
+                    ->whereDate('departure_date', '>=', now()->toDateString()),
+            ])
+            ->where('is_active', true)
+            ->visibleToCustomer()
+            ->latest('id')
+            ->get();
+
+        $mapDestinations = [
+            'bromo' => [
+                'id' => 'bromo',
+                'keyword' => 'Bromo',
+                'name' => 'Gunung Bromo',
+                'name_en' => 'Mount Bromo',
+                'area' => 'Bromo Tengger Semeru',
+                'area_en' => 'Bromo Tengger Semeru',
+                'badge' => 'Mountain & Sunrise',
+                'badge_en' => 'Mountain & Sunrise',
+                'description' => 'Kawasan kaldera Bromo dengan lautan pasir legendaris, kawah aktif, dan panorama golden sunrise terbaik di Jawa Timur.',
+                'description_en' => 'The Bromo caldera area featuring the legendary sea of sand, active crater, and the best golden sunrise view in East Java.',
+                'x' => 53,
+                'y' => 53.5,
+                'label_pos' => 'top',
+                'packages' => $activeMapPackages->filter(fn ($pkg) => $pkg->matchesMapDestination('bromo'))->values(),
+            ],
+            'tumpak_sewu' => [
+                'id' => 'tumpak_sewu',
+                'keyword' => 'Tumpak Sewu',
+                'name' => 'Air Terjun Tumpak Sewu',
+                'name_en' => 'Tumpak Sewu Waterfall',
+                'area' => 'Pronojiwo, Lumajang',
+                'area_en' => 'Pronojiwo, Lumajang',
+                'badge' => 'Air Terjun Eksotis',
+                'badge_en' => 'Exotic Waterfall',
+                'description' => 'Air terjun tirai megah setinggi 120 meter di perbatasan Malang-Lumajang yang sering dijuluki Niagara-nya Indonesia.',
+                'description_en' => 'A magnificent 120-meter curtain waterfall on the border of Malang and Lumajang, often dubbed the Niagara of Indonesia.',
+                'x' => 55,
+                'y' => 70.5,
+                'label_pos' => 'top',
+                'packages' => $activeMapPackages->filter(fn ($pkg) => $pkg->matchesMapDestination('tumpak_sewu'))->values(),
+            ],
+            'ijen' => [
+                'id' => 'ijen',
+                'keyword' => 'Ijen',
+                'name' => 'Kawah Ijen',
+                'name_en' => 'Ijen Crater',
+                'area' => 'Banyuwangi & Bondowoso',
+                'area_en' => 'Banyuwangi & Bondowoso',
+                'badge' => 'Blue Fire Phenomenon',
+                'badge_en' => 'Blue Fire Phenomenon',
+                'description' => 'Fenomena kawah asam terbesar di dunia dengan pancaran Blue Fire magis di tengah malam dan panorama danau toska alami.',
+                'description_en' => 'The world\'s largest acidic crater lake phenomenon featuring magical blue fire at midnight and panoramic turquoise waters.',
+                'x' => 85.2,
+                'y' => 67.5,
+                'label_pos' => 'right',
+                'packages' => $activeMapPackages->filter(fn ($pkg) => $pkg->matchesMapDestination('ijen'))->values(),
+            ],
+        ];
 
         // 2. Paket yang tampil pada section destinasi / hasil pencarian paket.
         $destinations = $applyPackageFilters(
@@ -168,6 +235,7 @@ class HomeController extends Controller
 
         return view($this->dashboardView('beranda.index'), [
             'featuredPackages' => $featuredPackages,
+            'mapDestinations' => $mapDestinations,
             'destinations' => $destinations,
             'destinationOptions' => $destinationOptions,
             'vehicles' => $vehicles,

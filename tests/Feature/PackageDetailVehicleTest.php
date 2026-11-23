@@ -179,7 +179,7 @@ class PackageDetailVehicleTest extends TestCase
             ->assertDontSee('Hidden Fleet Batch');
     }
 
-    public function test_package_with_only_unscheduled_vehicle_trip_is_hidden_from_customer(): void
+    public function test_package_with_unscheduled_vehicle_trip_remains_visible_to_customer(): void
     {
         $package = Package::create([
             'name' => 'Unscheduled Fleet Package',
@@ -203,9 +203,9 @@ class PackageDetailVehicleTest extends TestCase
 
         $this->get(route('packages.index'))
             ->assertOk()
-            ->assertDontSee('Unscheduled Fleet Package');
+            ->assertSee('Unscheduled Fleet Package');
 
-        $this->get(route('packages.show', $package->slug))->assertNotFound();
-        $this->getJson(route('trips.check-quota', $trip))->assertNotFound();
+        $this->get(route('packages.show', $package->slug))->assertOk();
+        $this->getJson(route('trips.check-quota', $trip))->assertOk();
     }
 }

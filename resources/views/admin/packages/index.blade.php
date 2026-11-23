@@ -43,9 +43,16 @@
 
             <select name="route_type" onchange="this.form.submit()" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:bg-white focus:outline-none focus:border-teal-600">
                 <option value="">Semua Rute</option>
-                <option value="bahari" {{ request('route_type') === 'bahari' ? 'selected' : '' }}>Bahari (Karimunjawa)</option>
-                <option value="gunung" {{ request('route_type') === 'gunung' ? 'selected' : '' }}>Gunung (Bromo / Dieng / Ijen)</option>
-                <option value="heritage" {{ request('route_type') === 'heritage' ? 'selected' : '' }}>Heritage (Jogja / Borobudur)</option>
+                <optgroup label="Destinasi Peta Jawa Timur">
+                    <option value="bromo" {{ request('route_type') === 'bromo' ? 'selected' : '' }}>Gunung Bromo</option>
+                    <option value="tumpak_sewu" {{ request('route_type') === 'tumpak_sewu' ? 'selected' : '' }}>Air Terjun Tumpak Sewu</option>
+                    <option value="ijen" {{ request('route_type') === 'ijen' ? 'selected' : '' }}>Kawah Ijen</option>
+                </optgroup>
+                <optgroup label="Rute Wilayah Lainnya">
+                    <option value="bahari" {{ request('route_type') === 'bahari' ? 'selected' : '' }}>Bahari (Karimunjawa)</option>
+                    <option value="gunung" {{ request('route_type') === 'gunung' ? 'selected' : '' }}>Gunung / Dataran Tinggi</option>
+                    <option value="heritage" {{ request('route_type') === 'heritage' ? 'selected' : '' }}>Heritage (Jogja / Borobudur)</option>
+                </optgroup>
             </select>
 
             <button type="submit" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition">
@@ -102,8 +109,20 @@
                             </td>
                             <td class="py-3.5 px-4">
                                 <span class="font-semibold text-slate-700 block">{{ $pkg->category }}</span>
-                                <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase {{ $pkg->route_type === 'bahari' ? 'bg-teal-50 text-teal-800' : ($pkg->route_type === 'gunung' ? 'bg-slate-100 text-slate-800' : 'bg-cyan-50 text-cyan-800') }}">
-                                    {{ $pkg->route_type }}
+                                @php
+                                    $badgeStyle = match($pkg->route_type) {
+                                        'bromo' => 'bg-amber-50 text-amber-800 border border-amber-200',
+                                        'tumpak_sewu' => 'bg-emerald-50 text-emerald-800 border border-emerald-200',
+                                        'ijen' => 'bg-teal-50 text-teal-800 border border-teal-200',
+                                        'bahari' => 'bg-cyan-50 text-cyan-800 border border-cyan-200',
+                                        'gunung' => 'bg-slate-100 text-slate-800 border border-slate-200',
+                                        'heritage' => 'bg-indigo-50 text-indigo-800 border border-indigo-200',
+                                        default => 'bg-slate-100 text-slate-800 border border-slate-200',
+                                    };
+                                    $routeLabel = \App\Models\Package::ROUTE_TYPES[$pkg->route_type] ?? $pkg->route_type;
+                                @endphp
+                                <span class="inline-block mt-0.5 px-2 py-0.5 rounded text-[10px] font-extrabold uppercase {{ $badgeStyle }}" title="{{ $routeLabel }}">
+                                    {{ str_replace(['_', '-'], ' ', $pkg->route_type) }}
                                 </span>
                             </td>
                             <td class="py-3.5 px-4 font-bold text-slate-700">

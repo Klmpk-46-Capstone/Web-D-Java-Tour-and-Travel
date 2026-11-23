@@ -46,15 +46,18 @@ class AdminPackageController extends Controller
     public function create(): View
     {
         $categories = Package::getAvailableCategories();
-        return view('admin.packages.create', compact('categories'));
+        $routeTypes = Package::ROUTE_TYPES;
+        return view('admin.packages.create', compact('categories', 'routeTypes'));
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $allowedRouteTypes = implode(',', array_keys(Package::ROUTE_TYPES));
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:180'],
             'category' => ['required', 'string', 'max:100'],
-            'route_type' => ['required', 'in:bahari,gunung,heritage'],
+            'route_type' => ['required', 'string', "in:{$allowedRouteTypes}"],
             'duration' => ['nullable', 'string', 'max:80'],
             'price' => ['required', 'integer', 'min:0'],
             'badge' => ['nullable', 'string', 'max:80'],
@@ -115,15 +118,18 @@ class AdminPackageController extends Controller
     {
         $package->load(['itineraries' => fn($q) => $q->orderBy('day_number')]);
         $categories = Package::getAvailableCategories();
-        return view('admin.packages.edit', compact('package', 'categories'));
+        $routeTypes = Package::ROUTE_TYPES;
+        return view('admin.packages.edit', compact('package', 'categories', 'routeTypes'));
     }
 
     public function update(Request $request, Package $package): RedirectResponse
     {
+        $allowedRouteTypes = implode(',', array_keys(Package::ROUTE_TYPES));
+
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:180'],
             'category' => ['required', 'string', 'max:100'],
-            'route_type' => ['required', 'in:bahari,gunung,heritage'],
+            'route_type' => ['required', 'string', "in:{$allowedRouteTypes}"],
             'duration' => ['nullable', 'string', 'max:80'],
             'price' => ['required', 'integer', 'min:0'],
             'badge' => ['nullable', 'string', 'max:80'],
