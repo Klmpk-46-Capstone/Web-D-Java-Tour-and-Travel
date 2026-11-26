@@ -60,7 +60,7 @@
                     </div>
                     <div>
                         <span class="block text-[11px] font-bold text-slate-400 uppercase">Rute Wilayah</span>
-                        <span class="text-xs font-extrabold text-teal-800 uppercase">{{ $package->route_type }}</span>
+                        <span class="text-xs font-extrabold text-teal-800 uppercase">{{ $package->route_type_label ?? $package->route_type }}</span>
                     </div>
                     <div>
                         <span class="block text-[11px] font-bold text-slate-400 uppercase">Durasi</span>

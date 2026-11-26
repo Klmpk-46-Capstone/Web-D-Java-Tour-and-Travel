@@ -20,6 +20,18 @@ class Package extends Model
         'Cultural, Heritage & City Tour',
     ];
 
+    /**
+     * Master pilihan tipe rute wilayah yang selaras dengan titik peta Jawa Timur.
+     */
+    public const ROUTE_TYPES = [
+        'bromo' => 'Gunung Bromo (Kawasan Bromo Tengger Semeru)',
+        'tumpak_sewu' => 'Air Terjun Tumpak Sewu (Lumajang / Pronojiwo)',
+        'ijen' => 'Kawah Ijen (Banyuwangi / Blue Fire)',
+        'bahari' => 'Bahari (Karimunjawa / Jepara)',
+        'gunung' => 'Gunung / Dataran Tinggi Lainnya (Dieng / dsb)',
+        'heritage' => 'Heritage & Budaya (Jogja / Borobudur)',
+    ];
+
     protected $fillable = [
         'name',
         'slug',
@@ -91,9 +103,9 @@ class Package extends Model
     /**
      * Paket yang masih layak tampil ke customer.
      *
-     * Paket tanpa jadwal mendatang tetap tampil sebagai informasi paket, tetapi
-     * paket yang sudah punya jadwal mendatang wajib memiliki minimal satu jadwal
-     * dengan tipe armada aktif. Jadwal "Belum ditentukan" tidak dihitung.
+     * Paket tanpa jadwal mendatang tetap tampil sebagai informasi paket.
+     * Paket yang memiliki jadwal mendatang tetap tampil (baik armada belum ditentukan
+     * maupun armada yang telah memiliki unit operasional aktif).
      */
     public function scopeVisibleToCustomer($query)
     {
@@ -106,8 +118,10 @@ class Package extends Model
             })->orWhereHas('trips', function ($tripQuery) use ($today) {
                 $tripQuery->where('status', '!=', 'cancelled')
                     ->whereDate('departure_date', '>=', $today)
-                    ->whereNotNull('vehicle_id')
-                    ->whereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
+                    ->where(function ($vq) {
+                        $vq->whereNull('vehicle_id')
+                            ->orWhereHas('vehicle', fn ($vehicleQuery) => $vehicleQuery->whereHas('activeUnits'));
+                    });
             });
         });
     }
@@ -174,5 +188,49 @@ class Package extends Model
         }
 
         return 1;
+    }
+
+    /**
+     * Label rute wilayah yang mudah dibaca.
+     */
+    public function getRouteTypeLabelAttribute(): string
+    {
+        return self::ROUTE_TYPES[$this->route_type] ?? ucfirst((string) $this->route_type);
+    }
+
+    /**
+     * Memeriksa apakah paket wisata ini cocok dengan salah satu destinasi peta Jawa Timur:
+     * 'bromo', 'tumpak_sewu', 'ijen'.
+     *
+     * Prioritas kecocokan:
+     * 1. route_type eksplisit yang dipilih admin ('bromo', 'tumpak_sewu', 'ijen')
+     * 2. Kompatibilitas data lama/seeder: route_type 'gunung' yang mengandung kata kunci pada teks
+     * 3. Kata kunci destinasi pada nama, kategori, deskripsi, atau slug paket
+     */
+    public function matchesMapDestination(string $destinationKey): bool
+    {
+        $key = strtolower(trim($destinationKey));
+        $route = strtolower((string) $this->route_type);
+        $text = strtolower($this->name . ' ' . $this->category . ' ' . $this->description . ' ' . $this->slug);
+
+        return match ($key) {
+            'bromo' => $route === 'bromo'
+                || in_array($route, ['gunung_bromo', 'gunung-bromo'])
+                || ($route === 'gunung' && str_contains($text, 'bromo'))
+                || str_contains($text, 'bromo'),
+
+            'tumpak_sewu' => $route === 'tumpak_sewu'
+                || in_array($route, ['tumpaksewu', 'air_terjun', 'air-terjun', 'air_terjun_tumpak_sewu'])
+                || str_contains($text, 'tumpak sewu')
+                || str_contains($text, 'tumpaksewu')
+                || str_contains($text, 'sewu'),
+
+            'ijen' => $route === 'ijen'
+                || in_array($route, ['kawah_ijen', 'kawah-ijen'])
+                || ($route === 'gunung' && str_contains($text, 'ijen'))
+                || str_contains($text, 'ijen'),
+
+            default => false,
+        };
     }
 }

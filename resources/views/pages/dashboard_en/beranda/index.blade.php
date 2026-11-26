@@ -44,6 +44,7 @@
                 @include('pages.dashboard_en.beranda.components.armada')
             @endif
         @else
+            @include('pages.dashboard_en.beranda.components.peta_destinasi')
             @include('pages.dashboard_en.beranda.components.rekomendasi_utama')
             @include('pages.dashboard_en.beranda.components.destinasi')
             @include('pages.dashboard_en.beranda.components.armada')

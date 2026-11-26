@@ -48,10 +48,20 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-1">Tipe Rute Wilayah</label>
                     <select name="route_type" required class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm focus:bg-white focus:outline-none focus:border-teal-600">
-                        <option value="bahari">Bahari (Karimunjawa / Jepara)</option>
-                        <option value="gunung">Gunung (Bromo / Dieng / Ijen)</option>
-                        <option value="heritage">Heritage (Jogja / Borobudur)</option>
+                        <optgroup label="Destinasi Peta Jawa Timur">
+                            <option value="bromo" {{ old('route_type') === 'bromo' ? 'selected' : '' }}>Gunung Bromo (Kawasan Bromo Tengger Semeru)</option>
+                            <option value="tumpak_sewu" {{ old('route_type') === 'tumpak_sewu' ? 'selected' : '' }}>Air Terjun Tumpak Sewu (Lumajang / Pronojiwo)</option>
+                            <option value="ijen" {{ old('route_type') === 'ijen' ? 'selected' : '' }}>Kawah Ijen (Banyuwangi / Blue Fire)</option>
+                        </optgroup>
+                        <optgroup label="Rute Wilayah Lainnya">
+                            <option value="bahari" {{ old('route_type') === 'bahari' ? 'selected' : '' }}>Bahari (Karimunjawa / Jepara)</option>
+                            <option value="gunung" {{ old('route_type', 'gunung') === 'gunung' ? 'selected' : '' }}>Gunung / Dataran Tinggi Lainnya (Dieng / dsb)</option>
+                            <option value="heritage" {{ old('route_type') === 'heritage' ? 'selected' : '' }}>Heritage (Jogja / Borobudur)</option>
+                        </optgroup>
                     </select>
+                    <p class="mt-1 text-[11px] text-slate-500">
+                        Memilih Bromo, Tumpak Sewu, atau Ijen otomatis menyelaraskan paket ke titik peta interaktif Jawa Timur di landing page.
+                    </p>
                 </div>
 
                 <div>
